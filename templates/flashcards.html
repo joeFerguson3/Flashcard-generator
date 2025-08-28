@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading - LearnlyAI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/flashcards.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header>
+        <div class="logo">LearnlyAI</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="/upload">Upload PDF</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </header>
+
+     <main class="flashcard-container">
+        <h2>Your AI-Generated Flashcards</h2>
+
+        {% if flashcards %}
+            {% for card in flashcards %}
+                <div class="flashcard">
+                    <p><strong>Q:</strong> {{ card.question }}</p>
+                    <p><strong>A:</strong> {{ card.answer }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No flashcards generated yet. Try uploading a PDF!</p>
+        {% endif %}
+    </main>
+</body>
+</html>
