@@ -22,8 +22,8 @@
      <main class="flashcard-container">
         <h2>Your AI-Generated Flashcards</h2>
 
-        {% if flashcards %}
-            {% for card in flashcards %}
+        {% if flashcards.questions %}
+            {% for card in flashcards.questions %}
                 <div class="flashcard">
                     <p><strong>Q:</strong> {{ card.question }}</p>
                     <p><strong>A:</strong> {{ card.answer }}</p>
@@ -33,5 +33,6 @@
             <p>No flashcards generated yet. Try uploading a PDF!</p>
         {% endif %}
     </main>
+
 </body>
 </html>
