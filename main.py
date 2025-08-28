@@ -15,7 +15,8 @@ def upload():
             return "No selected file"
         if file and file.filename.endswith('.pdf'):
             print("file read!")
-            return f"PDF uploaded successfully: {file.filename}"
+            # render_template('loading.html')
+            return redirect('/flashcards')
         else:
             return "Invalid file type. Please upload a PDF."
     return render_template('pdf-upload.html')
@@ -24,8 +25,18 @@ def upload():
 def home():
     return render_template('index.html')
 
+@app.route('/flashcards')
+def flashcards():
+    flashcards = [
+    {"question": "What is photosynthesis?", "answer": "The process by which plants convert sunlight into energy."},
+    {"question": "Capital of France?", "answer": "Paris"},
+    {"question": "Who wrote Hamlet?", "answer": "William Shakespeare"}
+]
+    return render_template('flashcards.html',flashcards = flashcards)
+
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 # Extract text from pdf
@@ -57,3 +68,4 @@ def extract_definitions(text):
       response = ollama.chat(model='gemma3', messages=messages)
       print(response)
       messages.pop()
+      redirect('flashcards.html')
