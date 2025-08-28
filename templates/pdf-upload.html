@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF</title>
+    <link rel="stylesheet" href="static/css/style.css">
+     <link rel="stylesheet" href="static/css/pdf-upload.css">
+</head>
+<body>
+       <!-- Top Navigation Bar -->
+    <header>
+        <div class="logo">LearnlyAI</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="pdf-upload.html">Upload PDF</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </header>
+
+
+    <!-- Upload Section -->
+    <section id="home">
+        <h1> Generate Flashcards</h1>
+        <p>Choose a PDF to generate AI-powered flashcards with LearnlyAI.</p>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" id="pdfUpload" name="pdfUpload" accept=".pdf" required>
+            <button type="submit">Upload PDF</button>
+        </form>
+    </section>
+
+        <!-- Instructions Section -->
+    <section id="instructions">
+        <h2>How to Upload Your PDF</h2>
+        <p>
+            1. Make sure your PDF contains the text you want to turn into flashcards.  
+        </p>
+        <p>
+            2. Maximum file size: 10MB. Only PDF files are supported.
+        </p>
+        <p>
+            3. After uploading, LearnlyAI will process your PDF and generate personalized flashcards instantly.  
+        </p>
+        <p>
+            4. Keep your PDF organized by topic for the best results.
+        </p>
+</section>
+
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 LearnlyAI. All rights reserved.</p>
+    </footer>
+</body>
+</html>

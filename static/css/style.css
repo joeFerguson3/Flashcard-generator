@@ -1,0 +1,175 @@
+/* Reset some defaults */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #f0f8ff;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Top Navigation Bar */
+header {
+    background: #4fc08d; /* keep your current green */
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Site Logo / Name */
+header .logo {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Navigation Links */
+header .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+}
+
+header .nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: transform 0.3s, color 0.3s;
+}
+
+header .nav-links a:hover {
+    color: #ffd700; /* bright yellow hover */
+    transform: scale(1.1);
+}
+
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+}
+
+nav a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #ffd700;
+}
+
+/* Hero Section */
+section#home {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(120deg, #a0e9fd, #ffecd2);
+    padding: 0 2rem;
+}
+
+section#home h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+section#home p {
+    font-size: 1.2rem;
+    max-width: 600px;
+}
+
+/* Other Sections */
+section {
+    padding: 5rem 2rem;
+    text-align: center;
+}
+
+section h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    color: #4fc08d;
+}
+
+section p, section ul {
+    font-size: 1rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+section ul {
+    list-style: none;
+    padding: 0;
+}
+
+section ul li {
+    background: #ffe4b5;
+    margin: 0.5rem 0;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Contact Form */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+input, textarea {
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    width: 100%;
+}
+
+button {
+    font-size: 1.5rem;
+    padding: 0.8rem;
+    border-radius: 12px;
+    border: none;
+    background-color: #4fc08d;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 1rem;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #3aa26d;
+}
+
+/* Footer */
+footer {
+    background: #4fc08d;
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    margin-top: 2rem;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}

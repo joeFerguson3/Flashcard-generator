@@ -1,6 +1,32 @@
 
 import pdfplumber
 import ollama
+from flask import Flask, request, render_template, redirect, url_for
+
+app = Flask(__name__)
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        if 'pdfUpload' not in request.files:
+            return "No file part"
+        file = request.files['pdfUpload']
+        if file.filename == '':
+            return "No selected file"
+        if file and file.filename.endswith('.pdf'):
+            print("file read!")
+            return f"PDF uploaded successfully: {file.filename}"
+        else:
+            return "Invalid file type. Please upload a PDF."
+    return render_template('pdf-upload.html')
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
 # Extract text from pdf
 def extract_text():
@@ -31,7 +57,3 @@ def extract_definitions(text):
       response = ollama.chat(model='gemma3', messages=messages)
       print(response)
       messages.pop()
-
-
-
-extract_text()
