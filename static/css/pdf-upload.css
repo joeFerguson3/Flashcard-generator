@@ -1,0 +1,29 @@
+/* Instructions Section */
+#instructions {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #fff0f5; /* light pastel background */
+    border-radius: 15px;
+    margin: 2rem auto;
+    max-width: 800px;
+}
+
+#instructions h2 {
+    color: #ff6f91; /* playful accent color */
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+#instructions p {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+#instructions p:last-child {
+    margin-bottom: 0;
+}
+
+#pdfUpload{
+    background-color: aliceblue;
+}
