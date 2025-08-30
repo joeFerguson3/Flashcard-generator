@@ -32,7 +32,13 @@
         {% else %}
             <p>No flashcards generated yet. Try uploading a PDF!</p>
         {% endif %}
+    <form method="POST" action="/save-flashcards">
+        <input type="hidden" name="flashcards" value='{{ flashcards | tojson }}'>
+        <button type="submit">Save to Database</button>
+    </form>
     </main>
+
+
 
 </body>
 </html>

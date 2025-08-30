@@ -2,9 +2,19 @@
 import pdfplumber
 import ollama
 from flask import Flask, request, render_template, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 import json
 app = Flask(__name__)
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
+db = SQLAlchemy(app)
+
+# Import models after db is defined
+class Flashcard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.Text, nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 # Extract text from pdf
 def extract_text():
@@ -56,6 +66,17 @@ def flashcards():
     flashcards = extract_text()
     return render_template('flashcards.html',flashcards = flashcards)
 
+@app.route('/save-flashcards', methods=['POST'])
+def save_flashcards():
+    data = json.loads(request.form['flashcards'])
+    for card in data["questions"]:
+        new_card = Flashcard(question=card["question"], answer=card["answer"])
+        db.session.add(new_card)
+    db.session.commit()
+    return redirect('/')
+
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
 
