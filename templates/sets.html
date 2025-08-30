@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading - LearnlyAI</title>
+    <title>My Flashcards</title>
     <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/sets.css">
 </head>
 <body>
     <!-- Top Navigation Bar -->
@@ -18,10 +19,17 @@
         </ul>
     </header>
 
-     <!-- Loading Section -->
-    <section id="home">
-        <h1> Your flashcards are loading...</h1>
-        <p>This may take a while.</p>
-    </section>
+    <div class="flashcard-container">
+        {% if flashcards %}
+        {% for card in flashcards %}
+            <div class="flashcard">
+            <p><strong>Q:</strong> {{ card.question }}</p>
+            <p><strong>A:</strong> {{ card.answer }}</p>
+            </div>
+        {% endfor %}
+        {% else %}
+        <p>No flashcards saved yet.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
