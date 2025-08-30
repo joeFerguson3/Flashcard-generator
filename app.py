@@ -4,10 +4,23 @@ import ollama
 from flask import Flask, request, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import json
-app = Flask(__name__)
+from flask_dance.contrib.google import make_google_blueprint, google
+import secrets
+import os
 
+app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
 db = SQLAlchemy(app)
+
+app.secret_key = secrets.token_hex(32)
+
+# Google OAuth blueprint
+google_bp = make_google_blueprint(
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    scope=["profile", "email"]
+)
+app.register_blueprint(google_bp, url_prefix="/login")
 
 # Import models after db is defined
 class Flashcard(db.Model):
@@ -59,12 +72,22 @@ def upload():
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    if not google.authorized:
+        return render_template('index.html')
+    else:
+        return redirect(url_for("sets"))
 
 @app.route('/flashcards')
 def flashcards():
     flashcards = extract_text()
     return render_template('flashcards.html',flashcards = flashcards)
+
+# Gets users flashcards
+@app.route('/sets')
+def sets():
+    flashcards = Flashcard.query.all()
+    return render_template('sets.html',flashcards = flashcards)
+
 
 @app.route('/save-flashcards', methods=['POST'])
 def save_flashcards():
@@ -73,7 +96,7 @@ def save_flashcards():
         new_card = Flashcard(question=card["question"], answer=card["answer"])
         db.session.add(new_card)
     db.session.commit()
-    return redirect('/')
+    return redirect('/sets')
 
 if __name__ == '__main__':
     with app.app_context():
