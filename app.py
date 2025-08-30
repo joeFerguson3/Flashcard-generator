@@ -1,105 +1,38 @@
-
-import pdfplumber
-import ollama
-from flask import Flask, request, render_template, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-import json
-from flask_dance.contrib.google import make_google_blueprint, google
-import secrets
+from flask import Flask
+from extensions import db
+from flask_dance.contrib.google import make_google_blueprint
 import os
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
-db = SQLAlchemy(app)
+def create_app():
+    app = Flask(__name__)
 
-app.secret_key = secrets.token_hex(32)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
+    app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback_secret")
 
-# Google OAuth blueprint
-google_bp = make_google_blueprint(
-    client_id=os.getenv("GOOGLE_CLIENT_ID"),
-    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    scope=["profile", "email"]
-)
-app.register_blueprint(google_bp, url_prefix="/login")
+    db.init_app(app)
 
-# Import models after db is defined
-class Flashcard(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    question = db.Column(db.Text, nullable=False)
-    answer = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    # Google OAuth
+    google_bp = make_google_blueprint(
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        scope=["profile", "email"]
+    )
+    app.register_blueprint(google_bp, url_prefix="/login")
 
-# Extract text from pdf
-def extract_text():
-    # Open the PDF file
-    with pdfplumber.open("Lecture12.pdf") as pdf:
-        text = ''
-        # Loop through each page
-        for page in pdf.pages:
-            page_text = page.extract_text()   # extract text from page
-            if page_text:                     # check in case page is blank
-                text = text + page_text
-    
-    return extract_definitions(text)
+    # Import blueprints
+    from routes.auth import auth_bp
+    from routes.flashcards import flashcards_bp
+    from routes.main import main_bp
 
-# Extract definitions from pdf text
-def extract_definitions(text):
-      messages = [{"role": "system", "content": """Generate flashcards from the following text. Output must be valid JSON only. Each flashcard must have "question" and "answer" keys. Do NOT use bold, italics, Markdown, or any extra text. Do not include any notes or commentary. Use plain text only."""}]
-      messages.append({"role": "user", "content": "Here is the text to utilise: " + text + "provide the question and answers as a json"})
-      response = ollama.chat(model='gemma3', messages=messages)
-      response = response['message']['content'].replace("`", "").removeprefix("json")
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(flashcards_bp)
+    app.register_blueprint(main_bp)
 
-      json_str = json.loads(response)
-      return json_str
-
-
-
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        if 'pdfUpload' not in request.files:
-            return "No file part"
-        file = request.files['pdfUpload']
-        if file.filename == '':
-            return "No selected file"
-        if file and file.filename.endswith('.pdf'):
-            print("file read!")
-            render_template('loading.html')
-            return redirect('/flashcards')
-        else:
-            return "Invalid file type. Please upload a PDF."
-    return render_template('pdf-upload.html')
-
-@app.route('/')
-def home():
-    if not google.authorized:
-        return render_template('index.html')
-    else:
-        return redirect(url_for("sets"))
-
-@app.route('/flashcards')
-def flashcards():
-    flashcards = extract_text()
-    return render_template('flashcards.html',flashcards = flashcards)
-
-# Gets users flashcards
-@app.route('/sets')
-def sets():
-    flashcards = Flashcard.query.all()
-    return render_template('sets.html',flashcards = flashcards)
-
-
-@app.route('/save-flashcards', methods=['POST'])
-def save_flashcards():
-    data = json.loads(request.form['flashcards'])
-    for card in data["questions"]:
-        new_card = Flashcard(question=card["question"], answer=card["answer"])
-        db.session.add(new_card)
-    db.session.commit()
-    return redirect('/sets')
-
-if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
 
+    return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)
