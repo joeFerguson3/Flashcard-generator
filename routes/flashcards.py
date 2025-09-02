@@ -18,11 +18,12 @@ def upload():
 @flashcards_bp.route("/flashcards")
 def flashcards():
     flashcards = extract_text()
+    flashcards = {"questions": flashcards}
     return render_template("flashcards.html", flashcards=flashcards)
 
 @flashcards_bp.route("/save-flashcards", methods=["POST"])
 def save_flashcards():
-    flashcard_set = FlashcardSet(title="test name", user_id=session["user_id"])
+    flashcard_set = FlashcardSet(name="test name", user_id=session["user_id"])
     db.session.add(flashcard_set)
     db.session.commit()
 

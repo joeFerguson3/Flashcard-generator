@@ -7,29 +7,41 @@
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/sets.css">
 </head>
-<body>
-    <!-- Top Navigation Bar -->
-    <header>
-        <div class="logo">LearnlyAI</div>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="/upload">Upload PDF</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </header>
 
-    <div class="flashcard-container">
-        {% if flashcards %}
-        {% for card in flashcards %}
-            <div class="flashcard">
-            <p><strong>Q:</strong> {{ card.question }}</p>
-            <p><strong>A:</strong> {{ card.answer }}</p>
-            </div>
-        {% endfor %}
-        {% else %}
-        <p>No flashcards saved yet.</p>
-        {% endif %}
-    </div>
-</body>
+
+    <body>
+            <!-- Top Navigation Bar -->
+        <header>
+            <div class="logo">LearnlyAI</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="/upload">Upload PDF</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </header>
+
+        <h1>Library</h1>
+
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search flashcard sets...">
+            <select id="sortSelect">
+                <option value="recent">Sort by Recent</option>
+                <option value="az">Sort A-Z</option>
+                <option value="za">Sort Z-A</option>
+            </select>
+        </div>
+
+        <div class="flashcard-container" id="flashcardContainer">
+            {% if flashcards %}
+                {% for set in flashcards %}
+                <div class="flashcard" data-name="{{ set.name }}" data-date="{{ set.created_at }}">
+                    <h2>{{ set.name }}</h2>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No flashcards saved yet.</p>
+            {% endif %}
+        </div>
+    </body>
 </html>
