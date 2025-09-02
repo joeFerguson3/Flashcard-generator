@@ -37,6 +37,7 @@
         {% if flashcards %}
             {% for set in flashcards %}
                 <form method="POST" action="/edit-set">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
                     <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
                         <h2>{{ set.name }}</h2>
                     </button>
