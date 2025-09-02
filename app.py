@@ -35,8 +35,10 @@ def create_app():
     app.register_blueprint(main_bp)
 
     with app.app_context():
+        from models import User, Flashcard, FlashcardSet
         db.create_all()
-
+        print(db.metadata.tables.keys())
+    
     return app
 
 if __name__ == "__main__":

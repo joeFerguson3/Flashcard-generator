@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, redirect
+from flask import Blueprint, render_template, request, redirect, session
 from utils.pdf_utils import extract_text
-from models import Flashcard
+from models import Flashcard, FlashcardSet
 from extensions import db  
 import json
 
@@ -22,9 +22,15 @@ def flashcards():
 
 @flashcards_bp.route("/save-flashcards", methods=["POST"])
 def save_flashcards():
+    flashcard_set = FlashcardSet(title="test name", user_id=session["user_id"])
+    db.session.add(flashcard_set)
+    db.session.commit()
+
+
     data = json.loads(request.form['flashcards'])
     for card in data["questions"]:
-        new_card = Flashcard(question=card["question"], answer=card["answer"])
+        new_card = Flashcard(question=card["question"], answer=card["answer"], set_id=flashcard_set.id)
         db.session.add(new_card)
     db.session.commit()
+
     return redirect("/sets")

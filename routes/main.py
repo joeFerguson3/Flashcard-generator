@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template
-from models import Flashcard
+from flask import Blueprint, render_template, session
+from models import FlashcardSet
 
 main_bp = Blueprint("main", __name__)
 
 @main_bp.route("/sets")
 def sets():
-    flashcards = Flashcard.query.all()
+    user_id = session.get("user_id")
+    flashcards = FlashcardSet.query.filter_by(user_id=user_id).all()
     return render_template("sets.html", flashcards=flashcards)
