@@ -15,12 +15,14 @@ def upload():
         return redirect("/flashcards")
     return render_template("pdf-upload.html")
 
+# Creates flash cards from uploaded pdf
 @flashcards_bp.route("/flashcards")
 def flashcards():
     flashcards = extract_text()
     flashcards = {"questions": flashcards}
     return render_template("flashcards.html", flashcards=flashcards)
 
+# Saves flashcards to database
 @flashcards_bp.route("/save-flashcards", methods=["POST"])
 def save_flashcards():
     flashcard_set = FlashcardSet(name="test name", user_id=session["user_id"])
@@ -35,3 +37,20 @@ def save_flashcards():
     db.session.commit()
 
     return redirect("/sets")
+
+# Edit flashcard set
+@flashcards_bp.route("/edit-set", methods=["POST"])
+def flashcards_edit():
+    set_id = request.form.get('set-id')
+
+    # Get flash cards
+    flashcards = Flashcard.query.filter_by(set_id=set_id).all()
+    flashcards_data = [
+        {"question": f.question, "answer": f.answer}
+        for f in flashcards
+    ]
+
+    flashcards = {"questions": json.loads(json.dumps(flashcards_data))}
+
+    return render_template("flashcards.html", flashcards=flashcards)
+    
