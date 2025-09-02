@@ -25,16 +25,24 @@ def flashcards():
 # Saves flashcards to database
 @flashcards_bp.route("/save-flashcards", methods=["POST"])
 def save_flashcards():
-    flashcard_set = FlashcardSet(name="test name", user_id=session["user_id"])
-    db.session.add(flashcard_set)
-    db.session.commit()
 
+    # Checks if editing or creating new set
+    if('set_id' in session):
+        set_id = session['set_id']
+        set = FlashcardSet.query.filter_by(id=set_id).first()
+        set.name = request.form.get("set_name")
+        db.session.commit()
+        session.pop('set_id')
+    else:
+        flashcard_set = FlashcardSet(name=request.form.get("set_name"), user_id=session["user_id"])
+        db.session.add(flashcard_set)
+        db.session.commit()
 
-    data = json.loads(request.form['flashcards'])
-    for card in data["questions"]:
-        new_card = Flashcard(question=card["question"], answer=card["answer"], set_id=flashcard_set.id)
-        db.session.add(new_card)
-    db.session.commit()
+        data = json.loads(request.form['flashcards'])
+        for card in data["questions"]:
+            new_card = Flashcard(question=card["question"], answer=card["answer"], set_id=flashcard_set.id)
+            db.session.add(new_card)
+        db.session.commit()
 
     return redirect("/sets")
 
@@ -42,6 +50,7 @@ def save_flashcards():
 @flashcards_bp.route("/edit-set", methods=["POST"])
 def flashcards_edit():
     set_id = request.form.get('set-id')
+    set_name = request.form.get('set-name')
 
     # Get flash cards
     flashcards = Flashcard.query.filter_by(set_id=set_id).all()
@@ -52,5 +61,6 @@ def flashcards_edit():
 
     flashcards = {"questions": json.loads(json.dumps(flashcards_data))}
 
-    return render_template("flashcards.html", flashcards=flashcards)
+    session['set_id'] = set_id
+    return render_template("flashcards.html", flashcards=flashcards, set_name=set_name)
     

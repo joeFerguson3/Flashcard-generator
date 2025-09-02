@@ -21,7 +21,10 @@
 
      <main class="flashcard-container">
         <h2>Your AI-Generated Flashcards</h2>
-
+    
+    <form method="POST" action="/save-flashcards">
+        <label for="set-name">Flashcard Set Name:</label>
+        <input type="text" id="set-name" name="set_name" value = "{{set_name}}" placeholder="Enter set name" required>
         {% if flashcards.questions %}
             {% for card in flashcards.questions %}
                 <div class="flashcard">
@@ -32,7 +35,7 @@
         {% else %}
             <p>No flashcards generated yet. Try uploading a PDF!</p>
         {% endif %}
-    <form method="POST" action="/save-flashcards">
+
         <input type="hidden" name="flashcards" value='{{ flashcards | tojson }}'>
         <button type="submit">Save to Database</button>
     </form>
