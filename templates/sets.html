@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Flashcards</title>
-    <link rel="stylesheet" href="static/css/style.css">
-    <link rel="stylesheet" href="static/css/sets.css">
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>My Flashcards</title>
+        <link rel="stylesheet" href="static/css/style.css">
+        <link rel="stylesheet" href="static/css/sets.css">
+    </head>
 
 
     <body>
+
             <!-- Top Navigation Bar -->
         <header>
             <div class="logo">LearnlyAI</div>
@@ -20,7 +21,7 @@
                 <li><a href="contact.html">Contact</a></li>
             </ul>
         </header>
-
+        <main>
         <h1>Library</h1>
 
         <div class="controls">
@@ -32,16 +33,19 @@
             </select>
         </div>
 
-        <div class="flashcard-container" id="flashcardContainer">
-            {% if flashcards %}
-                {% for set in flashcards %}
-                <div class="flashcard" data-name="{{ set.name }}" data-date="{{ set.created_at }}">
-                    <h2>{{ set.name }}</h2>
-                </div>
-                {% endfor %}
-            {% else %}
-                <p>No flashcards saved yet.</p>
-            {% endif %}
-        </div>
+    <div class="flashcard-container" id="flashcardContainer">
+        {% if flashcards %}
+            {% for set in flashcards %}
+                <form method="POST" action="/edit-set">
+                    <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
+                        <h2>{{ set.name }}</h2>
+                    </button>
+                </form>
+            {% endfor %}
+        {% else %}
+            <p>No flashcards saved yet.</p>
+        {% endif %}
+    </div>
+</main>
     </body>
 </html>
