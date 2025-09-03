@@ -28,20 +28,52 @@ def save_flashcards():
 
     # Checks if editing or creating new set
     if('set_id' in session):
+        # Update set name
         set_id = session['set_id']
         set = FlashcardSet.query.filter_by(id=set_id).first()
         set.name = request.form.get("set_name")
         db.session.commit()
         session.pop('set_id')
+
+        # Update flashcard values
+        flashcards = Flashcard.query.filter_by(set_id=set_id).all()
+        flashcard_ids = [card.id for card in flashcards]
+        i = 1
+        while True:
+            question = request.form.get(f"question-{i}")
+            answer = request.form.get(f"answer-{i}")
+            print(answer)
+            if not question or not answer:
+                print("empty")
+                break
+           
+            if(i < len(flashcard_ids)):
+                flashcard = Flashcard.query.get(flashcard_ids[i - 1])
+                flashcard.question = question
+                flashcard.answer = answer
+            else:
+                new_card = Flashcard(question=question, answer=answer, set_id=set_id)
+                db.session.add(new_card)
+            i += 1
+
+        db.session.commit()
     else:
+        # Create new flashcard set
         flashcard_set = FlashcardSet(name=request.form.get("set_name"), user_id=session["user_id"])
         db.session.add(flashcard_set)
         db.session.commit()
 
-        data = json.loads(request.form['flashcards'])
-        for card in data["questions"]:
-            new_card = Flashcard(question=card["question"], answer=card["answer"], set_id=flashcard_set.id)
+        set_id = flashcard_set.id
+        i = 1
+        while True:
+            question = request.form.get(f"question-{i}")
+            answer = request.form.get(f"answer-{i}")
+            if not question or not answer:
+                break
+            new_card = Flashcard(question=question, answer=answer, set_id=set_id)
             db.session.add(new_card)
+            i += 1
+
         db.session.commit()
 
     return redirect("/sets")
