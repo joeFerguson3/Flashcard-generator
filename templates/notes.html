@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading - LearnlyAI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/flashcards.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header>
+        <div class="logo">LearnlyAI</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="/upload">Upload PDF</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </header>
+
+    {% if sections %}
+        {% for card in sections %}
+            <div class="flashcard">
+                <h2>{{ card.main_title }}</h2>
+                <h3>{{ card.sub_title }}</h3>
+                <pre class="content">{{ card.content | join('\n') }}</pre>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No notes extracted yet. Try uploading a PDF!</p>
+    {% endif %}
+
+</body>
+</html>
