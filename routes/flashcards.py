@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session
 from utils.pdf_utils import extract_text
+from utils.notes import parse_notes
 from models import Flashcard, FlashcardSet
 from extensions import db  
 import json
@@ -96,3 +97,6 @@ def flashcards_edit():
     session['set_id'] = set_id
     return render_template("flashcards.html", flashcards=flashcards, set_name=set_name)
     
+@flashcards_bp.route("/notes")
+def notes():
+    return render_template("notes.html", sections=parse_notes())

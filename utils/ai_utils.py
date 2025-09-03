@@ -26,10 +26,26 @@ def extract_definitions(text):
     return json.loads(response.choices[0].message.content)
 
 # def extract_definitions(text):
-#     messages = [{"role": "system", "content": """Make flash cards as a JSON, in the following format: "flashcards":[{'question':'generated question', 'answer':'generated answer'}]. Include no addition text other than the flash cards and do not include markup or new lines."""}]
-#     messages.append({"role": "user", "content": "Here is the text to utilise: " + text + "provide the question and answers as a json, follow the given instructions."})
-#     response = ollama.chat(model='gemma3', messages=messages)
-#     print(response)
-#     response = response['message']['content'].replace("`", "").removeprefix("json")
-#     return json.loads(response)
+#     response = client.chat.completions.create(
+#         model="gpt-4o-mini",
+#         messages=[
+#         {"role": "system", "content": """
+#     From the following text, extract complete lecture notes:
 
+#     - Ignore introductions, lecture purpose statements, summarys, overviews or any content which a student would not be expecv=ted to memorise for a test.
+#     - Organize notes into clear sections with topic headings (use level-2 headings: ## Topic).
+#     - Use bullet points for readability.
+#     - Nest sub-points with a maximum of two levels (e.g., - main point,   - sub-point).
+#     - Preserve all important details, examples, and explanations needed for learning.
+#     - Avoid unnecessary repetition or filler text.
+#     - Ensure the output is clean, consistent, and easy to read for study purposes.
+#     - Format output in Markdown."""},
+
+#         {"role": "user", "content": f"Generate flashcards from the following text:\n<<<{text}>>>"} 
+#     ]
+#     )
+#     print(response.choices[0].message.content)
+
+
+       
+        
