@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session
 from models import FlashcardSet
+from utils.ai_utils import question
 
 main_bp = Blueprint("main", __name__)
 
