@@ -24,7 +24,6 @@
     {% for main_title, notes in data|groupby('main_title') %}
         <div class="main-title-block">
             <h2>{{ main_title }}</h2>
-
             {% for note in notes %}
                 {% if loop.first %}
                     <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
@@ -43,8 +42,31 @@
             <span id="card_num_{{main_title}}">0</span>
             <button onclick="nextCard('{{main_title}}')"></button>
         </div>
+
+        {% for q in questions %}
+            {% if q.title == main_title %}
+                <div class="question">
+                <p>{{ q.question }}</p>
+                {% if q.type == "fill-in-blank" %}
+                    <form method="post">
+                        <input type="text" name="answer_{{ loop.index }}" />
+                    </form>
+                {% elif q.type == "true-false" %}
+                    <form method="post">
+                        <label>
+                        <input type="radio" name="answer_{{ loop.index }}" value="true"> True
+                        </label>
+                        <label>
+                        <input type="radio" name="answer_{{ loop.index }}" value="false"> False
+                    </label>
+                    </form>
+                {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
     {% endfor %}
     {% endif %}
+
 
 </body>
 </html>

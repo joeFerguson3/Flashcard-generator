@@ -125,6 +125,23 @@ def save_notes():
     "sub_title": "Introduction"
   }
 ]
+    
+    questions = [
+  {
+    "type": "fill-in-blank",
+    "title": "Anatomy of the Eye",
+    "question": "The capital of France is {blank}.",
+    "answer": ["Paris"]
+  },
+  {
+    "type": "true-false",
+    "title": "Cognitive Science",
+    "question": "The Earth is flat.",
+    "answer": False
+  }
+]
+
+
 
     # for d in data:
     #     main = d.get("main_title", "")
