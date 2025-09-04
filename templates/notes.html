@@ -31,5 +31,9 @@
         <p>No notes extracted yet. Try uploading a PDF!</p>
     {% endif %}
 
+    <form method="POST" action="/generate-quiz">
+        <input type="hidden" name="notes" value='{{ sections | tojson }}'>
+        <button type="submit">Generate Quiz</button>
+    </form>
 </body>
 </html>

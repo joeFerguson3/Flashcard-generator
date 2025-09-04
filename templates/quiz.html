@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading - LearnlyAI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/flashcards.css">
+    <script src="static/js/script.js" defer></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header>
+        <div class="logo">LearnlyAI</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="/upload">Upload PDF</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </header>
+
+    {% if data %}
+    {% for main_title, notes in data|groupby('main_title') %}
+        <div class="main-title-block">
+            <h2>{{ main_title }}</h2>
+
+            {% for note in notes %}
+                {% if loop.first %}
+                    <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+                {% else %}
+                    <div style="visibility: hidden;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+                {% endif %}
+                    <h3>{{ note.sub_title }}</h3>
+                    <ul>
+                        {% for line in note.content %}
+                        <li>{{ line }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+            <button onclick="previousCard('{{main_title}}')"></button>
+            <span id="card_num_{{main_title}}">0</span>
+            <button onclick="nextCard('{{main_title}}')"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+
+</body>
+</html>

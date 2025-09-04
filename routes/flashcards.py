@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, session
 from utils.pdf_utils import extract_text
 from utils.notes import parse_notes
+from utils.ai_utils import question
 from models import Flashcard, FlashcardSet
 from extensions import db  
 import json
@@ -100,3 +101,36 @@ def flashcards_edit():
 @flashcards_bp.route("/notes")
 def notes():
     return render_template("notes.html", sections=parse_notes())
+
+@flashcards_bp.route("/generate-quiz", methods=["POST"])
+def save_notes():
+    
+    questions = []
+    # Compiles notes together
+    # data = json.loads(request.form.get("notes"))
+    data = [
+  {
+    "content": ["- Key Topics:", "  - What is intelligence?", "  - Brains and computers"],
+    "main_title": "Anatomy of the Eye",
+    "sub_title": "The Psychology of AI"
+  },
+  {
+    "content": ["- Human retina:", "  - 120 million rod cells", "  - 6 million cone cells"],
+    "main_title": "Anatomy of the Eye",
+    "sub_title": "Structure"
+  },
+  {
+    "content": ["- Topic:", "  - Cognitive science basics", "  - AI applications"],
+    "main_title": "Cognitive Science",
+    "sub_title": "Introduction"
+  }
+]
+
+    # for d in data:
+    #     main = d.get("main_title", "")
+    #     sub = d.get("sub_title", "")
+    #     content = "\n".join(d.get("content", []))
+    #     formatted_text = f"{main} - {sub}\n{content}"
+    #     # questions.append(question(formatted_text, main))
+
+    return render_template("quiz.html", data=data, questions=questions)

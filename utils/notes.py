@@ -48,5 +48,3 @@ def parse_notes():
         "content": content
     })
     return sections
-
-print(parse_notes())
