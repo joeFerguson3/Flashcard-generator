@@ -36,3 +36,28 @@ function previousCard(title){
     card_hide.style.display = "none"
     card_show.style.display = "block"
 }
+
+// // Goes to next question or notes
+// function next(button, main_title){
+//     document.getElementById(main_title).style.display = "grid"
+//         console.log(button)
+//     document.getElementById(button).style.display = "none"
+
+// }
+
+// Goes to next question or notes
+function next(currentId) {
+    // Hide the current element
+    const current = document.getElementById(currentId);
+    if (!current) return;
+
+    const currentButton = document.getElementById("next-button" + currentId);
+    currentButton.style.display = "none";
+
+    // Find the next element
+    const nextElement = current.nextElementSibling;
+ 
+    if (nextElement) {
+        nextElement.style.display = "grid";
+    }
+}
