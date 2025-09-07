@@ -60,4 +60,19 @@ function next(currentId) {
     if (nextElement) {
         nextElement.style.display = "grid";
     }
+
+    // Scrolls page down
+    nextElement.scrollIntoView({ behavior: "smooth", block: "end" });
+
+    // Updates progress bar
+    const bar = document.getElementById("progress-bar");
+    let width = ( parseFloat(bar.style.width) || 0 ) + (100 / numElements()) * 1.3
+    bar.style.width = width + "%"
+
+}
+
+// Gets the number of elements in the quiz
+function numElements(){
+    const totalCount = document.querySelectorAll('.question, .card-nav').length;
+    return totalCount;
 }

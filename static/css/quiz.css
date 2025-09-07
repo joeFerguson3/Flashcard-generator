@@ -66,12 +66,28 @@ form {
 }
 
 #progress-bar{
+    z-index: 11;
     position: fixed;
+    left: 10%;
+    height:5px;
+    width:1%;
+    top: 80px;   /* distance from top */
+    right: 10%;
+    background-color: #4287f5;
+    outline: 2px white solid;
+    border-radius: 1rem;
+    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.08);
+}
+
+#progress-bar-back{
+    z-index: 10;
+ position: fixed;
+    left: 10%;
     height:5px;
     width:80%;
     top: 80px;   /* distance from top */
     right: 10%;
-    background-color: #4287f5;
+    background-color: #c9d7ee;
     outline: 2px white solid;
     border-radius: 1rem;
     box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.08);
