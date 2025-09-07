@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="static/css/quiz.css">
     <script src="static/js/script.js" defer></script>
 </head>
+
 <body>
     <!-- Top Navigation Bar -->
     <header>
@@ -22,96 +24,113 @@
 
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
-        <div class="card-nav">
-            <button  id="card-nav" onclick="previousCard('{{main_title}}')"><img src="static\images\back-arrow.svg"></button>
-            <div class="main-title-block">
-                <h2>{{ main_title }}</h2>
-                {% for note in notes %}
-                <!-- Display notes-->
-                    {% if loop.first %}
-                        <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
-                    {% else %}
-                        <div style="display: none;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+    <div class="card-nav">
+        <button id="card-nav" onclick="previousCard('{{main_title}}')"><img src="static\images\back-arrow.svg"></button>
+        <div class="main-title-block">
+            <h2>{{ main_title }}</h2>
+            {% for note in notes %}
+            <!-- Display notes-->
+            {% if loop.first %}
+            <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+                {% else %}
+                <div style="display: none;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
                     {% endif %}
-                        <h3>{{ note.sub_title }}</h3>
-                        <ul>
-                            {% for line in note.content %}
-                            <li>{{ line }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                    <h3>{{ note.sub_title }}</h3>
+                    <ul>
+                        {% for line in note.content %}
+                        <li>{{ line }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
                 {% endfor %}
             </div>
-            <button id="card-nav" onclick="nextCard('{{main_title}}')"><img src="static\images\foward-arrow.svg"></button>
+            <button id="card-nav" onclick="nextCard('{{main_title}}')"><img
+                    src="static\images\foward-arrow.svg"></button>
         </div>
         <div class="card-num">
-         <span id="card_num_{{main_title}}">0</span>
+            <span id="card_num_{{main_title}}">0</span>
         </div>
         <!-- Display questions -->
         {% for q in questions %}
-            {% if q.title == main_title %}
-                <div class="question">
-                    {% if q.type == "fill-in-blank" %}
-                    <div class="question">
-                        <div class="question-box" >
-                            <form method="post">
-                                <p>
-                                    {% set parts = q.question.split("{blank}") %}
-                                    {% for part in parts %}
-                                        {{ part }}
-                                        {% if not loop.last %}
-                                            <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10" />
-                                        {% endif %}
-                                    {% endfor %}
-                                </p>
-                            </form>
-                        </div>
-                    </div>
+        {% if q.title == main_title %}
+        {% if q.type == "fill-in-blank" %}
+        <div class="question">
+            <div class="question-box">
+                <form method="post">
+                    <p>
+                        {% set parts = q.question.split("{blank}") %}
+                        {% for part in parts %}
+                        {{ part }}
+                        {% if not loop.last %}
+                        <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10" />
+                        {% endif %}
+                        {% endfor %}
+                    </p>
+                </form>
+            </div>
+        </div>
 
-                    {% elif q.type == "true-false" %}
-                        <form method="post">
-                            <label>
-                                <input type="radio" name="answer_{{ loop.index }}" value="true"> True
-                            </label>
-                            <label>
-                                <input type="radio" name="answer_{{ loop.index }}" value="false"> False
-                            </label>
-                        </form>
+        {% elif q.type == "true-false" %}
+        <div class="question">
+            <div class="question-box">
+                <form method="post">
+                    <label>
+                        <input type="radio" name="answer_{{ loop.index }}" value="true"> True
+                    </label>
+                    <label>
+                        <input type="radio" name="answer_{{ loop.index }}" value="false"> False
+                    </label>
+                </form>
+            </div>
+        </div>
 
-                    {% elif q.type == "multiple-choice" %}
-                        <form method="post">
-                            {% for opt in q.options %}
-                                <label>
-                                    <input type="radio" name="answer_{{ loop.index }}" value="{{ opt }}"> {{ opt }}
-                                </label><br>
-                            {% endfor %}
-                        </form>
+        {% elif q.type == "multiple-choice" %}
+        <div class="question">
+            <div class="question-box">
+                <form method="post">
+                    {% for opt in q.options %}
+                    <label>
+                        <input type="radio" name="answer_{{ loop.index }}" value="{{ opt }}"> {{ opt }}
+                    </label><br>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
 
-                    {% elif q.type == "short-answer" %}
-                        <form method="post">
-                            <textarea name="answer_{{ loop.index }}" rows="3" cols="40"></textarea>
-                        </form>
+        {% elif q.type == "short-answer" %}
+        <div class="question">
+            <div class="question-box">
+                <p> {{ q.question }}</p>
+                <form method="post">
+                    <textarea name="answer_{{ loop.index }}" rows="3" cols="40"></textarea>
+                </form>
+            </div>
+        </div>
 
-                    {% elif q.type == "ordering" %}
-                        <form method="post">
-                            <ul>
-                                {% for opt in q.options %}
-                                    <li>
-                                        <input type="text" name="order_{{ loop.index }}_{{ loop.index0 }}" value="{{ opt }}">
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            <p>(Rearrange the items by editing the order numbers or dragging, if JS is added)</p>
-                        </form>
-                    {% endif %}
+        {% elif q.type == "ordering" %}
+        <div class="question">
+            <div class="question-box">
+                <form method="post">
+                    <ul>
+                        {% for opt in q.options %}
+                        <li>
+                            <input type="text" name="order_{{ loop.index }}_{{ loop.index0 }}" value="{{ opt }}">
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <p>(Rearrange the items by editing the order numbers or dragging, if JS is added)</p>
+                </form>
+            </div>
+        </div>
+        {% endif %}
 
-                </div>
-            {% endif %}
+        {% endif %}
         {% endfor %}
 
-    {% endfor %}
-    {% endif %}
+        {% endfor %}
+        {% endif %}
 
 
 </body>
+
 </html>
