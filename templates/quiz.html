@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading - LearnlyAI</title>
     <link rel="stylesheet" href="static/css/style.css">
-    <link rel="stylesheet" href="static/css/flashcards.css">
+    <link rel="stylesheet" href="static/css/quiz.css">
     <script src="static/js/script.js" defer></script>
 </head>
 <body>
@@ -22,48 +22,89 @@
 
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
-        <div class="main-title-block">
-            <h2>{{ main_title }}</h2>
-            {% for note in notes %}
-                {% if loop.first %}
-                    <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
-                {% else %}
-                    <div style="visibility: hidden;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
-                {% endif %}
-                    <h3>{{ note.sub_title }}</h3>
-                    <ul>
-                        {% for line in note.content %}
-                        <li>{{ line }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endfor %}
-            <button onclick="previousCard('{{main_title}}')"></button>
-            <span id="card_num_{{main_title}}">0</span>
-            <button onclick="nextCard('{{main_title}}')"></button>
+        <div class="card-nav">
+            <button  id="card-nav" onclick="previousCard('{{main_title}}')"><img src="static\images\back-arrow.svg"></button>
+            <div class="main-title-block">
+                <h2>{{ main_title }}</h2>
+                {% for note in notes %}
+                <!-- Display notes-->
+                    {% if loop.first %}
+                        <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+                    {% else %}
+                        <div style="display: none;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+                    {% endif %}
+                        <h3>{{ note.sub_title }}</h3>
+                        <ul>
+                            {% for line in note.content %}
+                            <li>{{ line }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+            <button id="card-nav" onclick="nextCard('{{main_title}}')"><img src="static\images\foward-arrow.svg"></button>
         </div>
-
+        <span id="card_num_{{main_title}}">0</span>
+        <!-- Display questions -->
         {% for q in questions %}
             {% if q.title == main_title %}
                 <div class="question">
-                <p>{{ q.question }}</p>
-                {% if q.type == "fill-in-blank" %}
-                    <form method="post">
-                        <input type="text" name="answer_{{ loop.index }}" />
-                    </form>
-                {% elif q.type == "true-false" %}
-                    <form method="post">
-                        <label>
-                        <input type="radio" name="answer_{{ loop.index }}" value="true"> True
-                        </label>
-                        <label>
-                        <input type="radio" name="answer_{{ loop.index }}" value="false"> False
-                    </label>
-                    </form>
-                {% endif %}
+                    <p>{{ q.question }}</p>
+
+                    {% if q.type == "fill-in-blank" %}
+                        <form method="post">
+                            <p>
+                                {% set parts = q.question.split("{blank}") %}
+                                {% for part in parts %}
+                                    {{ part }}
+                                    {% if not loop.last %}
+                                        <input type="text" name="answer_{{ loop.index0 }}" size="10" />
+                                    {% endif %}
+                                {% endfor %}
+                            </p>
+                        </form>
+
+                    {% elif q.type == "true-false" %}
+                        <form method="post">
+                            <label>
+                                <input type="radio" name="answer_{{ loop.index }}" value="true"> True
+                            </label>
+                            <label>
+                                <input type="radio" name="answer_{{ loop.index }}" value="false"> False
+                            </label>
+                        </form>
+
+                    {% elif q.type == "multiple-choice" %}
+                        <form method="post">
+                            {% for opt in q.options %}
+                                <label>
+                                    <input type="radio" name="answer_{{ loop.index }}" value="{{ opt }}"> {{ opt }}
+                                </label><br>
+                            {% endfor %}
+                        </form>
+
+                    {% elif q.type == "short-answer" %}
+                        <form method="post">
+                            <textarea name="answer_{{ loop.index }}" rows="3" cols="40"></textarea>
+                        </form>
+
+                    {% elif q.type == "ordering" %}
+                        <form method="post">
+                            <ul>
+                                {% for opt in q.options %}
+                                    <li>
+                                        <input type="text" name="order_{{ loop.index }}_{{ loop.index0 }}" value="{{ opt }}">
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <p>(Rearrange the items by editing the order numbers or dragging, if JS is added)</p>
+                        </form>
+                    {% endif %}
+
                 </div>
             {% endif %}
         {% endfor %}
+
     {% endfor %}
     {% endif %}
 

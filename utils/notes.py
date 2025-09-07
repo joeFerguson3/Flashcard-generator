@@ -1,20 +1,6 @@
-text= """## Machines and Intelligence
-### The Psychology of AI
-- Key Topics:
-  - What is intelligence?
-  - Brains and computers
-
----
-
-## Anatomy of the Eye
-### Structure
-- Human retina:
-  - 120 million rod cells
-  - 6 million cone cells
-"""
 
 # Extracts parts of notes to display
-def parse_notes():
+def parse_notes(text):
     sections = []
     main_title = ""
     sub_title = ""
@@ -47,4 +33,5 @@ def parse_notes():
         "sub_title": sub_title,
         "content": content
     })
+    print(sections)
     return sections

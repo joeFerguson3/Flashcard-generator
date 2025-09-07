@@ -6,7 +6,11 @@ generate quizes
 edit flashc cards
 menu bar refactoring
 
-data base improvement
 
 
 flash card route check suer upload
+
+check flash card owner when editing
+
+
+notes indentations, note page

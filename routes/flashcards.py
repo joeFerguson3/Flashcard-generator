@@ -20,9 +20,9 @@ def upload():
 # Creates flash cards from uploaded pdf
 @flashcards_bp.route("/flashcards")
 def flashcards():
-    flashcards = extract_text()
-    flashcards = {"questions": flashcards}
-    return render_template("flashcards.html", flashcards=flashcards)
+    notes = extract_text()
+    # flashcards = {"questions": flashcards}
+    return render_template("notes.html", sections=notes)
 
 # Saves flashcards to database
 @flashcards_bp.route("/save-flashcards", methods=["POST"])
@@ -107,47 +107,26 @@ def save_notes():
     
     questions = []
     # Compiles notes together
-    # data = json.loads(request.form.get("notes"))
-    data = [
-  {
-    "content": ["- Key Topics:", "  - What is intelligence?", "  - Brains and computers"],
-    "main_title": "Anatomy of the Eye",
-    "sub_title": "The Psychology of AI"
-  },
-  {
-    "content": ["- Human retina:", "  - 120 million rod cells", "  - 6 million cone cells"],
-    "main_title": "Anatomy of the Eye",
-    "sub_title": "Structure"
-  },
-  {
-    "content": ["- Topic:", "  - Cognitive science basics", "  - AI applications"],
-    "main_title": "Cognitive Science",
-    "sub_title": "Introduction"
-  }
-]
-    
-    questions = [
-  {
-    "type": "fill-in-blank",
-    "title": "Anatomy of the Eye",
-    "question": "The capital of France is {blank}.",
-    "answer": ["Paris"]
-  },
-  {
-    "type": "true-false",
-    "title": "Cognitive Science",
-    "question": "The Earth is flat.",
-    "answer": False
-  }
-]
+    data = json.loads(request.form.get("notes"))
 
+    questions = [{'type': 'fill-in-blank', 'question': 'The definition and exploration of intelligence in AI is referred to as {blank}.', 'answer': ['intelligence in AI'], 'title': 'Machines and Intelligence'},
+    {'type': 'short-answer', 'question': 'What are the key similarities and differences between human brains and computers in terms of processing information?', 'answer': 'Both process information, but brains use neural networks while computers use binary code.', 'title': 'Machines and Intelligence'},
+    {'type': 'fill-in-blank', 'question': 'The fundamental components necessary for {blank}.', 'answer': ['intelligence'], 'title': 'Machines and Intelligence'},
+    {'type': 'short-answer', 'question': 'How does learning in neural networks compare to human learning?', 'answer': 'Learning in neural networks occurs in ways that parallel human learning processes.', 'title': 'Machines and Intelligence'},
+    {'type': 'short-answer', 'question': 'What are some of the progress and challenges in developing Artificial General Intelligence (AGI)?', 'answer': 'Progress includes advancements in machine learning and neural networks, while challenges involve ethical considerations and ensuring safety.', 'title': 'Machines and Intelligence'},
+    {'type': 'short-answer', 'question': 'What are some implications of artificial intelligence in everyday life?', 'answer': 'Interactions with AI in various daily activities and its impact on lifestyle.', 'title': 'How Vision Works'},
+    {'type': 'short-answer', 'question': 'Why is the exploration of human visual perception important for creating artificial visual systems?', 'answer': 'It is essential for understanding how to replicate visual functions in machines.', 'title': 'How Vision Works'},
+    {'type': 'multiple-choice', 'question': 'What limitation is associated with the Inner Screen Theory of Seeing?', 'options': ['It successfully explains vision', 'It leads to infinite regress problem', 'It is widely accepted', 'It does not involve the brain'], 'answer': 'It leads to infinite regress problem', 'title': 'How Vision Works'},
+    {'type': 'fill-in-blank', 'question': 'The human retina contains approximately {blank} rod cells and about {blank} cone cells.', 'answer': ['120 million', '6 million'], 'title': 'How Vision Works'},
+    {'type': 'fill-in-blank', 'question': 'The Left Visual Field represents {blank}°, while the Right Visual Field represents {blank}°.', 'answer': ['200', '135'], 'title': 'How Vision Works'},
+    {'type': 'fill-in-blank', 'question': 'Numerous areas in the brain are organized as {blank}.', 'answer': ['retinotopic maps'], 'title': 'How Vision Works'}]
 
-
+    data = [{'main_title': 'Machines and Intelligence', 'sub_title': 'What is Intelligence?', 'content': ['- Definition and exploration of intelligence in AI.']}, {'main_title': 'Machines and Intelligence', 'sub_title': 'Brains and Computers', 'content': ['- Comparison of human brains and computers in terms of processing information.']}, {'main_title': 'Machines and Intelligence', 'sub_title': 'The Building Blocks of Intelligence', 'content': ['- Fundamental components necessary for intelligence.']}, {'main_title': 'Machines and Intelligence', 'sub_title': 'Learning in Neural Networks', 'content': ['- How learning occurs in neural networks and parallels with human learning.']}, {'main_title': 'Machines and Intelligence', 'sub_title': 'Towards Artificial General Intelligence (AI)', 'content': ['- Progress and challenges in developing AGI.']}, {'main_title': 'How Vision Works', 'sub_title': 'Living with Artificial Intelligence', 'content': ['- Implications and interactions with AI in everyday life.']}, {'main_title': 'How Vision Works', 'sub_title': 'Overview', 'content': ['- Exploration of human visual perception essential for creating artificial visual systems.']}, {'main_title': 'How Vision Works', 'sub_title': 'The Inner Screen Theory of Seeing', 'content': ['- **Concept**: Proposes brain representation akin to a movie theater (Cartesian Theatre).', '- **Limitation**: Fails due to infinite regress problem.']}, {'main_title': 'How Vision Works', 'sub_title': 'Anatomy of the Eye', 'content': ['- Human retina is an extension of the brain:', '  - Contains approximately 120 million rod cells.', '  - Contains about 6 million cone cells.']}, {'main_title': 'How Vision Works', 'sub_title': 'The Human Visual System as Two Hemifields', 'content': ['- Visual fields represent:', '  - Left Visual Field: 200°', '  - Right Visual Field: 135°', '  - Overlap and distortion in perception.']}, {'main_title': 'How Vision Works', 'sub_title': 'Retinotopic Maps in the Brain', 'content': ['- Numerous areas in the brain are organized as retinotopic maps.']}, {'main_title': 'How Vision Works', 'sub_title': 'Cortical Processing of Vision', 'content': ['- Originates from the back of the brain and involves multiple pathways.']}, {'main_title': 'How Vision Works', 'sub_title': 'Edge Detector Cells in Visual Cortex', 'content': ['- Hubel & Wiesel (1959) found single V1 cells respond to moving lines at preferred orientations.']}, {'main_title': 'How Vision Works', 'sub_title': 'High-Level Concepts in Vision', 'content': ['- Neurons in the temporal lobe respond to complex stimulus properties associated with high-level concepts (e.g., people, places).']}, {'main_title': 'How Vision Works', 'sub_title': 'Deep Learning and Computer Vision', 'content': ['- **Convolutional Neural Networks**:', '  - Successive layers act as feature detectors.', '- Complexity of features increases through layers.']}, {'main_title': 'Gestalt Principles', 'sub_title': 'Visual Cortical Areas and Deep Networks', 'content': ['- Activity in human visual cortex matches layers in artificial deep networks:', '  - Early areas (V1, V2) match simpler feature layers.', '  - Later areas (V3, V4, LO) correspond to complex feature layers.']}, {'main_title': 'Interim Summary', 'sub_title': 'Key Principles of Perception', 'content': ['- **Emergence**: Percepts form from simpler shapes.', '- **Multistability**: Perceptions can shift between interpretations.', '- **Reification**: Recognition of whole forms.', '- **Other Principles**:', '  - Closure', '  - Similarity', '  - Proximity', '  - Continuity', '- **Inner Screen Theory**: Lacks a physical "inner eye."', '- **Retinotopic Maps**: Upside-down, flipped, and distorted.', '- **Information Extraction**: Separated streams for "what" and "where."', '- **Neural Responses**: Comparisons with artificial neurons in deep networks.', '- **Perceptual Principles**: Brain utilizes powerful principles including closure, similarity, proximity, and continuity in visual processing.']}]
     # for d in data:
     #     main = d.get("main_title", "")
     #     sub = d.get("sub_title", "")
     #     content = "\n".join(d.get("content", []))
     #     formatted_text = f"{main} - {sub}\n{content}"
-    #     # questions.append(question(formatted_text, main))
+    #     questions.append(question(formatted_text, main))
 
     return render_template("quiz.html", data=data, questions=questions)
