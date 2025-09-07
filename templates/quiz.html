@@ -22,6 +22,12 @@
         </ul>
     </header>
 
+
+    <!-- Progress bar -->
+     <div>
+     <div id="progress-bar"></div>
+     </div>
+
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
     <div class="card-nav">

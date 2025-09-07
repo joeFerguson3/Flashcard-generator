@@ -14,6 +14,7 @@ body {
 
 /* Top Navigation Bar */
 header {
+    margin-bottom: 50px;
     background: #4fc08d; /* keep your current green */
     padding: 1rem 2rem;
     position: sticky;
