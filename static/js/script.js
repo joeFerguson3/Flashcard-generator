@@ -14,8 +14,8 @@ function nextCard(title){
     counterNum += 1;
     counter.innerText = counterNum;
 
-    card_hide.style.visibility = "hidden"
-    card_show.style.visibility = "visible"
+    card_hide.style.display = "none"
+    card_show.style.display = "block"
 }
 
 // Goes to previous card in flash card set
@@ -33,6 +33,6 @@ function previousCard(title){
     counterNum -= 1;
     counter.innerText = counterNum;
 
-    card_hide.style.visibility = "hidden"
-    card_show.style.visibility = "visible"
+    card_hide.style.display = "none"
+    card_show.style.display = "block"
 }

@@ -1,0 +1,30 @@
+/* Flashcard */
+.main-title-block{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* space between notes */
+    font-family: "Inter", sans-serif;
+    background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width:60%;
+  min-height: 200px;;
+}
+
+/* Navigation div */
+.card-nav{ 
+    display: flex;
+    gap: 1rem; 
+    justify-content: center;
+    align-items: center;  
+}
+
+/* Navigation button */
+#card-nav{
+    margin: -2%;
+    z-index: 1;
+    padding: 10px; 
+    border-radius: 10px;
+}

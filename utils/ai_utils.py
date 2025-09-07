@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
+from utils.notes import parse_notes
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -11,11 +12,21 @@ def question(text, title):
         model="gpt-4o-mini",
         messages=[
         {"role": "system", "content": """You are generating quiz questions from the following text. 
-Decide whether to create a "fill-in-blank" or "true-false" question. 
-Follow these rules:
-- Use "fill-in-blank" if the text contains key facts, numbers, or definitions.
-- Use "true-false" if the text can be slightly modified into a correct or incorrect statement.
-- Output strictly in JSON format, using one of the following schemas:
+Decide whether to create one of these types: 
+- "fill-in-blank" 
+- "true-false" 
+- "multiple-choice" 
+- "short-answer" 
+- "ordering" 
+
+Rules:
+- Use "fill-in-blank" if the text contains key facts, numbers, or definitions.  
+- Use "true-false" if the text can be slightly modified into a correct or incorrect statement.  
+- Use "multiple-choice" if the text offers clear alternatives or categories.  
+- Use "short-answer" if the text requires explanation or reasoning in own words.  
+- Use "ordering" if the text contains steps, sequences, or chronology.  
+
+Output strictly in JSON format, using one of the following schemas:  
 
 Fill-in-the-blank:
 {
@@ -29,7 +40,33 @@ True/False:
   "type": "true-false",
   "question": "Statement",
   "answer": true or false
-}"""},
+}
+
+Multiple-choice:
+{
+  "type": "multiple-choice",
+  "question": "Question text?",
+  "options": ["option A", "option B", "option C", "option D"],
+  "answer": "correct option"
+}
+
+Short-answer:
+{
+  "type": "short-answer",
+  "question": "Open-ended question requiring a short response",
+  "answer": "expected key idea or phrase"
+}
+
+Ordering:
+{
+  "type": "ordering",
+  "question": "Arrange the following in the correct order",
+  "options": ["step 1", "step 2", "step 3"],
+  "answer": ["step 1", "step 2", "step 3"]
+}
+
+Your output must be a single JSON object, matching exactly one schema above, with no extra text.
+"""},
 
         {"role": "user", "content": f"Generate a question from the following text:\n<<<{text}>>>"} 
     ]
@@ -78,7 +115,7 @@ def extract_definitions(text):
         {"role": "user", "content": f"Generate flashcards from the following text:\n<<<{text}>>>"} 
     ]
     )
-    print(response.choices[0].message.content)
+    return parse_notes(response.choices[0].message.content)
 
 
        

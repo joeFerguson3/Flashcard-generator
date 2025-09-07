@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>My Flashcards</title>
+        <link rel="stylesheet" href="static/css/style.css">
+        <link rel="stylesheet" href="static/css/sets.css">
+    </head>
+
+
+    <body>
+
+            <!-- Top Navigation Bar -->
+        <header>
+            <div class="logo">LearnlyAI</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="/upload">Upload PDF</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </header>
+        <main>
+        <h1>Library</h1>
+
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search flashcard sets...">
+            <select id="sortSelect">
+                <option value="recent">Sort by Recent</option>
+                <option value="az">Sort A-Z</option>
+                <option value="za">Sort Z-A</option>
+            </select>
+        </div>
+
+    <div class="flashcard-container" id="flashcardContainer">
+        {% if quizzes %}
+            {% for set in quizzes %}
+                <form method="POST" action="/edit-set">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
+                    <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
+                        <h2>{{ set.name }}</h2>
+                    </button>
+                </form>
+            {% endfor %}
+        {% else %}
+            <p>No quizzes saved yet.</p>
+        {% endif %}
+    </div>
+</main>
+    </body>
+</html>
