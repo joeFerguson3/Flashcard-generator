@@ -44,25 +44,29 @@
             </div>
             <button id="card-nav" onclick="nextCard('{{main_title}}')"><img src="static\images\foward-arrow.svg"></button>
         </div>
-        <span id="card_num_{{main_title}}">0</span>
+        <div class="card-num">
+         <span id="card_num_{{main_title}}">0</span>
+        </div>
         <!-- Display questions -->
         {% for q in questions %}
             {% if q.title == main_title %}
                 <div class="question">
-                    <p>{{ q.question }}</p>
-
                     {% if q.type == "fill-in-blank" %}
-                        <form method="post">
-                            <p>
-                                {% set parts = q.question.split("{blank}") %}
-                                {% for part in parts %}
-                                    {{ part }}
-                                    {% if not loop.last %}
-                                        <input type="text" name="answer_{{ loop.index0 }}" size="10" />
-                                    {% endif %}
-                                {% endfor %}
-                            </p>
-                        </form>
+                    <div class="question">
+                        <div class="question-box" >
+                            <form method="post">
+                                <p>
+                                    {% set parts = q.question.split("{blank}") %}
+                                    {% for part in parts %}
+                                        {{ part }}
+                                        {% if not loop.last %}
+                                            <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10" />
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </form>
+                        </div>
+                    </div>
 
                     {% elif q.type == "true-false" %}
                         <form method="post">
