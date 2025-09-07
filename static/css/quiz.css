@@ -12,6 +12,9 @@
   width:60%;
   min-height: 200px;;
 }
+form{
+    width:100%;
+}
 
 /* Navigation div */
 .card-nav{ 
@@ -27,4 +30,35 @@
     z-index: 1;
     padding: 10px; 
     border-radius: 10px;
+}
+
+/* Displays current card number */
+.card-num{
+    text-align:center; 
+    padding: 20px;
+}
+
+.question-box{
+    display: flex;
+    gap: 1rem;
+    font-family: "Inter", sans-serif;
+    background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width:60%;
+  margin:20px;
+}
+
+.blank-textbox{
+    width:100px;
+    height:25px;
+}
+
+.question{
+    display: flex;
+  justify-content: center;
+  align-items: center;  
+  width:100%;
 }
