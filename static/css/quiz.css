@@ -98,3 +98,9 @@ form {
     background-color: #d4f8d4; 
     font-weight: bold;
 }
+
+/* Correct answer text */
+.incorrect-answer{
+    background-color: #f8e1d4; 
+    font-weight: bold;
+}

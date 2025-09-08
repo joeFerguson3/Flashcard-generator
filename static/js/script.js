@@ -46,10 +46,23 @@ function previousCard(title){
 // }
 
 // Goes to next question or notes
-function next(currentId) {
+function next(currentId, skip=true) {
     // Hide the current element
     const current = document.getElementById(currentId);
     if (!current) return;
+
+    // When question is skipped
+    if (current.className == "question" && skip){
+        const inputs = current.querySelectorAll("input, textarea");
+
+        inputs.forEach(input => {
+            const span = document.createElement("span");
+            span.textContent = input.dataset.answer; // use input value as answer
+            span.classList.add("incorrect-answer");
+
+            input.replaceWith(span); // replace input with span
+        });
+    }
 
     const currentButton = document.getElementById("next-button" + currentId);
     currentButton.style.display = "none";
@@ -88,14 +101,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
       let fuse = new Fuse([answer], { includeScore: true, threshold: 0.25 });
       let result = fuse.search(typed)
-   
       // When correct answer
-      if(result.length > 0 && result[0].score < 0.25 && typed.length > Math.round(answer.length * 0.7)){
+      if(result.length > 0 && result[0].score < 0.25 && typed.length >= Math.round(answer.length * 0.7)){
         let span = document.createElement("span");
         span.textContent = this.dataset.answer; 
         span.classList.add("correct-answer");
 
         this.parentNode.replaceChild(span, this);
+        // Goes to next question
+        if(span.closest(".question").querySelector("input, textarea") == null){
+            next(span.closest(".question").id, false);
+        }
       }
     });
   }
