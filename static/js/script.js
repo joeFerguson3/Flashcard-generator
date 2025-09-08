@@ -76,3 +76,27 @@ function numElements(){
     const totalCount = document.querySelectorAll('.question, .card-nav').length;
     return totalCount;
 }
+
+// Checks user answers
+document.addEventListener("DOMContentLoaded", function() {
+  let inputs = document.querySelectorAll(".blank-textbox, .answer-box");
+
+  for (let i = 0; i < inputs.length; i++) {
+    inputs[i].addEventListener("input", function() {
+       let answer  = this.dataset.answer
+      let typed = this.value;  // current text in the box
+
+      let fuse = new Fuse([answer], { includeScore: true, threshold: 0.25 });
+      let result = fuse.search(typed)
+   
+      // When correct answer
+      if(result.length > 0 && result[0].score < 0.25 && typed.length > Math.round(answer.length * 0.7)){
+        let span = document.createElement("span");
+        span.textContent = this.dataset.answer; 
+        span.classList.add("correct-answer");
+
+        this.parentNode.replaceChild(span, this);
+      }
+    });
+  }
+});
