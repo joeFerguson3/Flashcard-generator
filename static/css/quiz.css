@@ -92,3 +92,9 @@ form {
     border-radius: 1rem;
     box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.08);
 }
+
+/* Correct answer text */
+.correct-answer{
+    background-color: #d4f8d4; 
+    font-weight: bold;
+}

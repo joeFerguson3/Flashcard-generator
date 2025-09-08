@@ -7,7 +7,10 @@
     <title>Loading - LearnlyAI</title>
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/quiz.css">
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2" defer></script>
     <script src="static/js/script.js" defer></script>
+
+
 </head>
 
 <body>
@@ -77,7 +80,7 @@
                         {% for part in parts %}
                         {{ part }}
                         {% if not loop.last %}
-                        <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10" />
+                        <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10" data-answer="{{ q.answer[loop.index0] }}"/>
                         {% endif %}
                         {% endfor %}
                     </p>
@@ -120,7 +123,7 @@
             <div class="question-box">
                 <p> {{ q.question }}</p>
                 <form method="post">
-                    <textarea name="answer_{{ loop.index }}" rows="3" cols="40"></textarea>
+                    <textarea name="answer_{{ loop.index }}" class="answer-box" data-answer="{{ q.answer[loop.index0] }}" rows="3" cols="40"></textarea>
                 </form>
             </div>
             <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} " onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
