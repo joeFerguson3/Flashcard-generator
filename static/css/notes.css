@@ -1,0 +1,29 @@
+.sub-card{
+    gap: 1rem;
+    font-family: "Inter", sans-serif;
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 70%;
+    min-width: 200px; 
+      box-sizing: border-box;
+      margin:20px;
+}
+
+/* Centres cards on page */
+.card-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+   width: 100%; 
+}
+
+/* Aligns title */
+.title{
+    width:70%;
+    margin:auto;
+    align-self: flex-start;
+  text-align: left;
+}
