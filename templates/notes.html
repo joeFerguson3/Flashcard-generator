@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading - LearnlyAI</title>
     <link rel="stylesheet" href="static/css/style.css">
-    <link rel="stylesheet" href="static/css/flashcards.css">
+    <link rel="stylesheet" href="static/css/notes.css">
+        <script src="static/js/edit-notes.js" defer></script>
 </head>
+
 <body>
     <!-- Top Navigation Bar -->
     <header>
@@ -19,21 +22,32 @@
         </ul>
     </header>
 
-    {% if sections %}
-        {% for card in sections %}
-            <div class="flashcard">
-                <h2>{{ card.main_title }}</h2>
-                <h3>{{ card.sub_title }}</h3>
-                <pre class="content">{{ card.content | join('\n') }}</pre>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No notes extracted yet. Try uploading a PDF!</p>
-    {% endif %}
 
-    <form method="POST" action="/generate-quiz">
-        <input type="hidden" name="notes" value='{{ sections | tojson }}'>
-        <button type="submit">Generate Quiz</button>
-    </form>
+
+
+    {% if data %}
+    {% for main_title, notes in data|groupby('main_title') %}
+    {% set safe_title = main_title|replace(' ', '_') %}
+
+    <div id="card_{{ safe_title }}" class="card-nav">
+        <div class="title"><h2>{{ main_title }}</h2></div>
+
+        {% for note in notes %}
+        <div contenteditable="true" class="sub-card" id="sub_{{ safe_title }}_{{ loop.index0 }}">
+            <h3>{{ note.sub_title }}</h3>
+            {% for line in note.content %}
+            <span>{{ line }}</span><br>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        {% endfor %}
+        {% endif %}
+        <button id="generate-button" onclick="generateQuiz()">Generate Quiz</button>
+    </div>
+
+
+
+
 </body>
+
 </html>

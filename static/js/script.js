@@ -116,3 +116,20 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 });
+
+// Detects if note content is edited
+const editableSections = document.querySelectorAll('.sub-card');
+const button = document.getElementById('generate-button');
+
+// Flag to check if any section is edited
+let isEdited = false;
+
+editableSections.forEach(section => {
+  section.addEventListener('input', () => {
+    if (!isEdited) {
+      isEdited = true;
+      console.log("edit")
+      button.textContent = 'Regenerate Notes';
+    }
+  });
+});
