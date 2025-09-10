@@ -15,6 +15,7 @@ editableSections.forEach(section => {
 });
 
 function generateQuiz() {
+    if(isEdited){
     const notes = [...document.querySelectorAll('.sub-card')].map(card => card.innerText.trim());
     console.log(notes)
 
@@ -28,9 +29,18 @@ function generateQuiz() {
 
        .then(response => {
     if (response.redirected) {
-        // If Flask sent a redirect, follow it manually
         window.location.href = response.url;
     }
     });
+
+    }else{
+    //     fetch('/generate-quiz', {
+    //     method: 'POST',
+    //     headers: {
+    //         'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify({ notes: notes })
+    // })
+    }
 
 };
