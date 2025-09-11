@@ -8,41 +8,62 @@ class User(db.Model):
     name = db.Column(db.String(255))
     picture = db.Column(db.String(250))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    
-    flashcards = db.relationship("Flashcard", secondary="user_flashcards", back_populates="users")
-    sets = db.relationship("FlashcardSet", back_populates="owner")
 
-# Flashcard table
-class Flashcard(db.Model):
+    # separate relationships
+    note_sets = db.relationship("NoteSet", back_populates="owner")
+    flashcard_sets = db.relationship("FlashcardSet", back_populates="owner")
+
+# Note sets (groups of notes/questions)
+class NoteSet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    owner = db.relationship("User", back_populates="note_sets")
+    notes = db.relationship("Note", back_populates="note_set", cascade="all, delete-orphan")
+    questions = db.relationship("Question", back_populates="note_set", cascade="all, delete-orphan")
+
+
+# Notes table
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    set_id = db.Column(db.Integer, db.ForeignKey("note_set.id"), nullable=False)
+    main_title = db.Column(db.String(255), nullable=False)
+    sub_title = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, nullable=False)  # JSON string
+
+    note_set = db.relationship("NoteSet", back_populates="notes")
+
+
+# Questions table (derived from notes)
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    set_id = db.Column(db.Integer, db.ForeignKey("note_set.id"), nullable=False)
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
-    set_id = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    
-    users = db.relationship("User", secondary="user_flashcards", back_populates="flashcards")
-    sets = db.relationship("FlashcardSet", secondary="set_flashcards", back_populates="flashcards")
 
-# FlashcardSet table (group of flashcards)
+    note_set = db.relationship("NoteSet", back_populates="questions")
+
+
+# Flashcard sets
 class FlashcardSet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    
-    owner = db.relationship("User", back_populates="sets")
-    flashcards = db.relationship("Flashcard", secondary="set_flashcards", back_populates="sets")
 
-# Link table: User ↔ Flashcards (for ownership or shared cards)
-user_flashcards = db.Table(
-    "user_flashcards",
-    db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
-    db.Column("flashcard_id", db.Integer, db.ForeignKey("flashcard.id"), primary_key=True)
-)
+    owner = db.relationship("User", back_populates="flashcard_sets")
+    flashcards = db.relationship("Flashcard", back_populates="set", cascade="all, delete-orphan")
 
-# Link table: FlashcardSet ↔ Flashcards
-set_flashcards = db.Table(
-    "set_flashcards",
-    db.Column("set_id", db.Integer, db.ForeignKey("flashcard_set.id"), primary_key=True),
-    db.Column("flashcard_id", db.Integer, db.ForeignKey("flashcard.id"), primary_key=True)
-)
+
+# Flashcards table
+class Flashcard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    set_id = db.Column(db.Integer, db.ForeignKey("flashcard_set.id"), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    set = db.relationship("FlashcardSet", back_populates="flashcards")
+

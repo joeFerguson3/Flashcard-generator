@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, url_for
 from utils.pdf_utils import extract_text
 from utils.notes import parse_notes
 from utils.ai_utils import question
-from models import Flashcard, FlashcardSet
+from models import Flashcard, FlashcardSet, Note, NoteSet, Question
 from extensions import db  
 import json
 
@@ -111,19 +111,19 @@ def notes():
 # Regenerates edited notes
 @flashcards_bp.route("/regenerate-notes", methods=['POST'])
 def regenerate_notes():
+    # Data to regenerate
     data = request.get_json()
     data = data.get("notes")
-    print(data)
+
     notes = [{'main_title': 'Understxnding Vision', 'sub_title': 'The Psychology of AI', 'content': ['- regenerateed!!!!!!!!!*What is intelligence?**', '- **Brains and computers**', '- **The building blocks of intelligence**', '- **Learning in neural networks**', '- **Towards Artificial General Intelligence (AI)**', '- **Living with Artificial Intelligence**']}, {'main_title': 'Understanding Vision', 'sub_title': 'The "Inner Screen" Theory of Seeing', 'content': ['- Proposes the brain represents scene brightness as an "inner screen" ', '- Fails due to the infinite regress problem (no "inner eye" to inspect the screen)']}, {'main_title': 'Understanding Vision', 'sub_title': 'Anatomy of the Eye', 'content': ['- **Retina Structure**', '  - Contains approximately 120 million rod cells and 6 million cone cells', '  - Rod and cone cells assist in processing light and color']}, {'main_title': 'Understanding Vision', 'sub_title': 'Human Visual System Organization', 'content': ['- Visual fields: ', '  - Left Visual field - 200°', '  - Right Visual field - 135°', '  - Overlapping area - 120°', '- Organized as retinotopic maps', '- Cortical processing begins at the back, signaling multiple pathways for vision']}, {'main_title': 'Deep Learning and Computer Vision', 'sub_title': 'Visual Processing Pathways', 'content': ['- **Visual Streams in Cortex**', '  - No single location where all visual information converges', '  - Edge detector cells in visual cortex (Hubel & Wiesel, 1959)', '    - V1 cells respond to moving lines at preferred orientations', '- **The "What" Pathway**', '  - Higher-level concepts processed in the temporal lobe', '  - Example: A neuron that preferentially responds to images of Jennifer Aniston (Quiroga et al., 2005)']}, {'main_title': 'Deep Learning and Computer Vision', 'sub_title': 'Convolutional Neural Networks (CNNs)', 'content': ['- Inspired by human neural processing', '- Composed of multiple layers of adaptive weights', '- Feature complexity increases with depth of layers']}, {'main_title': 'Interim Summary', 'sub_title': 'Similarities with Human Visual Cortex', 'content': ['- Activity in human visual areas matches that of layers in artificial neural networks', "  - V1, V2 correspond to neural networks' lower layers (simple features)", '  - V3, V4, LO correspond to higher layers (complex features)', '- Fundamental principles noted by Gestalt Psychologists:', '  - **Emergence**', '  - **Multistability**', '  - **Reification (Recognition of Whole Forms)**', '  - **Closure**', '  - **Similarity**', '  - **Proximity**', '  - **Continuity**', '- The "inner screen" theory lacks empirical support', '- Retinotopic maps in the brain are inversely organized', '- The brain processes dual streams of visual information: "What" and "Where"', '- Neurons respond to increasingly complex features, from edges to recognizable faces', '- Visual processing in the brain can be compared to artificial deep convolutional networks', '- Gestalt principles play a crucial role in constructing perceptual experiences across various stimuli']}]
     session['notes'] = notes
     return redirect("/flashcards")
 
 @flashcards_bp.route("/generate-quiz", methods=["POST"])
 def save_notes():
-    
+    data = request.get_json()
+    data = data.get("notes")
     questions = []
-    # Compiles notes together
-    data = json.loads(request.form.get("notes"))
 
     questions = [{'type': 'fill-in-blank', 'question': 'The definition and exploration of intelligence in AI is referred to as {blank}.', 'answer': ['intelligence in AI'], 'title': 'Machines and Intelligence'},
     {'type': 'short-answer', 'question': 'What are the key similarities and differences between human brains and computers in terms of processing information?', 'answer': 'Both process information, but brains use neural networks while computers use binary code.', 'title': 'Machines and Intelligence'},
@@ -145,4 +145,48 @@ def save_notes():
     #     formatted_text = f"{main} - {sub}\n{content}"
     #     questions.append(question(formatted_text, main))
 
-    return render_template("quiz.html", data=data, questions=questions)
+    # Saves notes and questions to database
+    note_set = NoteSet(name="Vision Notes", user_id=session.get("user_id"))  
+
+    for d in data:
+        note = Note(
+            main_title=d["main_title"],
+            sub_title=d["sub_title"],
+            content=json.dumps(d["content"])
+        )
+        note_set.notes.append(note)
+
+    for q in questions:
+        question = Question(
+            question=q["question"],
+            answer=json.dumps(q["answer"])
+        )
+        note_set.questions.append(question)
+
+    db.session.add(note_set)
+    db.session.commit()
+
+    return redirect(url_for("flashcards.quiz"))
+
+@flashcards_bp.route("/quiz")
+def quiz():
+    note_set = NoteSet.query.filter_by(id=1, user_id=session.get("user_id")).first()
+
+    notes = [
+        {
+            "main_title": note.main_title,
+            "sub_title": note.sub_title,
+            "content": json.loads(note.content)
+        }
+        for note in note_set.notes
+    ]
+
+    questions = [
+    {
+        "question": q.question,
+        "answer": json.loads(q.answer)
+    }
+    for q in note_set.questions
+    ]
+
+    return render_template("quiz.html", data=notes, questions=questions)
