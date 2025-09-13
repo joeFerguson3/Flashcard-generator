@@ -25,9 +25,8 @@
 
         <div id="new-class-div">
             <h1>Subject</h1>
-            <button>Create subject</button>
         </div>
-
+        <div id="subjects-container">
         <div class="controls">
             <input type="text" id="searchInput" placeholder="Search flashcard sets...">
             <select id="sortSelect">
@@ -40,17 +39,22 @@
          <div class="subjects-container" id="subjectsContainer">
         {% if subjects %}
             {% for subject in subjects %}
+            <div class="subject-form">
                 <form method="POST" action="/open-subject-folder">
                     <input type="hidden" name="subject-name" value="{{ subject[0] }}">
                     <button type="submit" class="subject-button">
                         <h2>{{ subject[0] }}</h2>
                     </button>
                 </form>
+            </div>
             {% endfor %}
         {% else %}
             <p>No quizzes saved yet.</p>
         {% endif %}
     </div>
+        <button id="new-subject-btn">Create new subject</button>
+        </div>
+        <button id="generate-new-quiz">Create new quiz</button>
    
 </main>
     </body>
