@@ -37,9 +37,20 @@
             </select>
         </div>
 
-        <div id="classes">
-            subjects
-        </div>
+         <div class="subjects-container" id="subjectsContainer">
+        {% if subjects %}
+            {% for subject in subjects %}
+                <form method="POST" action="/open-subject-folder">
+                    <input type="hidden" name="subject-name" value="{{ subject[0] }}">
+                    <button type="submit" class="subject-button">
+                        <h2>{{ subject[0] }}</h2>
+                    </button>
+                </form>
+            {% endfor %}
+        {% else %}
+            <p>No quizzes saved yet.</p>
+        {% endif %}
+    </div>
    
 </main>
     </body>
