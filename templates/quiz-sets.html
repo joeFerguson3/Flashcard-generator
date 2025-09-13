@@ -42,6 +42,12 @@
                         <h2>{{ set.name }}</h2>
                     </button>
                 </form>
+                <form method="POST" action="/edit-quiz">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
+                    <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
+                        <h2> edit </h2>
+                    </button>
+                </form>
             {% endfor %}
         {% else %}
             <p>No quizzes saved yet.</p>
