@@ -24,7 +24,8 @@
 
 
 
-
+    <h2 contenteditable="true" id="notes-title"> Quiz title </h2>
+     <h3 contenteditable="true" id="notes-subject"> Subject </h3>
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
     {% set safe_title = main_title|replace(' ', '_') %}
