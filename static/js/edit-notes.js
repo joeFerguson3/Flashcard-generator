@@ -17,7 +17,7 @@ editableSections.forEach(section => {
 function generateQuiz() {
     if (isEdited) {
         const notes = [...document.querySelectorAll('.sub-card')].map(card => card.innerText.trim());
-
+        
         fetch('/regenerate-notes', {
             method: 'POST',
             headers: {
@@ -33,13 +33,17 @@ function generateQuiz() {
             });
 
     } else {
+        const title = document.getElementById('notes-title')
+        const subject = document.getElementById('notes-subject')
+        console.log(title.innerText)
+        console.log("32423123123123" + subject)
+
         fetch('/generate-quiz', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-              credentials: 'include', 
-            body: JSON.stringify({ notes: getNotes() })
+            body: JSON.stringify({subject: subject.innerText, title: title.innerText, notes: getNotes() })
         })
             .then(response => {
                 if (response.redirected) {
@@ -52,6 +56,7 @@ function generateQuiz() {
 
 // Extracts notes from page as JSON
 function getNotes() {
+
     const cards = document.querySelectorAll('.card-nav');
     const data = [];
 

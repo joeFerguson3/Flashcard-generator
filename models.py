@@ -19,6 +19,7 @@ class NoteSet(db.Model):
     name = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    subject = db.Column(db.String(255), nullable=False)
 
     owner = db.relationship("User", back_populates="note_sets")
     notes = db.relationship("Note", back_populates="note_set", cascade="all, delete-orphan")

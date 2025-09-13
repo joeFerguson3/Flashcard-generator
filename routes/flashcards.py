@@ -121,8 +121,10 @@ def regenerate_notes():
 
 @flashcards_bp.route("/generate-quiz", methods=["POST"])
 def save_notes():
-    data = request.get_json()
-    data = data.get("notes")
+    dict = request.get_json()
+    data = dict.get("notes")
+    title = dict.get("title")
+    subject = dict.get("subject")
     questions = []
 
     questions = [{'type': 'fill-in-blank', 'question': 'The definition and exploration of intelligence in AI is referred to as {blank}.', 'answer': ['intelligence in AI'], 'title': 'Machines and Intelligence'},
@@ -146,7 +148,7 @@ def save_notes():
     #     questions.append(question(formatted_text, main))
 
     # Saves notes and questions to database
-    note_set = NoteSet(name="Vision Notes", user_id=session.get("user_id"))  
+    note_set = NoteSet(name=title, user_id=session.get("user_id"), subject=subject)  
 
     for d in data:
         note = Note(
@@ -190,3 +192,13 @@ def quiz():
     ]
 
     return render_template("quiz.html", data=notes, questions=questions)
+
+@flashcards_bp.route("/home")
+def home_page():
+    return render_template("/home.html")
+
+@flashcards_bp.route("/quiz-sets")
+def quiz_sets():
+    quizzes = NoteSet.query.filter_by(user_id=session.get("user_id")).all()
+    print(quizzes)
+    return render_template("quiz-sets.html", quizzes=quizzes)
