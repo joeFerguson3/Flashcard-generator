@@ -172,7 +172,8 @@ def save_notes():
 
 @flashcards_bp.route("/quiz")
 def quiz():
-    note_set = NoteSet.query.filter_by(id=1, user_id=session.get("user_id")).first()
+    set_id = session.get('set-id')
+    note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
 
     notes = [
         {
@@ -193,12 +194,30 @@ def quiz():
 
     return render_template("quiz.html", data=notes, questions=questions)
 
+
+# Displays different Subjects
 @flashcards_bp.route("/home")
 def home_page():
-    return render_template("/home.html")
+    subjects = db.session.query(NoteSet.subject).filter_by(user_id=session.get("user_id")).distinct().all()
+    return render_template("/home.html", subjects=subjects)
 
+
+# Display quizzes for a class
 @flashcards_bp.route("/quiz-sets")
 def quiz_sets():
-    quizzes = NoteSet.query.filter_by(user_id=session.get("user_id")).all()
+    subject = session.get('subject-name')
+    quizzes = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=subject).all()
     print(quizzes)
     return render_template("quiz-sets.html", quizzes=quizzes)
+
+# Redirects to subject quiz
+@flashcards_bp.route("/open-subject-folder", methods=["POST"])
+def subject_folder():
+    session['subject-name'] = request.form.get('subject-name')
+    return redirect("/quiz-sets")
+
+# Opens selected quiz
+@flashcards_bp.route("/open-quiz", methods=["POST"])
+def open_quiz():
+    session['set-id'] = request.form.get('set-id')
+    return redirect("/quiz")

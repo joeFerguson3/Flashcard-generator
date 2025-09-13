@@ -36,7 +36,7 @@
     <div class="flashcard-container" id="flashcardContainer">
         {% if quizzes %}
             {% for set in quizzes %}
-                <form method="POST" action="/edit-set">
+                <form method="POST" action="/open-quiz">
                     <input type="hidden" name="set-name" value="{{ set.name }}">
                     <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
                         <h2>{{ set.name }}</h2>
