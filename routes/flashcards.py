@@ -176,7 +176,7 @@ def save_notes():
         db.session.delete(note_set)
         db.session.commit()
 
-    return redirect(url_for("flashcards.quiz"))
+    return redirect("/quiz")
 
 @flashcards_bp.route("/quiz")
 def quiz():
@@ -215,8 +215,7 @@ def home_page():
 def quiz_sets():
     subject = session.get('subject-name')
     quizzes = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=subject).all()
-    print(quizzes)
-    return render_template("quiz-sets.html", quizzes=quizzes)
+    return render_template("quiz-sets.html", quizzes=quizzes, subject=subject)
 
 # Redirects to subject quiz
 @flashcards_bp.route("/open-subject-folder", methods=["POST"])

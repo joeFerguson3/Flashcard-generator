@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -5,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>My Flashcards</title>
         <link rel="stylesheet" href="static/css/style.css">
-        <link rel="stylesheet" href="static/css/sets.css">
+        <link rel="stylesheet" href="static/css/home.css">
     </head>
 
 
@@ -22,8 +24,11 @@
             </ul>
         </header>
         <main>
-        <h1>Library</h1>
 
+        <div id="new-class-div">
+            <h1>{{subject}}</h1>
+        </div>
+        <div id="subjects-container">
         <div class="controls">
             <input type="text" id="searchInput" placeholder="Search flashcard sets...">
             <select id="sortSelect">
@@ -33,26 +38,26 @@
             </select>
         </div>
 
-    <div class="flashcard-container" id="flashcardContainer">
+         <div class="subjects-container" id="subjectsContainer">
         {% if quizzes %}
             {% for set in quizzes %}
+            <div class="subject-form">
                 <form method="POST" action="/open-quiz">
-                    <input type="hidden" name="set-name" value="{{ set.name }}">
-                    <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
+                    <input type="hidden" name="subject-name" value="{{ set.id }}">
+                    <button type="submit" class="subject-button">
                         <h2>{{ set.name }}</h2>
                     </button>
                 </form>
-                <form method="POST" action="/edit-quiz">
-                    <input type="hidden" name="set-name" value="{{ set.name }}">
-                    <button type="submit" class="flashcard-btn" name="set-id" value="{{ set.id }}">
-                        <h2> edit </h2>
-                    </button>
-                </form>
+            </div>
             {% endfor %}
         {% else %}
             <p>No quizzes saved yet.</p>
         {% endif %}
     </div>
+        <button id="new-subject-btn">Create new subject</button>
+        </div>
+        <button id="generate-new-quiz">Create new quiz</button>
+   
 </main>
     </body>
 </html>
