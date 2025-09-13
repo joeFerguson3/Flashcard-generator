@@ -35,8 +35,6 @@ function generateQuiz() {
     } else {
         const title = document.getElementById('notes-title')
         const subject = document.getElementById('notes-subject')
-        console.log(title.innerText)
-        console.log("32423123123123" + subject)
 
         fetch('/generate-quiz', {
             method: 'POST',

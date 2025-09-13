@@ -168,6 +168,14 @@ def save_notes():
     db.session.add(note_set)
     db.session.commit()
 
+    session['set-id'] = note_set.id
+    
+    # Deletes previous notes and quiz
+    if('set-edit' in session):
+        note_set = NoteSet.query.get(int(session.get('set-edit')))
+        db.session.delete(note_set)
+        db.session.commit()
+
     return redirect(url_for("flashcards.quiz"))
 
 @flashcards_bp.route("/quiz")
@@ -221,3 +229,27 @@ def subject_folder():
 def open_quiz():
     session['set-id'] = request.form.get('set-id')
     return redirect("/quiz")
+
+# Edit notes
+@flashcards_bp.route("/edit-quiz", methods=["POST"])
+def edit_quiz():
+    session['set-id'] = request.form.get('set-id')
+    return redirect('/edit-notes')
+
+@flashcards_bp.route("/edit-notes")
+def edit_notes():
+    set_id = session.get('set-id')
+
+    note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
+
+    notes = [
+        {
+            "main_title": note.main_title,
+            "sub_title": note.sub_title,
+            "content": json.loads(note.content)
+        }
+        for note in note_set.notes
+    ]
+
+    session['set-edit'] = set_id
+    return render_template("notes.html", data=notes)
