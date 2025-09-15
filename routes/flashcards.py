@@ -168,14 +168,15 @@ def save_notes():
     db.session.add(note_set)
     db.session.commit()
 
-    session['set-id'] = note_set.id
+    # session['set-id'] = note_set.id
     
     # Deletes previous notes and quiz
     if('set-edit' in session):
         note_set = NoteSet.query.get(int(session.get('set-edit')))
         db.session.delete(note_set)
         db.session.commit()
-
+       
+    session.pop("set-edit", None)
     return redirect("/quiz")
 
 @flashcards_bp.route("/quiz")
@@ -259,7 +260,17 @@ def edit_notes():
 def quiz_preview():
     set_id = request.form.get('set-id')
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
-    return render_template("quiz-preview.html", set=note_set)
+
+    all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=note_set.subject).all()
+    all_set_info = [
+        {
+            "name": set.name,
+            "id": set.id
+        }
+        for set in all_sets
+    ]
+
+    return render_template("quiz-preview.html", set=note_set, other_sets=all_set_info)
 
 
 # Ends the quiz and directs to the next question
@@ -267,6 +278,16 @@ def quiz_preview():
 def end_quiz():
     current_set_id = request.form.get('set-id')
     current_set = NoteSet.query.filter_by(id=current_set_id, user_id=session.get("user_id")).first()
+    
+    all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=current_set.subject).all()
+    all_set_info = [
+        {
+            "name": set.name,
+            "id": set.id
+        }
+        for set in all_sets
+    ]
+
     next_set = (
         NoteSet.query
         .filter(
@@ -281,4 +302,4 @@ def end_quiz():
     if not next_set:
         session['subject-name'] = current_set.subject
         return redirect('quiz-sets')
-    return render_template("quiz-preview.html", set=next_set)
+    return render_template("quiz-preview.html", set=next_set, other_sets=all_set_info)

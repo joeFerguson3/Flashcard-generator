@@ -1,15 +1,60 @@
-  <h1>{{ set.name }}</h1>
-  
-  <form method="POST" action="/edit-quiz">
-                    <input type="hidden" name="set-name" value="{{ set.name }}">
-                    <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-                        <h2> Edit </h2>
-                    </button>
-                </form>
+<!DOCTYPE html>
+<html lang="en">
 
-  <form method="POST" action="/open-quiz">
-                    <input type="hidden" name="set-name" value="{{ set.name }}">
-                    <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-                        <h2> Start </h2>
-                    </button>
-                </form>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/quiz-preview.css">
+</head>
+
+<body>
+
+
+
+    <!-- Top Navigation Bar -->
+    <header>
+        <div class="logo">LearnlyAI</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="pdf-upload.html">Upload PDF</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </header>
+    <main>
+
+        <div id="side-menu">
+            {% for set_item in other_sets %}
+            <form method="POST" action="/quiz-preview" class="{% if set_item.id == set.id %}highlight{% endif %}">
+                <input type="hidden" name="set-id" value="{{ set_item.id }}">
+                <button type="submit">
+                    {{ set_item.name }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+
+        <div id="main-content">
+            <h1 id="title">{{ set.name }}</h1>
+
+            <form method="POST" action="/edit-quiz" >
+                <input type="hidden" name="set-name" value="{{ set.name }}">
+                <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
+                    <h2> Edit </h2>
+                </button>
+            </form>
+
+            <form method="POST" action="/open-quiz">
+                <input type="hidden" name="set-name" value="{{ set.name }}">
+                <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
+                    <h2> Start </h2>
+                </button>
+            </form>
+        </div>
+    </main>
+
+</body>
+
+</html>
