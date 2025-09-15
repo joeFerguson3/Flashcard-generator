@@ -200,7 +200,7 @@ def quiz():
     for q in note_set.questions
     ]
 
-    return render_template("quiz.html", data=notes, questions=questions)
+    return render_template("quiz.html", data=notes, questions=questions,set_id=set_id)
 
 
 # Displays different Subjects
@@ -252,3 +252,33 @@ def edit_notes():
 
     session['set-edit'] = set_id
     return render_template("notes.html", data=notes)
+
+
+# Opens quiz preview
+@flashcards_bp.route("/quiz-preview", methods=["POST"])
+def quiz_preview():
+    set_id = request.form.get('set-id')
+    note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
+    return render_template("quiz-preview.html", set=note_set)
+
+
+# Ends the quiz and directs to the next question
+@flashcards_bp.route("/end-quiz", methods=["POST"])
+def end_quiz():
+    current_set_id = request.form.get('set-id')
+    current_set = NoteSet.query.filter_by(id=current_set_id, user_id=session.get("user_id")).first()
+    next_set = (
+        NoteSet.query
+        .filter(
+            NoteSet.user_id == session.get("user_id"),
+            NoteSet.subject == current_set.subject,
+            NoteSet.id > current_set.id
+        )
+        .order_by(NoteSet.created_at.asc())
+        .first()
+    )
+
+    if not next_set:
+        session['subject-name'] = current_set.subject
+        return redirect('quiz-sets')
+    return render_template("quiz-preview.html", set=next_set)

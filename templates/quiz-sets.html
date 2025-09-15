@@ -42,8 +42,8 @@
         {% if quizzes %}
             {% for set in quizzes %}
             <div class="subject-form">
-                <form method="POST" action="/open-quiz">
-                    <input type="hidden" name="subject-name" value="{{ set.id }}">
+                <form method="POST" action="/quiz-preview">
+                    <input type="hidden" name="set-id" value="{{ set.id }}">
                     <button type="submit" class="subject-button">
                         <h2>{{ set.name }}</h2>
                     </button>
