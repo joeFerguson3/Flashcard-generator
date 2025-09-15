@@ -27,16 +27,16 @@
 
 
     <!-- Progress bar -->
-     <div id="progress-bar-back">
-    <div id="progress-bar"></div>
+    <div id="progress-bar-back">
+        <div id="progress-bar"></div>
     </div>
 
 
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
-    
-    <div id="{{ main_title }}" class="card-nav" {% if not loop.first %}style="display:none;"{% endif %}>
-            <h2>{{ main_title }}</h2>
+
+    <div id="{{ main_title }}" class="card-nav" {% if not loop.first %}style="display:none;" {% endif %}>
+        <h2>{{ main_title }}</h2>
         <div class="main-title-block" id="{{ main_title }}">
             <button id="card-nav" style="margin-right: auto;" onclick="previousCard('{{main_title}}')"><img
                     src="static\images\back-arrow.svg"></button>
@@ -47,7 +47,7 @@
                 {% else %}
                 <div style="display: none;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
                     {% endif %}
-                    <h3 >{{ note.sub_title }}</h3>
+                    <h3>{{ note.sub_title }}</h3>
                     <ul>
                         {% for line in note.content %}
                         <li>{{ line }}</li>
@@ -55,19 +55,20 @@
                     </ul>
                 </div>
                 {% endfor %}
-                            <button style="margin-left: auto;" id="card-nav" onclick="nextCard('{{main_title}}')"><img
-                    src="static\images\foward-arrow.svg"></button>
+                <button style="margin-left: auto;" id="card-nav" onclick="nextCard('{{main_title}}')"><img
+                        src="static\images\foward-arrow.svg"></button>
             </div>
 
-                {% if loop.nextitem %}
-            <button class="next-button" id="next-button{{main_title}}" onclick="next('{{main_title}}')">Continue</button>
+            {% if loop.nextitem %}
+            <button class="next-button" id="next-button{{main_title}}"
+                onclick="next('{{main_title}}')">Continue</button>
             {% endif %}
-                    <div id="card_num_container{{ main_title }}"" class="card-num">
-            <span id="card_num_{{main_title}}">0</span>
-        </div>
+            <div id="card_num_container{{ main_title }}"" class=" card-num">
+                <span id="card_num_{{main_title}}">0</span>
+            </div>
         </div>
 
-       
+
         <!-- Display questions -->
         {% for q in questions %}
         {% if q.title == main_title %}
@@ -80,17 +81,19 @@
                         {% for part in parts %}
                         {{ part }}
                         {% if not loop.last %}
-                        <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10" data-answer="{{ q.answer[loop.index0] }}"/>
+                        <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10"
+                            data-answer="{{ q.answer[loop.index0] }}" />
                         {% endif %}
                         {% endfor %}
                     </p>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} " onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
+                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
         </div>
 
         {% elif q.type == "true-false" %}
-        <div class="question"  id=" q{{main_title}}{{ loop.index }} ">
+        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <form method="post">
                     <label>
@@ -101,11 +104,12 @@
                     </label>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} " onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
+                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
         </div>
 
         {% elif q.type == "multiple-choice" %}
-        <div class="question"  id=" q{{main_title}}{{ loop.index }} ">
+        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <form method="post">
                     {% for opt in q.options %}
@@ -115,22 +119,25 @@
                     {% endfor %}
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} " onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
+                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
         </div>
 
         {% elif q.type == "short-answer" %}
-        <div class="question"  id=" q{{main_title}}{{ loop.index }} ">
+        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <p> {{ q.question }}</p>
                 <form method="post">
-                    <textarea name="answer_{{ loop.index }}" class="answer-box" data-answer="{{ q.answer[loop.index0] }}" rows="3" cols="40"></textarea>
+                    <textarea name="answer_{{ loop.index }}" class="answer-box"
+                        data-answer="{{ q.answer[loop.index0] }}" rows="3" cols="40"></textarea>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} " onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
+                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
         </div>
 
         {% elif q.type == "ordering" %}
-        <div class="question"  id=" q{{main_title}}{{ loop.index }} ">
+        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <form method="post">
                     <ul>
@@ -143,17 +150,23 @@
                     <p>(Rearrange the items by editing the order numbers or dragging, if JS is added)</p>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} " onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
+                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
         </div>
         {% endif %}
-   
-        {% endif %}
-            
-        {% endfor %}
-        
-        {% endfor %}
+
         {% endif %}
 
+        {% endfor %}
+
+        {% endfor %}
+        {% endif %}
+        <form method="POST" action="/end-quiz">
+            <input type="hidden" name="set-id" value="{{ set_id }}">
+            <button type="submit" class="quiz-button">
+                <h2> Finish </h2>
+            </button>
+        </form>
 
 </body>
 

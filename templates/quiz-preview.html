@@ -1,6 +1,15 @@
+  <h1>{{ set.name }}</h1>
+  
   <form method="POST" action="/edit-quiz">
                     <input type="hidden" name="set-name" value="{{ set.name }}">
                     <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-                        <h2> edit </h2>
+                        <h2> Edit </h2>
+                    </button>
+                </form>
+
+  <form method="POST" action="/open-quiz">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
+                    <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
+                        <h2> Start </h2>
                     </button>
                 </form>
