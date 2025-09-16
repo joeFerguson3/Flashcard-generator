@@ -11,6 +11,9 @@ main {
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
+    display: flex;
+    justify-content:center;
+    flex-direction: column;
 }
 
 h1 {
@@ -24,6 +27,7 @@ h1 {
     justify-content: center;
     gap: 20px;
     margin-bottom: 30px;
+    height:50px;
 }
 
 .controls input,
@@ -38,26 +42,36 @@ h1 {
 
 .controls input:focus,
 .controls select:focus {
-    border-color: #3b82f6;
+    border-color: #4fc08d;
     box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+}
+
+#new-subject-btn{
+    font-size:1rem;
+    margin:0;
+    border-radius: 8px;
+    padding:2px;
 }
 
 .subjects-container{
     display: flex;
+        justify-content: center;
     flex-wrap: wrap;
     max-height: 200px;
      overflow-y: auto;
 }
 
+
 .subject-button{
-    background-color: white;
-    outline: 1px rgb(180, 178, 178) solid;
+    background-color: #4fc08d;;
+    color:white;
+    outline: 1px #ccc solid;
     border: none;
     border-radius: 12px;
     padding: 25px 20px;
-    width: 250px;
+    width: 240px;
     text-align: center;
-
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     white-space: nowrap; 
@@ -69,20 +83,43 @@ h1 {
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
-    color: #1f2937;
+    color: #ffffff;
 }
 
 .subject-button:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-    background-color: #f3f4f6;
+    background-color:  #1e3a8a;
+    color:black;
 }
 
 #subjects-container{
-
     border-radius: 10px;
     padding:10px;
     background-color: white;
-    
-     box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+}
+
+#generate-quiz-btn {
+  background: linear-gradient(135deg, #6366f1, #1e3a8a);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.3s ease;
+}
+
+#generate-quiz-btn:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.4);
+  background: linear-gradient(135deg, #4f46e5, #1e3a8a);
+}
+
+#generate-quiz-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }

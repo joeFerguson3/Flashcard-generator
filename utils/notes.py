@@ -5,13 +5,13 @@ def parse_notes(text):
     main_title = ""
     sub_title = ""
     content = []
-
+    print(text)
     lines = text.strip().splitlines()
     for line in lines:
         if line.startswith("---"):
             continue
 
-        if line.strip().startswith("### "):
+        if line.strip().startswith("## "):
             if len(content) > 0:
                 sections.append({
                 "main_title": main_title,
@@ -20,12 +20,12 @@ def parse_notes(text):
                 })
                 content = [] 
             
-            sub_title = line[4:]
+            sub_title = line[3:]
 
-        elif line.strip().startswith("## "):
-            main_title = line[3:]
+        elif line.strip().startswith("### "):
+            main_title = line[4:]
         
-        elif line.strip().startswith("- "):
+        elif line.strip().startswith("-"):
             content.append(line)
     
     sections.append({
@@ -33,5 +33,6 @@ def parse_notes(text):
         "sub_title": sub_title,
         "content": content
     })
+
     print(sections)
     return sections

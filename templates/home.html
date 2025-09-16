@@ -24,7 +24,7 @@
         <main>
 
         <div id="new-class-div">
-            <h1>Subject</h1>
+            <h1>Subjects</h1>
         </div>
         <div id="subjects-container">
         <div class="controls">
@@ -34,6 +34,7 @@
                 <option value="az">Sort A-Z</option>
                 <option value="za">Sort Z-A</option>
             </select>
+            <!-- <button id="new-subject-btn">Create new subject</button> -->
         </div>
 
          <div class="subjects-container" id="subjectsContainer">
@@ -52,9 +53,8 @@
             <p>No quizzes saved yet.</p>
         {% endif %}
     </div>
-        <button id="new-subject-btn">Create new subject</button>
         </div>
-        <button id="generate-new-quiz">Create new quiz</button>
+        <a href="/upload"> <button id="generate-quiz-btn">Create new quiz</button></a>
    
 </main>
     </body>

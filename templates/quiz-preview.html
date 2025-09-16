@@ -26,20 +26,46 @@
     <main>
 
         <div id="side-menu">
+            <br>
             {% for set_item in other_sets %}
-            <form method="POST" action="/quiz-preview" class="{% if set_item.id == set.id %}highlight{% endif %}">
+            <form method="POST" action="/quiz-preview-content" onsubmit="return submitSidebarForm(this)">
                 <input type="hidden" name="set-id" value="{{ set_item.id }}">
-                <button type="submit">
+                <button class="side-bar-btn" type="submit">
                     {{ set_item.name }}
                 </button>
             </form>
             {% endfor %}
         </div>
 
+        <!-- only refreshes main content on button press -->
+        <script>
+            function submitSidebarForm(form) {
+                 const sidebarForms = document.querySelectorAll("#side-menu button");
+                sidebarForms.forEach(f => f.classList.remove("highlight"));
+
+                // add highlight to clicked quiz
+                form.querySelector("button").classList.add("highlight");
+                
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: "POST",
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById("main-content").innerHTML = html;
+                    });
+
+                return false;
+                
+            }
+        </script>
+
         <div id="main-content">
             <h1 id="title">{{ set.name }}</h1>
 
-            <form method="POST" action="/edit-quiz" >
+            <form method="POST" action="/edit-quiz">
                 <input type="hidden" name="set-name" value="{{ set.name }}">
                 <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
                     <h2> Edit </h2>
