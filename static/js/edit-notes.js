@@ -15,6 +15,7 @@ editableSections.forEach(section => {
 });
 
 function generateQuiz() {
+    console.log(isEdited)
     if (isEdited) {
         const notes = [...document.querySelectorAll('.sub-card')].map(card => card.innerText.trim());
         
