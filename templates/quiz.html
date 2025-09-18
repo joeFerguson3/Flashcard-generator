@@ -34,7 +34,7 @@
 
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
-
+    
     <div id="{{ main_title }}" class="card-nav" {% if not loop.first %}style="display:none;" {% endif %}>
         <h2>{{ main_title }}</h2>
         <div class="main-title-block" id="{{ main_title }}">
@@ -71,12 +71,14 @@
 
         <!-- Display questions -->
         {% for q in questions %}
+
         {% if q.title == main_title %}
         {% if q.type == "fill-in-blank" %}
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <form method="post">
                     <p>
+                                {{q.type}}
                         {% set parts = q.question.split("{blank}") %}
                         {% for part in parts %}
                         {{ part }}

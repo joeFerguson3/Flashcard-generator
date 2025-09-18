@@ -124,35 +124,41 @@ def regenerate_notes():
 
 @flashcards_bp.route("/generate-quiz", methods=["POST"])
 def save_notes():
+    print("generating quiz")
     dict = request.get_json()
     data = dict.get("notes")
+    print(data)
     title = dict.get("title")
     subject = dict.get("subject")
     questions = []
 
-    # main = d.get("main_title", "")
-    # sub = d.get("sub_title", "")
-    # content = "\n".join(d.get("content", []))
-    # formatted_text = f"{main} - {sub}\n{content}"
-    # questions.append(question(formatted_text, main))
+    for d in data[::400]:
+        main = d.get("main_title", "")
+        sub = d.get("sub_title", "")
+        content = "\n".join(d.get("content", []))
+        formatted_text = f"{main} - {sub}\n{content}"
+        questions.append(question(formatted_text, main))################################################
 
     # Saves notes and questions to database
     note_set = NoteSet(name=title, user_id=session.get("user_id"), subject=subject)  
-
+    
     for d in data:
+        print(d.get("main_title", ""))
         note = Note(
-            main_title=d["main_title"],
-            sub_title=d["sub_title"],
-            content=json.dumps(d["content"])
+            main_title=d.get("main_title", ""),
+            sub_title=d.get("sub_title", ""),
+            content=json.dumps(d.get("content", ""))
         )
         note_set.notes.append(note)
 
     for q in questions:
-        question = Question(
+        question_db = Question(
             question=q["question"],
-            answer=json.dumps(q["answer"])
+            answer=json.dumps(q["answer"]),
+            title=q['title'],
+            type=q['type']
         )
-        note_set.questions.append(question)
+        note_set.questions.append(question_db)
 
     db.session.add(note_set)
     db.session.commit()
@@ -183,11 +189,13 @@ def quiz():
     questions = [
     {
         "question": q.question,
-        "answer": json.loads(q.answer)
+        "answer": json.loads(q.answer),
+        "title": q.title,
+        "type": q.type
     }
     for q in note_set.questions
     ]
-
+    print(questions)
     return render_template("quiz.html", data=notes, questions=questions,set_id=set_id)
 
 
