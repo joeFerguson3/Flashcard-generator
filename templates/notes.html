@@ -38,13 +38,15 @@
             <h3>{{ note.sub_title }}</h3>
             {% for line in note.content %}
             <span>{{ line }}</span><br>
+ 
             {% endfor %}
-        </div>
+        </div>  
         {% endfor %}
+        </div>
         {% endfor %}
         {% endif %}
         <button id="generate-button" onclick="generateQuiz()">Generate Quiz</button>
-    </div>
+
 
 
 

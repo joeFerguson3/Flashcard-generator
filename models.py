@@ -43,6 +43,8 @@ class Question(db.Model):
     set_id = db.Column(db.Integer, db.ForeignKey("note_set.id"), nullable=False)
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
+    title = db.Column(db.Text, nullable=False)
+    type = db.Column(db.Text, nullable=False)
 
     note_set = db.relationship("NoteSet", back_populates="questions")
 

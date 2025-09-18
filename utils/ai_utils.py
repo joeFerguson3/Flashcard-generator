@@ -74,7 +74,7 @@ Your output must be a single JSON object, matching exactly one schema above, wit
 
     response = json.loads(response.choices[0].message.content)
     response["title"] = title
-    print(response)
+
     return response
 
 

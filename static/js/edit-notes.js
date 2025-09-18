@@ -34,6 +34,7 @@ function generateQuiz() {
             });
 
     } else {
+        console.log("yes")
         const title = document.getElementById('notes-title')
         const subject = document.getElementById('notes-subject')
 
