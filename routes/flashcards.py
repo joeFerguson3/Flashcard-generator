@@ -146,7 +146,7 @@ def save_notes():
                 {"main":main,"sub":sub,"content":content}
             )
             main = None
-            
+
         if main != prev_main:
             print(main)
             print(prev_main)
@@ -182,11 +182,13 @@ def save_notes():
         note_set.notes.append(note)
 
     for q in questions:
+
         question_db = Question(
             question=q["question"],
             answer=json.dumps(q["answer"]),
             title=q['title'],
-            type=q['type']
+            type=q['type'],
+            options = json.dumps(q.get("options")) if q.get("options") is not None else None
         )
         note_set.questions.append(question_db)
 
@@ -221,7 +223,8 @@ def quiz():
         "question": q.question,
         "answer": json.loads(q.answer),
         "title": q.title,
-        "type": q.type
+        "type": q.type,
+        "options": json.loads(q.options) if q.options else None
     }
     for q in note_set.questions
     ]
