@@ -32,6 +32,28 @@
     </div>
 
 
+   <div class="question-box">
+                <h3>Arrange the following steps of the TCP three-way handshake process in the correct order</h3>
+                <form onsubmit="checkOrdering(event)" data-answer="[&quot;SYN segment is sent&quot;, &quot;SYN + ACK segment is received&quot;, &quot;ACK segment is sent&quot;]">
+                    <ol>
+                        
+                        <li draggable="true" class="draggable">
+                            SYN segment is sent
+                        </li>
+                        
+                        <li draggable="true" class="draggable">
+                            SYN + ACK segment is received
+                        </li>
+                        
+                        <li draggable="true" class="draggable">
+                            ACK segment is sent
+                        </li>
+                        
+                    </ol>
+                    <button type="submit">Confirm</button>
+                </form>
+            </div>
+
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
     
@@ -139,15 +161,16 @@
         {% elif q.type == "ordering" %}
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
-                <form method="post">
-                    <ul>
+                <h3>{{q.question}}</h3>
+                <form onsubmit="checkOrdering(event)"  data-answer='{{ q.answer |tojson }}'>
+                    <ol>
                         {% for opt in q.options %}
-                        <li>
-                            <input type="text" name="order_{{ loop.index }}_{{ loop.index0 }}" value="{{ opt }}">
+                        <li draggable="true" class="draggable">
+                            {{ opt }}
                         </li>
                         {% endfor %}
-                    </ul>
-                    <p>(Rearrange the items by editing the order numbers or dragging, if JS is added)</p>
+                    </ol>
+                    <button type="submit">Confirm</button>
                 </form>
             </div>
             <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
