@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from extensions import db
 from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
@@ -14,6 +14,10 @@ def create_app():
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback_secret")
 
     db.init_app(app)
+
+    # Register custom Jinja2 filter
+    import jinja_filters
+    app.jinja_env.filters['lstrip'] = jinja_filters.lstrip_chars
 
     # Google OAuth
     google_bp = make_google_blueprint(

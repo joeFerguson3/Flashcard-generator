@@ -50,7 +50,8 @@
                     <h3>{{ note.sub_title }}</h3>
                     <ul>
                         {% for line in note.content %}
-                        <li>{{ line }}</li>
+                        {% set level = line | length - line.lstrip('-') | length %}
+                        <li style="margin-left: {{ level * 20 }}px;">{{ line | lstrip('- ') }}</li>
                         {% endfor %}
                     </ul>
                 </div>

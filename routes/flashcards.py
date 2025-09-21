@@ -140,7 +140,7 @@ def save_notes():
         for d in data:
             main = d.get("main_title", "")
 
-            if main != prev_main and data_array:  # only if data_array has items
+            if main != prev_main and data_array: 
                 num_of_q = max(round(len(data_array)/3), 1)
                 for _ in range(num_of_q):
                     rand_q = random.randint(0, len(data_array)-1)
