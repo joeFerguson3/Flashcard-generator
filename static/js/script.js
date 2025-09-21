@@ -90,7 +90,7 @@ function numElements(){
     return totalCount;
 }
 
-// Checks user answers
+// Checks user typed answers
 document.addEventListener("DOMContentLoaded", function() {
   let inputs = document.querySelectorAll(".blank-textbox, .answer-box");
 
@@ -117,19 +117,18 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// Detects if note content is edited
-const editableSections = document.querySelectorAll('.sub-card');
-const button = document.getElementById('generate-button');
+// Checks true false answers
+function checkAnswerTF(event, answer){
+    event.preventDefault();
 
-// Flag to check if any section is edited
-let isEdited = false;
-
-editableSections.forEach(section => {
-  section.addEventListener('input', () => {
-    if (!isEdited) {
-      isEdited = true;
-      console.log("edit")
-      button.textContent = 'Regenerate Notes';
+    const button = event.target
+    const userAnswer = button.value;
+    console.log(userAnswer, answer)
+    if( userAnswer.toLowerCase() == answer.toLowerCase()){
+        button.style.backgroundColor = "green";
+    } else {
+        button.style.backgroundColor = "red";
     }
-  });
-});
+
+     next(button.closest(".question").id, false);
+}

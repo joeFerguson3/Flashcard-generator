@@ -54,7 +54,7 @@ Short-answer:
 {
   "type": "short-answer",
   "question": "Open-ended question requiring a short response",
-  "answer": "expected key idea or phrase"
+  "answer": "expected key idea or phrase, only one word or key short phrase in length"
 }
 
 Ordering:
@@ -104,24 +104,16 @@ def extract_definitions(text):
       response = client.chat.completions.create(
           model="gpt-4o-mini",
           messages=[
-            {"role": "system", "content": """
-            Generate study notes from the given text. Follow this exact format :
-            ### Main Heading
-            ## Subheading (main point)
-            - point
-            -- Subpoint (detail)
+            {"role": "system", "content": """Act as a study-notes assistant. Given an educational text or notes on any topic, produce a concise, well-structured summary for revision. Use the following Markdown format exactly:
 
-            Rules:
-            - Create main headings where the text naturally splits.  
-            - Under each main heading, create multiple short subheadings to capture the key ideas in detail, each subheading and its points must make sense with no additional context.   
-            - Each subheading may contain 1 or more points.  
-            - Each point may include 0 or more subpoints for extra detail.
-            - Only include key facts, definitions, processes, or examples likely to appear on a test.
-            - Keep sentences short, simple, and easy to scan.
-            - Remove unnecessary details, filler, or repetition.
-            - Output must only contain the notes in the specified format."""},
+### [Main Heading]
+## [Subheading (main point)]
+- [Bullet point with key idea or definition]
+-- [Sub-bullet with a supporting detail or example]
 
-          {"role": "user", "content": f"Given text:\n<<<{chunk}>>>"} 
+Only include essential definitions, concepts, processes, and relevant examples needed for understanding or exams. Exclude irrelevant details like extra dates or background not needed for core concepts. Use clear, simple language and present information in short bullet points as above. Do not make any text bold or itallics. """},
+
+          {"role": "user", "content": f"Text for notes:\n<<<{chunk}>>>"} 
       ]
       )
 
@@ -131,7 +123,7 @@ def extract_definitions(text):
 
 
 # Splits text into chunks for higher quality repsonse
-def chunk_text(text, chunk_size=600, step=500):
+def chunk_text(text, chunk_size=850, step=800):
     chunks = []
     i = 0
     text_length = len(text)

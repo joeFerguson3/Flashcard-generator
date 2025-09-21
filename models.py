@@ -45,6 +45,7 @@ class Question(db.Model):
     answer = db.Column(db.Text, nullable=False)
     title = db.Column(db.Text, nullable=False)
     type = db.Column(db.Text, nullable=False)
+    options = db.Column(db.Text, nullable=True)
 
     note_set = db.relationship("NoteSet", back_populates="questions")
 
