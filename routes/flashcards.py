@@ -5,6 +5,7 @@ from utils.ai_utils import question
 from models import Flashcard, FlashcardSet, Note, NoteSet, Question
 from extensions import db  
 import json
+import random
 
 flashcards_bp = Blueprint("flashcards", __name__)
 
@@ -127,23 +128,52 @@ def save_notes():
     print("generating quiz")
     dict = request.get_json()
     data = dict.get("notes")
-    print(data)
     title = dict.get("title")
     subject = dict.get("subject")
     questions = []
 
-    for d in data[::400]:
+    prev_main = data[0].get("main_title", "")
+    data_array = []
+    for d in data:
         main = d.get("main_title", "")
+        # Every new main heading
+
+        # Checks if last item
+        if d == data[-1]:
+            sub = d.get("sub_title", "")
+            content = "\n".join(d.get("content", []))
+            data_array.append(
+                {"main":main,"sub":sub,"content":content}
+            )
+            main = None
+            
+        if main != prev_main:
+            print(main)
+            print(prev_main)
+            # Determines number of questions to make
+            num_of_q = round(len(data_array) / 30)
+            if num_of_q == 0:
+                num_of_q = 1
+            # Selects random questions
+            for i in range(num_of_q):
+                rand_q = random.randint(0, len(data_array) - 1)
+                formatted_text = f"{data_array[rand_q]['main']} - {data_array[rand_q]['sub']}\n{data_array[rand_q]['content']}"
+                questions.append(question(formatted_text, prev_main))
+            data_array = []
+
+
+        prev_main = main
         sub = d.get("sub_title", "")
         content = "\n".join(d.get("content", []))
-        formatted_text = f"{main} - {sub}\n{content}"
-        questions.append(question(formatted_text, main))################################################
+        data_array.append(
+            {"main":main,"sub":sub,"content":content}
+        )
+       
 
     # Saves notes and questions to database
     note_set = NoteSet(name=title, user_id=session.get("user_id"), subject=subject)  
     
     for d in data:
-        print(d.get("main_title", ""))
         note = Note(
             main_title=d.get("main_title", ""),
             sub_title=d.get("sub_title", ""),

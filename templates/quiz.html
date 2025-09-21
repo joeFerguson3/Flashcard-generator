@@ -77,8 +77,8 @@
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <form method="post">
+                    <h3>{{q.type}}</h3>
                     <p>
-                                {{q.type}}
                         {% set parts = q.question.split("{blank}") %}
                         {% for part in parts %}
                         {{ part }}
@@ -95,15 +95,12 @@
         </div>
 
         {% elif q.type == "true-false" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
+        <div class="question" id=" q{{main_title}}{{ loop.index }} " >
             <div class="question-box">
-                <form method="post">
-                    <label>
-                        <input type="radio" name="answer_{{ loop.index }}" value="true"> True
-                    </label>
-                    <label>
-                        <input type="radio" name="answer_{{ loop.index }}" value="false"> False
-                    </label>
+                <h3>{{q.question}}</h3>
+                <form class="true-false-form">
+                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_T" value="true">True</button>
+                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_F" value="false">False</button>
                 </form>
             </div>
             <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
@@ -129,9 +126,10 @@
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <p> {{ q.question }}</p>
+                {{ q.answer }}
                 <form method="post">
                     <textarea name="answer_{{ loop.index }}" class="answer-box"
-                        data-answer="{{ q.answer[loop.index0] }}" rows="3" cols="40"></textarea>
+                        data-answer="{{ q.answer }}" rows="3" cols="40"></textarea>
                 </form>
             </div>
             <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
