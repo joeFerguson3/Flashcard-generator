@@ -132,3 +132,68 @@ function checkAnswerTF(event, answer){
 
      next(button.closest(".question").id, false);
 }
+
+
+// Responsible for allowing dragging quiz ordering questions
+document.querySelectorAll('.draggable').forEach(item => {
+    item.setAttribute('draggable', true);
+    item.addEventListener('dragstart', dragStart);
+    item.addEventListener('dragover', dragOver);
+    item.addEventListener('drop', drop);
+    item.addEventListener('dragleave', dragLeave);
+});
+
+let dragSrcEl = null;
+let prev = null;
+
+function dragStart(e) {
+    dragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function dragOver(e) {
+    e.preventDefault(); // allow dropping
+    if (prev) {
+        prev.style.outline = "0px";
+    }
+    prev = this;
+    this.style.outline = "3px solid black";
+}
+
+function dragLeave(e) {
+    this.style.outline = "0px"; // remove highlight if you drag away
+}
+
+function drop(e) {
+    e.stopPropagation();
+    if (dragSrcEl !== this) {
+        const tmp = dragSrcEl.innerHTML;
+        dragSrcEl.innerHTML = this.innerHTML;
+        this.innerHTML = tmp;
+    }
+    this.style.outline = "0px"; // clear outline on drop
+}
+
+// Checks ordering question
+function checkOrdering(e){
+    e.preventDefault();
+
+    const form = e.target
+    const items = form.querySelectorAll("li");
+
+    const user_answer = Array.from(items).map(li => li.innerText.trim());
+    const answer = JSON.parse(form.dataset.answer)
+    for(let i = 0; i < answer.length;  i++){
+  
+        if(user_answer[i] == answer[i].trim()){
+            items[i].style.backgroundColor = "green"
+            items[i].value = answer.indexOf(user_answer[i]) + 1
+        }else{
+            items[i].style.backgroundColor = "red"
+            items[i].value = answer.indexOf(user_answer[i]) + 1
+        }
+    }
+
+    next(form.closest(".question").id, false);
+}

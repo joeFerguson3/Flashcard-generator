@@ -12,10 +12,12 @@
     width: 50%;
     min-height: 200px;
     min-width: 200px;
+    max-width: 1000px;
 }
 
 form {
     width: 100%;
+    max-width: 100%;
 }
 
 /* Contains all elements for a flash card */
@@ -41,16 +43,19 @@ form {
 
 /* Box containing question and user input */
 .question-box {
+    padding:25px;
     display: flex;
-    gap: 1rem;
+    place-items: center;
     font-family: "Inter", sans-serif;
     background: #ffffff;
     border-radius: 1rem;
-    padding: 1.2rem 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    width: 60%;
+    width: 50%;
     margin: 20px;
+    max-width: 1000px;
+     min-height: 200px;
+    min-width: 200px;
 }
 
 
@@ -103,4 +108,31 @@ form {
 .incorrect-answer{
     background-color: #f8e1d4; 
     font-weight: bold;
+}
+.sub-card{
+    margin:15px;
+    width:100%;
+    text-align: left;
+}
+
+/* draggable elements */
+.draggable{
+    cursor: grab;
+    background:  #f0f8ff;
+    margin:10px;
+    min-height: 40px;
+    border-radius: 9px;
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+    padding:10px;
+}
+
+.draggable:active {
+    cursor: grabbing;
+    background: #828282;
+    transform: scale(1.04);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.draggable:hover {
+    background:  #cedfed;
 }
