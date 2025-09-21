@@ -6,7 +6,7 @@ from models import Flashcard, FlashcardSet, Note, NoteSet, Question
 from extensions import db  
 import json
 import random
-
+from concurrent.futures import ThreadPoolExecutor
 flashcards_bp = Blueprint("flashcards", __name__)
 
 @flashcards_bp.route("/upload", methods=["GET", "POST"])
@@ -53,7 +53,6 @@ def save_flashcards():
         while True:
             question = request.form.get(f"question-{i}")
             answer = request.form.get(f"answer-{i}")
-            print(answer)
             if not question or not answer:
                 print("empty")
                 break
@@ -132,43 +131,41 @@ def save_notes():
     subject = dict.get("subject")
     questions = []
 
-    prev_main = data[0].get("main_title", "")
+    questions = []
+    futures = []
+    prev_main = ""
+    main = ""
     data_array = []
-    for d in data:
-        main = d.get("main_title", "")
-        # Every new main heading
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        for d in data:
+            main = d.get("main_title", "")
 
-        # Checks if last item
-        if d == data[-1]:
+            if main != prev_main and data_array:  # only if data_array has items
+                num_of_q = max(round(len(data_array)/3), 1)
+                for _ in range(num_of_q):
+                    rand_q = random.randint(0, len(data_array)-1)
+                    formatted_text = f"{data_array[rand_q]['main']} - {data_array[rand_q]['sub']}\n{data_array[rand_q]['content']}"
+                    # submit only the question creation
+                    futures.append(executor.submit(question, formatted_text, prev_main))
+
+                data_array = []
+
+            prev_main = main
             sub = d.get("sub_title", "")
             content = "\n".join(d.get("content", []))
-            data_array.append(
-                {"main":main,"sub":sub,"content":content}
-            )
-            main = None
+            data_array.append({"main":main, "sub":sub, "content":content})
 
-        if main != prev_main:
-            print(main)
-            print(prev_main)
-            # Determines number of questions to make
-            num_of_q = round(len(data_array) / 30)
-            if num_of_q == 0:
-                num_of_q = 1
-            # Selects random questions
-            for i in range(num_of_q):
-                rand_q = random.randint(0, len(data_array) - 1)
+        # handle last heading after loop
+        if data_array:
+            num_of_q = max(round(len(data_array)/3), 1)
+            for _ in range(num_of_q):
+                rand_q = random.randint(0, len(data_array)-1)
                 formatted_text = f"{data_array[rand_q]['main']} - {data_array[rand_q]['sub']}\n{data_array[rand_q]['content']}"
-                questions.append(question(formatted_text, prev_main))
-            data_array = []
+                futures.append(executor.submit(question, formatted_text, prev_main))
 
-
-        prev_main = main
-        sub = d.get("sub_title", "")
-        content = "\n".join(d.get("content", []))
-        data_array.append(
-            {"main":main,"sub":sub,"content":content}
-        )
-       
+        # collect results in order
+        for f in futures:
+            questions.append(f.result())
 
     # Saves notes and questions to database
     note_set = NoteSet(name=title, user_id=session.get("user_id"), subject=subject)  

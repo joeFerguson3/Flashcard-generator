@@ -110,11 +110,10 @@
         {% elif q.type == "multiple-choice" %}
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
-                <form method="post">
+                <h3>{{q.question}}</h3>
+                <form class="true-false-form">
                     {% for opt in q.options %}
-                    <label>
-                        <input type="radio" name="answer_{{ loop.index }}" value="{{ opt }}"> {{ opt }}
-                    </label><br>
+                        <button onclick="checkAnswerTF(event, '{{ q.answer }}')" value="{{ opt }}">{{ opt }}</button>
                     {% endfor %}
                 </form>
             </div>

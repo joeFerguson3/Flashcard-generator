@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import json
 from utils.notes import parse_notes
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -98,29 +99,36 @@ Your output must be a single JSON object, matching exactly one schema above, wit
 
 def extract_definitions(text):
     chunks = chunk_text(text)
-    response_text = ""
-    print(chunks)
-    for chunk in chunks:
-      response = client.chat.completions.create(
-          model="gpt-4o-mini",
-          messages=[
-            {"role": "system", "content": """Act as a study-notes assistant. Given an educational text or notes on any topic, produce a concise, well-structured summary for revision. Use the following Markdown format exactly:
+    response_texts = []
 
-### [Main Heading]
-## [Subheading (main point)]
-- [Bullet point with key idea or definition]
--- [Sub-bullet with a supporting detail or example]
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        # submit jobs in order
+        futures = [executor.submit(process_chunk, chunk) for chunk in chunks]
 
-Only include essential definitions, concepts, processes, and relevant examples needed for understanding or exams. Exclude irrelevant details like extra dates or background not needed for core concepts. Use clear, simple language and present information in short bullet points as above. Do not make any text bold or itallics. """},
+        # collect results in the same order as chunks
+        response_texts = [future.result() for future in futures]
 
-          {"role": "user", "content": f"Text for notes:\n<<<{chunk}>>>"} 
-      ]
-      )
+    return parse_notes("\n".join(response_texts))
 
-      response_text = response_text + response.choices[0].message.content + "\n"
+# Gets notes for chunk of text
+def process_chunk(chunk):
+  response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+          {"role": "system", "content": """Act as a study-notes assistant. Given an educational text or notes on any topic, produce a concise, well-structured summary for revision. Use the following Markdown format exactly:
 
-    return parse_notes(response_text)
+      ### [Main Heading]
+      ## [Subheading (main point)]
+      - [Bullet point with key idea or definition]
+      -- [Sub-bullet with a supporting detail or example]
 
+      Only include essential definitions, concepts, processes, and relevant examples needed for understanding or exams. Exclude irrelevant details like extra dates or background not needed for core concepts. Use clear, simple language and present information in short bullet points as above. Do not make any text bold or itallics. """},
+
+              {"role": "user", "content": f"Text for notes:\n<<<{chunk}>>>"} 
+    ]
+    )
+  
+  return response.choices[0].message.content
 
 # Splits text into chunks for higher quality repsonse
 def chunk_text(text, chunk_size=850, step=800):

@@ -33,4 +33,4 @@ def home():
     # Save user ID in session (logged in)
     session["user_id"] = user.id  
 
-    return redirect(url_for("main.sets"))
+    return redirect("/home")
