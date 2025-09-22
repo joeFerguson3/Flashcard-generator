@@ -31,29 +31,6 @@
         <div id="progress-bar"></div>
     </div>
 
-
-   <div class="question-box">
-                <h3>Arrange the following steps of the TCP three-way handshake process in the correct order</h3>
-                <form onsubmit="checkOrdering(event)" data-answer="[&quot;SYN segment is sent&quot;, &quot;SYN + ACK segment is received&quot;, &quot;ACK segment is sent&quot;]">
-                    <ol>
-                        
-                        <li draggable="true" class="draggable">
-                            SYN segment is sent
-                        </li>
-                        
-                        <li draggable="true" class="draggable">
-                            SYN + ACK segment is received
-                        </li>
-                        
-                        <li draggable="true" class="draggable">
-                            ACK segment is sent
-                        </li>
-                        
-                    </ol>
-                    <button type="submit">Confirm</button>
-                </form>
-            </div>
-
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
     
@@ -91,14 +68,13 @@
             </div>
         </div>
 
-
         <!-- Display questions -->
         {% for q in questions %}
 
         {% if q.title == main_title %}
         {% if q.type == "fill-in-blank" %}
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
-            <div class="question-box">
+            <div class="question-box fill-in-blank">
                 <form method="post">
                     <h3>{{q.type}}</h3>
                     <p>
@@ -135,8 +111,9 @@
             <div class="question-box">
                 <h3>{{q.question}}</h3>
                 <form class="true-false-form">
-                    {% for opt in q.options %}
-                        <button onclick="checkAnswerTF(event, '{{ q.answer }}')" value="{{ opt }}">{{ opt }}</button>
+                    {% set options = q.options | shuffle %}
+                    {% for opt in options %}
+                        <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')" value="{{ opt }}">{{ opt }}</button>
                     {% endfor %}
                 </form>
             </div>
@@ -164,7 +141,8 @@
                 <h3>{{q.question}}</h3>
                 <form onsubmit="checkOrdering(event)"  data-answer='{{ q.answer |tojson }}'>
                     <ol>
-                        {% for opt in q.options %}
+                        {% set options = q.options | shuffle %}
+                        {% for opt in options %}
                         <li draggable="true" class="draggable">
                             {{ opt }}
                         </li>
@@ -186,7 +164,7 @@
         {% endif %}
         <form method="POST" action="/end-quiz">
             <input type="hidden" name="set-id" value="{{ set_id }}">
-            <button type="submit" class="quiz-button">
+            <button type="submit" class="finish-quiz-btn">
                 <h2> Finish </h2>
             </button>
         </form>

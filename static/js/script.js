@@ -1,12 +1,12 @@
 
 // Goes to next card in flash card set
-function nextCard(title){
+function nextCard(title) {
     let counter = document.getElementById("card_num_" + title);
     let counterNum = parseInt(counter.innerText, 10);
 
     let card_show = document.getElementById(title + String(counterNum + 1));
     // Checks next card exists
-    if(card_show === null){
+    if (card_show === null) {
         return
     }
     let card_hide = document.getElementById(title + String(counterNum));
@@ -19,13 +19,13 @@ function nextCard(title){
 }
 
 // Goes to previous card in flash card set
-function previousCard(title){
+function previousCard(title) {
     let counter = document.getElementById("card_num_" + title);
     let counterNum = parseInt(counter.innerText, 10);
 
     let card_show = document.getElementById(title + String(counterNum - 1));
     // Checks next card exists
-    if(card_show === null){
+    if (card_show === null) {
         return
     }
     let card_hide = document.getElementById(title + String(counterNum));
@@ -46,13 +46,13 @@ function previousCard(title){
 // }
 
 // Goes to next question or notes
-function next(currentId, skip=true) {
+function next(currentId, skip = true) {
     // Hide the current element
     const current = document.getElementById(currentId);
     if (!current) return;
 
     // When question is skipped
-    if (current.className == "question" && skip){
+    if (current.className == "question" && skip) {
         const inputs = current.querySelectorAll("input, textarea");
 
         inputs.forEach(input => {
@@ -69,7 +69,7 @@ function next(currentId, skip=true) {
 
     // Find the next element
     const nextElement = current.nextElementSibling;
- 
+
     if (nextElement) {
         nextElement.style.display = "grid";
     }
@@ -79,58 +79,65 @@ function next(currentId, skip=true) {
 
     // Updates progress bar
     const bar = document.getElementById("progress-bar");
-    let width = ( parseFloat(bar.style.width) || 0 ) + (100 / numElements()) * 1.3
+    let width = (parseFloat(bar.style.width) || 0) + (100 / numElements()) * 1.3
     bar.style.width = width + "%"
 
 }
 
 // Gets the number of elements in the quiz
-function numElements(){
+function numElements() {
     const totalCount = document.querySelectorAll('.question, .card-nav').length;
     return totalCount;
 }
 
 // Checks user typed answers
-document.addEventListener("DOMContentLoaded", function() {
-  let inputs = document.querySelectorAll(".blank-textbox, .answer-box");
+document.addEventListener("DOMContentLoaded", function () {
+    let inputs = document.querySelectorAll(".blank-textbox, .answer-box");
 
-  for (let i = 0; i < inputs.length; i++) {
-    inputs[i].addEventListener("input", function() {
-       let answer  = this.dataset.answer
-      let typed = this.value;  // current text in the box
+    for (let i = 0; i < inputs.length; i++) {
+        inputs[i].addEventListener("input", function () {
+            let answer = this.dataset.answer
+            let typed = this.value;  // current text in the box
 
-      let fuse = new Fuse([answer], { includeScore: true, threshold: 0.25 });
-      let result = fuse.search(typed)
-      // When correct answer
-      if(result.length > 0 && result[0].score < 0.25 && typed.length >= Math.round(answer.length * 0.7)){
-        let span = document.createElement("span");
-        span.textContent = this.dataset.answer; 
-        span.classList.add("correct-answer");
+            let fuse = new Fuse([answer], { includeScore: true, threshold: 0.25 });
+            let result = fuse.search(typed)
+            // When correct answer
+            if (result.length > 0 && result[0].score < 0.25 && typed.length >= Math.round(answer.length * 0.7)) {
+                let span = document.createElement("span");
+                span.textContent = this.dataset.answer;
+                span.classList.add("correct-answer");
 
-        this.parentNode.replaceChild(span, this);
-        // Goes to next question
-        if(span.closest(".question").querySelector("input, textarea") == null){
-            next(span.closest(".question").id, false);
-        }
-      }
-    });
-  }
+                this.parentNode.replaceChild(span, this);
+                // Goes to next question
+                if (span.closest(".question").querySelector("input, textarea") == null) {
+                    next(span.closest(".question").id, false);
+                }
+            }
+        });
+    }
 });
 
 // Checks true false answers
-function checkAnswerTF(event, answer){
+function checkAnswerTF(event, answer) {
     event.preventDefault();
 
     const button = event.target
     const userAnswer = button.value;
-    console.log(userAnswer, answer)
-    if( userAnswer.toLowerCase() == answer.toLowerCase()){
-        button.style.backgroundColor = "green";
+    if (userAnswer.toLowerCase() == answer.toLowerCase()) {
+        button.classList.add("correct-answer");
     } else {
-        button.style.backgroundColor = "red";
+        button.classList.add("incorrect-answer");
+        question = button.closest(".true-false-form")
+        allButtons = question.querySelectorAll("button");
+        console.log(allButtons)
+        allButtons.forEach(btn => {
+            if (btn.innerText.trim() === answer.trim()) {
+                btn.classList.add("correct-answer");
+            }
+        });
     }
 
-     next(button.closest(".question").id, false);
+    next(button.closest(".question").id, false);
 }
 
 
@@ -176,7 +183,7 @@ function drop(e) {
 }
 
 // Checks ordering question
-function checkOrdering(e){
+function checkOrdering(e) {
     e.preventDefault();
 
     const form = e.target
@@ -184,13 +191,14 @@ function checkOrdering(e){
 
     const user_answer = Array.from(items).map(li => li.innerText.trim());
     const answer = JSON.parse(form.dataset.answer)
-    for(let i = 0; i < answer.length;  i++){
-  
-        if(user_answer[i] == answer[i].trim()){
-            items[i].style.backgroundColor = "green"
+    for (let i = 0; i < answer.length; i++) {
+
+        if (user_answer[i] == answer[i].trim()) {
+            items[i].classList.add("correct-answer");
+            console.log("hi")
             items[i].value = answer.indexOf(user_answer[i]) + 1
-        }else{
-            items[i].style.backgroundColor = "red"
+        } else {
+            items[i].classList.add("incorrect-answer");
             items[i].value = answer.indexOf(user_answer[i]) + 1
         }
     }

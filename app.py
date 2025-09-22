@@ -18,6 +18,7 @@ def create_app():
     # Register custom Jinja2 filter
     import jinja_filters
     app.jinja_env.filters['lstrip'] = jinja_filters.lstrip_chars
+    app.jinja_env.filters['shuffle'] = jinja_filters.shuffle
 
     # Google OAuth
     google_bp = make_google_blueprint(

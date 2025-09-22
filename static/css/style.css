@@ -143,16 +143,22 @@ input, textarea {
 }
 
 button {
-    font-size: 1.5rem;
-    padding: 0.8rem;
-    border-radius: 12px;
-    border: none;
-    background-color: #4fc08d;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    margin: 1rem;
-    transition: background 0.3s;
+  font-size: 1.5rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
+  border: none;
+  background-color: #4fc08d;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 0 #3da876, 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 button:hover {
