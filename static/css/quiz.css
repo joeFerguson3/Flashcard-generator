@@ -5,15 +5,20 @@
     gap: 1rem;
     font-family: "Inter", sans-serif;
     background: #ffffff;
-    border-radius: 1rem;
-    padding: 1.2rem 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    width: 50%;
-    min-height: 200px;
-    min-width: 200px;
-    max-width: 1000px;
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.06);
+    width: 90%;
+    max-width: 800px;
+    margin: auto;
+    border: none;
+    transition: transform 0.2s ease;
 }
+
+.main-title-block:hover {
+    transform: scale(1.02);
+}
+
 
 form {
     width: 100%;
@@ -43,19 +48,26 @@ form {
 
 /* Box containing question and user input */
 .question-box {
-    padding:25px;
-    display: flex;
-    place-items: center;
-    font-family: "Inter", sans-serif;
-    background: #ffffff;
-    border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    width: 50%;
-    margin: 20px;
-    max-width: 1000px;
-     min-height: 200px;
-    min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: "Inter", sans-serif;
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 1.8rem;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.06);
+  width: 90%;
+  max-width: 900px;
+  margin: 25px auto;
+  border: none; /* matches main-title */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 220px;
+}
+
+/* Hover effect */
+.question-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -98,17 +110,6 @@ form {
     box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.08);
 }
 
-/* Correct answer text */
-.correct-answer{
-    background-color: #d4f8d4; 
-    font-weight: bold;
-}
-
-/* Correct answer text */
-.incorrect-answer{
-    background-color: #f8e1d4; 
-    font-weight: bold;
-}
 .sub-card{
     margin:15px;
     width:100%;
@@ -135,4 +136,69 @@ form {
 
 .draggable:hover {
     background:  #cedfed;
+}
+
+.multi-choice-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    margin:0;
+    font-size: 18px;
+    font-weight: 500;
+    font-family: sans-serif;
+    color: #333;
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 0 ;
+}
+
+/* Hover/active feedback */
+.multi-choice-btn:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+/* Correct answer text */
+.correct-answer {
+  background-color: #e6ffec;
+  color: #2e7d32;
+  font-weight: 600;
+  border: 2px solid #81c784;
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.2);
+}
+
+/* Correct answer text */
+.incorrect-answer {
+  background-color: #ffecec;
+  color: #c62828;
+  font-weight: 600;
+  border: 2px solid #ef9a9a;
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 2px 6px rgba(198, 40, 40, 0.15);
+}
+
+
+.fill-in-the-blank input {
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #4fc08d;
+  border-radius: 10px;
+  outline: none;
+  background-color: #f6fff9;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  width: 120px;
+  text-align: center;
+}
+
+.fill-in-the-blank input:focus {
+  border-color: #2ebd85;
+  box-shadow: 0 0 0 3px rgba(79, 192, 141, 0.3);
 }
