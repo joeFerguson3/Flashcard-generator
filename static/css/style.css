@@ -48,7 +48,7 @@ header .nav-links a {
 }
 
 header .nav-links a:hover {
-    color: #ffd700; /* bright yellow hover */
+    color: #007bff; /* bright yellow hover */
     transform: scale(1.1);
 }
 
@@ -162,7 +162,8 @@ button:active {
 }
 
 button:hover {
-    background-color: #3aa26d;
+     box-shadow: 0 8px 0 #3da876, 0 12px 20px rgba(0, 0, 0, 0.3);
+     transform: translateY(-2px);
 }
 
 /* Footer */

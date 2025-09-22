@@ -160,6 +160,7 @@ form {
 .multi-choice-btn:hover {
     border-color: #007bff;
     background: #f0f8ff;
+    box-shadow: none;
 }
 
 /* Correct answer text */
@@ -201,4 +202,29 @@ form {
 .fill-in-the-blank input:focus {
   border-color: #2ebd85;
   box-shadow: 0 0 0 3px rgba(79, 192, 141, 0.3);
+}
+
+#finish-quiz-btn {
+   display: none;
+  background: linear-gradient(135deg, #6366f1, #1e3a8a);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.2rem;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 0 #3730a3, 0 8px 16px rgba(0, 0, 0, 0.25);
+  align-self: center; /* center it under subjects */
+}
+
+#finish-quiz-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 #2e268a, 0 12px 20px rgba(0, 0, 0, 0.3);
+}
+
+#finish-quiz-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 #2e268a, 0 4px 8px rgba(0, 0, 0, 0.2);
 }
