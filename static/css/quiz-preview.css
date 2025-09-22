@@ -1,7 +1,7 @@
 #side-menu {
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: #4fc08d;
+    background-color: #3da876;
     width: 260px;
     height: 100vh;
     position: fixed;
@@ -13,9 +13,10 @@
 }
 
 .side-bar-btn {
+    box-shadow: none;
     width: 100%;
     padding: 14px 18px;
-    background: transparent;
+    background: #4fc08d;
     border: none;
     text-align: left;
     font-size: 15px;
@@ -23,14 +24,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: background-color 0.25s ease, color 0.25s ease, padding-left 0.25s ease;
     border-radius: 6px;
     margin: 4px 8px;
 }
 
 .side-bar-btn:hover {
     background-color: rgba(0, 0, 0, 0.1);
-    padding-left: 24px;
 }
 
 .highlight {
