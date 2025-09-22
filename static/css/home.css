@@ -97,6 +97,7 @@ h1 {
 .subject-button:hover{
     border-color: #007bff;
     background: #f0f8ff;
+     box-shadow: none;
 }
 
 /* Generate quiz button = strong CTA */

@@ -30,6 +30,7 @@
 
 .side-bar-btn:hover {
     background-color: rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 .highlight {
@@ -38,14 +39,10 @@
     padding-left: 24px;
 }
 
-main {
-    display: flex;
-    flex-direction: row;
-
-    min-height: 100vh;
-}
-
 #main-content {
+    margin: 80px;
+    height:auto;
+    margin-left: 340px;
     flex: 1;
     text-align: center;
     display: flex;
@@ -54,4 +51,9 @@ main {
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    background: white;
+}
+
+body{
+    background: linear-gradient(180deg, #f0fdf4 0%, #f5f7fa 100%);
 }

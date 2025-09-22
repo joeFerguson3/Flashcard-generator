@@ -57,7 +57,7 @@ function next(currentId, skip = true) {
 
         inputs.forEach(input => {
             const span = document.createElement("span");
-            span.textContent = input.dataset.answer; // use input value as answer
+            span.textContent = input.dataset.answer; // user input value as answer
             span.classList.add("incorrect-answer");
 
             input.replaceWith(span); // replace input with span
@@ -68,10 +68,12 @@ function next(currentId, skip = true) {
     currentButton.style.display = "none";
 
     // Find the next element
-    const nextElement = current.nextElementSibling;
-
-    if (nextElement) {
+    let nextElement = current.nextElementSibling;
+    if (nextElement.nextElementSibling.classList.contains("card-nav") || nextElement.nextElementSibling.classList.contains("question")) {
         nextElement.style.display = "grid";
+    }else{
+       nextElement = document.getElementById("finish-quiz-btn")
+       nextElement.style.display = "block";
     }
 
     // Scrolls page down

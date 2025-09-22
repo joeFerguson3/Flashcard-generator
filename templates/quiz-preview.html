@@ -13,24 +13,14 @@
 
 
 
-    <!-- Top Navigation Bar -->
-    <header>
-        <div class="logo">LearnlyAI</div>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="pdf-upload.html">Upload PDF</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </header>
-    <main>
+      {% include "menu-bar.html" %}
 
         <div id="side-menu">
             <br>
             {% for set_item in other_sets %}
             <form method="POST" action="/quiz-preview-content" onsubmit="return submitSidebarForm(this)">
                 <input type="hidden" name="set-id" value="{{ set_item.id }}">
-                <button class="side-bar-btn" type="submit">
+                <button class="side-bar-btn {% if loop.first %}highlight{% endif %}" type="submit">
                     {{ set_item.name }}
                 </button>
             </form>
