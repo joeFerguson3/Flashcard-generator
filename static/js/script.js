@@ -69,7 +69,7 @@ function next(currentId, skip = true) {
 
     // Find the next element
     let nextElement = current.nextElementSibling;
-    if (nextElement.nextElementSibling.classList.contains("card-nav") || nextElement.nextElementSibling.classList.contains("question")) {
+    if (nextElement.nextElementSibling.nextElementSibling.classList.contains("card-nav") || nextElement.nextElementSibling.nextElementSibling.classList.contains("question")) {
         nextElement.style.display = "grid";
     }else{
        nextElement = document.getElementById("finish-quiz-btn")
@@ -81,14 +81,15 @@ function next(currentId, skip = true) {
 
     // Updates progress bar
     const bar = document.getElementById("progress-bar");
-    let width = (parseFloat(bar.style.width) || 0) + (100 / numElements()) * 1.3
+    let width = (parseFloat(bar.style.width) || 0) + (80 / numElements())
     bar.style.width = width + "%"
+    console.log(numElements(), bar.style.width)
 
 }
 
 // Gets the number of elements in the quiz
 function numElements() {
-    const totalCount = document.querySelectorAll('.question, .card-nav').length;
+    const totalCount = document.querySelectorAll('.question, .card-nav').length - 1;
     return totalCount;
 }
 
