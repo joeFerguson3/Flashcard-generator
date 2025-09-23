@@ -11,36 +11,45 @@
 </head>
 
 <body>
-      {% include "menu-bar.html" %}
+    {% include "menu-bar.html" %}
 
 
+    <main>
+        <h1 contenteditable="true" id="notes-title"> Quiz title </h1>
+        <h2 contenteditable="true" id="notes-subject"> Subject </h2>
+        {% if data %}
+        {% for main_title, notes in data|groupby('main_title') %}
+        {% set safe_title = main_title|replace(' ', '_') %}
 
-    <h2 contenteditable="true" id="notes-title"> Quiz title </h2>
-    <h3 contenteditable="true" id="notes-subject"> Subject </h3>
-    {% if data %}
-    {% for main_title, notes in data|groupby('main_title') %}
-    {% set safe_title = main_title|replace(' ', '_') %}
+        <div class="card-nav">
+            <div class="title">
+                <h2 contenteditable="true">{{ main_title }}</h2>
+                <button onclick="enhanceNote(event)" contenteditable="false"
+                    class="sub-card-button edit">enhance</button>
+            </div>
+            {% for note in notes %}
+            <div class="sub-card" id="sub_{{ safe_title }}_{{ loop.index0 }}">
+                <div class="sub-note-container">
+                    <h3 contenteditable="true">{{ note.sub_title }}</h3>
+                    <div class="sub-card-btn-container">
+                        <button onclick="deleteNote(event)" contenteditable="false"
+                            class="sub-card-button delete">delete</button>
+                    </div>
+                </div>
+                <div class="content" contenteditable="true">
+                {% for line in note.content %}
+                {{ line }}<br>
 
-    <div id="card_{{ safe_title }}" class="card-nav">
-        <div class="title">
-            <h2>{{ main_title }}</h2>
-        </div>
-
-        {% for note in notes %}
-        <div contenteditable="true" class="sub-card" id="sub_{{ safe_title }}_{{ loop.index0 }}">
-            <h3>{{ note.sub_title }}</h3>
-            {% for line in note.content %}
-            <span>{{ line }}</span><br>
-
+                {% endfor %}
+                </div>
+            </div>
             {% endfor %}
         </div>
         {% endfor %}
-    </div>
-    {% endfor %}
-    {% endif %}
-    <button id="generate-button" onclick="generateQuiz()">Generate Quiz</button>
+        {% endif %}
+        <button id="generate-button" onclick="generateQuiz()">Generate Quiz</button>
 
-
+    </main>
 
 
 

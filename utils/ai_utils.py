@@ -32,7 +32,7 @@ Output strictly in JSON format, using one of the following schemas:
 Fill-in-the-blank:
 {
   "type": "fill-in-blank",
-  "question": "Sentence with {blank} placeholders",
+  "question": "Sentence with {blank} placeholders, never use __ as the place holder",
   "answer": ["correct term", "another correct term"]
 }
 
@@ -101,7 +101,7 @@ def extract_definitions(text):
     chunks = chunk_text(text)
     response_texts = []
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         # submit jobs in order
         futures = [executor.submit(process_chunk, chunk) for chunk in chunks]
 

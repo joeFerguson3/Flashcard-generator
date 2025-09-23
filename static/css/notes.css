@@ -10,6 +10,8 @@
     min-width: 200px; 
       box-sizing: border-box;
       margin:20px;
+       white-space: normal;
+    word-break: break-word; 
 }
 
 /* Centres cards on page */
@@ -26,4 +28,59 @@
     margin:auto;
     align-self: flex-start;
   text-align: left;
+}
+
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sub-note-container{
+    display: flex;
+    align-items:left;
+    gap: 10px;
+}
+
+.sub-card-button{
+   padding: 8px;
+   font-weight: 100;
+   font-size: 13px;
+   margin: 0;
+       border-radius: 8px;
+   align-items: right;
+   height:40px;
+   width: 70px;
+}
+
+.delete{
+    background-color: #ef4444;
+    box-shadow: 0 4px 0 #b91c1c, 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.delete:hover{
+    background-color: #dc2626;
+    box-shadow: 0 6px 0 #b91c1c, 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.delete:active{
+    transform: translateY(4px);
+  box-shadow: 0 2px 0 #b91c1c, 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sub-card-btn-container{
+    display: flex;
+    margin-left: auto;
+    gap: 10px;
+}
+
+main{
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+}
+
+.title{
+  display: flex;
+  align-items: left;
+  gap:15px;
 }

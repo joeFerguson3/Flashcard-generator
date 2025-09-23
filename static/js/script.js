@@ -83,7 +83,6 @@ function next(currentId, skip = true) {
     const bar = document.getElementById("progress-bar");
     let width = (parseFloat(bar.style.width) || 0) + (80 / numElements())
     bar.style.width = width + "%"
-    console.log(numElements(), bar.style.width)
 
 }
 
@@ -114,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Goes to next question
                 if (span.closest(".question").querySelector("input, textarea") == null) {
                     next(span.closest(".question").id, false);
+                    increaseScore()
                 }
             }
         });
@@ -128,6 +128,7 @@ function checkAnswerTF(event, answer) {
     const userAnswer = button.value;
     if (userAnswer.toLowerCase() == answer.toLowerCase()) {
         button.classList.add("correct-answer");
+        increaseScore()
     } else {
         button.classList.add("incorrect-answer");
         question = button.closest(".true-false-form")
@@ -194,17 +195,26 @@ function checkOrdering(e) {
 
     const user_answer = Array.from(items).map(li => li.innerText.trim());
     const answer = JSON.parse(form.dataset.answer)
+    correct = true
     for (let i = 0; i < answer.length; i++) {
 
         if (user_answer[i] == answer[i].trim()) {
             items[i].classList.add("correct-answer");
-            console.log("hi")
             items[i].value = answer.indexOf(user_answer[i]) + 1
         } else {
             items[i].classList.add("incorrect-answer");
             items[i].value = answer.indexOf(user_answer[i]) + 1
+            correct = false
         }
     }
 
+    if(correct)increaseScore()
     next(form.closest(".question").id, false);
+}
+
+let score = 0
+function increaseScore(){
+    q_num = document.querySelectorAll(".question").length
+    score = score + 100 / q_num
+    console.log(score)
 }

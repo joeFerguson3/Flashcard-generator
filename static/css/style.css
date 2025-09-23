@@ -181,3 +181,15 @@ footer {
 html {
     scroll-behavior: smooth;
 }
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #1e3a8a;
+}
