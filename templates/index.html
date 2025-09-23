@@ -7,16 +7,21 @@
     <title>AI Flashcards</title>
 </head>
 <body>
-      {% include "menu-bar.html" %}
+       <!-- Top Navigation Bar -->
+    <header>
+        <div class="logo">LearnlyAI</div>
+        <ul class="nav-links">
+            <li><a href="">Help</a></li>
+            <li><a href="">Contact Us</a></li>
+            <li><a href="">About</a></li>
+        </ul>
+    </header>
 
 
     <!-- Hero Section -->
     <section id="home">
-        <h1>Learn Faster with AI-Generated Flashcards</h1>
-        <p>Create personalized flashcards in seconds. Let AI help you study smarter, not harder!</p>
-        <a href="/upload">
-            <button type="button">Get Started</button>
-        </a>
+        <h1>Learn Faster with AI-Generated Quizzes</h1>
+        <p>Create personalized quizzes in seconds. Let AI help you study smarter, not harder!</p>
         <a href="{{ url_for('google.login') }}">
             <button type="button">Login with Google</button>
         </a>

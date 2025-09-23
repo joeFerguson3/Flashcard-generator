@@ -57,3 +57,8 @@
 body{
     background: linear-gradient(180deg, #f0fdf4 0%, #f5f7fa 100%);
 }
+
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
+}

@@ -18,7 +18,7 @@ function generateQuiz() {
     console.log(isEdited)
     if (isEdited) {
         const notes = [...document.querySelectorAll('.sub-card')].map(card => card.innerText.trim());
-        
+
         fetch('/regenerate-notes', {
             method: 'POST',
             headers: {
@@ -43,7 +43,7 @@ function generateQuiz() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({subject: subject.innerText, title: title.innerText, notes: getNotes() })
+            body: JSON.stringify({ subject: subject.innerText, title: title.innerText, notes: getNotes() })
         })
             .then(response => {
                 if (response.redirected) {
@@ -80,4 +80,78 @@ function getNotes() {
         });
     });
     return data
+}
+
+function deleteNote(event) {
+    const button = event.target;
+    const subCard = button.closest('.sub-card');
+
+    if(button.closest('.card-nav').querySelectorAll('.sub-card').length === 1){
+        button.closest('.card-nav').remove();
+    }
+        subCard.remove();
+}
+
+function enhanceNote(event) {
+    const button = event.target;
+    const card = button.closest('.card-nav');
+
+    const subCards = card.querySelectorAll('.sub-card');
+    if (subCards.length === 0) return; // No sub-cards to enhance
+
+    // const mainTitle = card.querySelector('h2');
+    // let contentLines = "### " + mainTitle.innerText.trim() + "\n";
+    contentLines = ""
+    for (const subCard of subCards) {
+
+        const subTitle = subCard.querySelector('h3').innerText.trim();
+        const contentSpans = subCard.querySelector('.content').innerText;
+        contentLines += "##" + subTitle + "\n" + contentSpans + "\n\n";
+    }
+
+    console.log(contentLines)
+    fetch('/enhance-note', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ note: contentLines })
+    })
+        .then(response => response.json())
+        .then(data => {
+            displayEnhancedNote(data.note, card);
+        })
+}
+
+// Displays the enhanced note on the page
+function displayEnhancedNote(enhancedText, card) {
+    html = ""
+    mainTitle = ""
+    for (subCard of enhancedText) {
+        if (subCard['main_title'] != mainTitle) {
+            html +=  `<div class="card-nav">
+                <div class="title">
+                    <h2 contenteditable="true">${subCard['main_title']}</h2>
+                    <button onclick="enhanceNote(event)" contenteditable="false"
+                        class="sub-card-button edit">enhance</button>
+                </div>`
+            mainTitle = subCard['main_title']
+        }
+
+        html += `<div class="sub-card">
+                            <div class="sub-note-container">
+                                <h3 contenteditable="true" >${subCard['sub_title']}</h3>
+                                <div class="sub-card-btn-container">
+                                    <button onclick="deleteNote(event)" contenteditable="false"
+                                        class="sub-card-button delete">delete</button>
+                                </div>
+                            </div>`
+        html += `<div class="content" contenteditable="true">`
+        for (line of subCard['content']) {
+            html += `${line}<br>`
+        }
+        html += `</div></div></div>`
+    }
+
+    card.outerHTML = html;
 }
