@@ -99,8 +99,6 @@ function enhanceNote(event) {
     const subCards = card.querySelectorAll('.sub-card');
     if (subCards.length === 0) return; // No sub-cards to enhance
 
-    // const mainTitle = card.querySelector('h2');
-    // let contentLines = "### " + mainTitle.innerText.trim() + "\n";
     contentLines = ""
     for (const subCard of subCards) {
 
