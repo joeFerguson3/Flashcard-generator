@@ -8,12 +8,13 @@ body {
 
 /* Keep layout centered */
 main {
-  max-width: 1200px;
+ max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
+
   display: flex;
-  justify-content: center;
-  flex-direction: column;
+  flex-direction: column;    
+  align-items: center;      
   gap: 2rem;
 }
 
@@ -50,6 +51,7 @@ main {
   padding: 20px;
   background-color: #ffffff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  width: 100%;
 }
 
 /* Subjects container (scrollable area) */
