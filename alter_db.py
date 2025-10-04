@@ -7,8 +7,8 @@ conn = sqlite3.connect("instance/flashcards.db")
 cursor = conn.cursor()
 
 cursor.execute("""
-    ALTER TABLE note_set
-    ADD COLUMN subject VARCHAR(255) NOT NULL DEFAULT 'Default';
+    ALTER TABLE question
+    ADD COLUMN title VARCHAR(255) NOT NULL DEFAULT 'Default';
 """)
 
 # save and close

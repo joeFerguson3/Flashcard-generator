@@ -17,15 +17,7 @@ main {
   gap: 2rem;
 }
 
-h1 {
-  text-align: center; /* center title like Duolingo */
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin-bottom: 20px;
-  color: #1e3a8a; /* stronger theme color */
-}
 
-/* Control inputs with more playful style */
 .controls {
   display: flex;
   justify-content: center;

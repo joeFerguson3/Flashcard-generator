@@ -87,3 +87,7 @@ h1 {
      box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
 }
 
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
+}

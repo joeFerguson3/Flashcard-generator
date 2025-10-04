@@ -12,6 +12,18 @@ body {
     line-height: 1.6;
 }
 
+main{
+    height: 100%;
+    background-color: none;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  min-height: 100vh;
+}
+
 /* Top Navigation Bar */
 header {
     margin-bottom: 50px;
@@ -48,7 +60,7 @@ header .nav-links a {
 }
 
 header .nav-links a:hover {
-    color: #007bff; /* bright yellow hover */
+    color: #007bff;
     transform: scale(1.1);
 }
 
@@ -86,7 +98,6 @@ section#home {
 section#home h1 {
     font-size: 3rem;
     margin-bottom: 1rem;
-    color: #333;
 }
 
 section#home p {

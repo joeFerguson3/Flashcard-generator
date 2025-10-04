@@ -4,7 +4,7 @@ from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
 import os
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" #HTTP ok, change for production
+# os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" #HTTP ok, change for production
 
 load_dotenv()
 def create_app():
