@@ -22,7 +22,7 @@
 
     {% if data %}
     {% for main_title, notes in data|groupby('main_title') %}
-    
+
     <div id="{{ main_title }}" class="card-nav" {% if not loop.first %}style="display:none;" {% endif %}>
         <h2>{{ main_title }}</h2>
         <div class="main-title-block" id="{{ main_title }}">
@@ -83,12 +83,14 @@
         </div>
 
         {% elif q.type == "true-false" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} " >
+        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <h3>{{q.question}}</h3>
                 <form class="true-false-form">
-                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_T" value="true">True</button>
-                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_F" value="false">False</button>
+                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_T"
+                        value="true">True</button>
+                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_F"
+                        value="false">False</button>
                 </form>
             </div>
             <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
@@ -102,7 +104,8 @@
                 <form class="true-false-form">
                     {% set options = q.options | shuffle %}
                     {% for opt in options %}
-                        <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')" value="{{ opt }}">{{ opt }}</button>
+                    <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                        value="{{ opt }}">{{ opt }}</button>
                     {% endfor %}
                 </form>
             </div>
@@ -116,8 +119,8 @@
                 <p> {{ q.question }}</p>
                 {{ q.answer }}
                 <form method="post">
-                    <textarea name="answer_{{ loop.index }}" class="answer-box"
-                        data-answer="{{ q.answer }}" rows="3" cols="40"></textarea>
+                    <textarea name="answer_{{ loop.index }}" class="answer-box" data-answer="{{ q.answer }}" rows="3"
+                        cols="40"></textarea>
                 </form>
             </div>
             <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
@@ -128,7 +131,7 @@
         <div class="question" id=" q{{main_title}}{{ loop.index }} ">
             <div class="question-box">
                 <h3>{{q.question}}</h3>
-                <form onsubmit="checkOrdering(event)"  data-answer='{{ q.answer |tojson }}'>
+                <form onsubmit="checkOrdering(event)" data-answer='{{ q.answer |tojson }}'>
                     <ol>
                         {% set options = q.options | shuffle %}
                         {% for opt in options %}
@@ -157,7 +160,7 @@
                 <h2> Finish </h2>
             </button>
         </form>
-
+ {% include "footer.html" %}
 </body>
 
 </html>

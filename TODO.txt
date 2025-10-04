@@ -14,3 +14,14 @@ check flash card owner when editing
 
 
 notes indentations, note page
+
+
+
+
+auto select next question text box
+
+
+
+
+
+filter text generated e.g remove '
