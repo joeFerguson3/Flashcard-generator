@@ -4,11 +4,19 @@ from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
 import os
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+
 # os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" #HTTP ok, change for production
+
 
 load_dotenv()
 def create_app():
     app = Flask(__name__)
+
+    # For handling proxy server headers
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    app.config['PREFERRED_URL_SCHEME'] = 'https'
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flashcards.db'
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback_secret")
