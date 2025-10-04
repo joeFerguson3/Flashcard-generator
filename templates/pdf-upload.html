@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload PDF</title>
+    <title>Upload PDF | QuizlyNotes</title>
     <link rel="stylesheet" href="static/css/style.css">
      <link rel="stylesheet" href="static/css/pdf-upload.css">
+    <script src="static/js/script.js" defer></script>
 </head>
 <body>
       {% include "menu-bar.html" %}
@@ -17,7 +18,7 @@
         <p>Choose a PDF to generate AI-powered flashcards with LearnlyAI.</p>
         <form action="/upload" method="post" enctype="multipart/form-data">
             <input type="file" id="pdfUpload" name="pdfUpload" accept=".pdf" required>
-            <button type="submit">Upload PDF</button>
+            <button onclick="showLoading('#home')" type="submit">Upload PDF</button>
         </form>
     </section>
 

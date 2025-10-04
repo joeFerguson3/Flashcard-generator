@@ -71,9 +71,9 @@ function next(currentId, skip = true) {
     let nextElement = current.nextElementSibling;
     if (nextElement.nextElementSibling.nextElementSibling.classList.contains("card-nav") || nextElement.nextElementSibling.nextElementSibling.classList.contains("question")) {
         nextElement.style.display = "grid";
-    }else{
-       nextElement = document.getElementById("finish-quiz-btn")
-       nextElement.style.display = "block";
+    } else {
+        nextElement = document.getElementById("finish-quiz-btn")
+        nextElement.style.display = "block";
     }
 
     // Scrolls page down
@@ -208,13 +208,26 @@ function checkOrdering(e) {
         }
     }
 
-    if(correct)increaseScore()
+    if (correct) increaseScore()
     next(form.closest(".question").id, false);
 }
 
 let score = 0
-function increaseScore(){
+function increaseScore() {
     q_num = document.querySelectorAll(".question").length
     score = score + 100 / q_num
     console.log(score)
+}
+
+// Displays loading screen
+function showLoading(element) {
+    let loading = document.querySelector(element)
+
+    loaderHTML = `<div id="overlay" class="overlay">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+    </div>`
+
+    loading.style.position = 'relative';
+    loading.insertAdjacentHTML('beforeend', loaderHTML);
 }

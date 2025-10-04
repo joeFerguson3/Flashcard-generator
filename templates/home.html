@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>My Flashcards</title>
+        <title>My subjects | QuizlyNotes</title>
         <link rel="stylesheet" href="static/css/style.css">
         <link rel="stylesheet" href="static/css/home.css">
     </head>
@@ -12,6 +12,7 @@
     <body>
 
           {% include "menu-bar.html" %}
+          {% include "loading.html" %}
         <main>
 
         <div id="new-class-div">
@@ -19,7 +20,7 @@
         </div>
         <div id="subjects-container">
         <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search flashcard sets...">
+            <input type="text" id="searchInput" placeholder="Search subjects...">
             <select id="sortSelect">
                 <option value="recent">Sort by Recent</option>
                 <option value="az">Sort A-Z</option>
@@ -45,7 +46,7 @@
         {% endif %}
     </div>
         </div>
-        <a href="/upload"> <button id="generate-quiz-btn">Create new quiz</button></a>
+        <a href="/upload"> <button id="generate-quiz-btn">Create Quiz</button></a>
    
 </main>
 
