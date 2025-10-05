@@ -15,7 +15,7 @@ editableSections.forEach(section => {
 });
 
 function generateQuiz() {
-    console.log(isEdited)
+    showLoading("body")
     if (isEdited) {
         const notes = [...document.querySelectorAll('.sub-card')].map(card => card.innerText.trim());
 
@@ -51,7 +51,7 @@ function generateQuiz() {
                 }
             })
     }
-
+    removeLoading();
 };
 
 // Extracts notes from page as JSON
@@ -101,7 +101,7 @@ function enhanceNote(event) {
 
     contentLines = ""
     for (const subCard of subCards) {
-
+        showLoading(subCard)
         const subTitle = subCard.querySelector('h3').innerText.trim();
         const contentSpans = subCard.querySelector('.content').innerText;
         contentLines += "##" + subTitle + "\n" + contentSpans + "\n\n";
@@ -119,6 +119,8 @@ function enhanceNote(event) {
         .then(data => {
             displayEnhancedNote(data.note, card);
         })
+
+    cancelLoading();
 }
 
 // Displays the enhanced note on the page
