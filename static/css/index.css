@@ -1,0 +1,33 @@
+
+
+html, body {
+     all: unset;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f0fdf4;
+}
+
+main {
+     all: unset;
+  flex: 1; /* pushes footer down */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+footer {
+     all: unset;
+  background: #4fc08d;
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
