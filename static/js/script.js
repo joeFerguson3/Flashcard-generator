@@ -221,7 +221,12 @@ function increaseScore() {
 
 // Displays loading screen
 function showLoading(element) {
-    let loading = document.querySelector(element)
+    let loading;
+    if (element.startsWith('.') || element.startsWith('#')) {
+        loading = document.querySelector(element)
+    } else {
+        loading = element
+    }
 
     loaderHTML = `<div id="overlay" class="overlay">
     <div class="spinner"></div>
@@ -230,4 +235,8 @@ function showLoading(element) {
 
     loading.style.position = 'relative';
     loading.insertAdjacentHTML('beforeend', loaderHTML);
+}
+
+function cancelLoading(){
+    document.querySelectorAll('.overlay').forEach(e => e.remove());
 }
