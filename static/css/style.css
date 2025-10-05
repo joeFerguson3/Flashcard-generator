@@ -7,7 +7,7 @@
 }
 
 body {
-    background: linear-gradient(180deg, #f0fdf4 0%, #f5f7fa 100%);
+    background: #f0fdf4;
     color: #333;
     line-height: 1.6;
 }
@@ -16,12 +16,12 @@ main{
     height: 100%;
     background-color: none;
 }
-html, body {
-  height: 100%;
-  margin: 0;
+
+html{
+    height: 100%;
 }
 body {
-  min-height: 100vh;
+  height: 100%;
 }
 
 /* Top Navigation Bar */
@@ -179,6 +179,7 @@ button:hover {
 
 /* Footer */
 footer {
+    display:block;
     background: #4fc08d;
     color: white;
     text-align: center;

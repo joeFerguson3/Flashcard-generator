@@ -84,3 +84,14 @@ main{
   align-items: left;
   gap:15px;
 }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+main, .content {
+  flex: 1;
+}

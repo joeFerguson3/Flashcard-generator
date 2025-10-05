@@ -222,7 +222,7 @@ function increaseScore() {
 // Displays loading screen
 function showLoading(element) {
     let loading;
-    if (element.startsWith('.') || element.startsWith('#')) {
+    if (typeof element === 'string') {
         loading = document.querySelector(element)
     } else {
         loading = element
@@ -233,8 +233,10 @@ function showLoading(element) {
     <p>Loading...</p>
     </div>`
 
+    console.log("laoding: ", loading)
     loading.style.position = 'relative';
     loading.insertAdjacentHTML('beforeend', loaderHTML);
+    console.log("laoding: ", loading)
 }
 
 function cancelLoading(){
