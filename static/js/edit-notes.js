@@ -33,7 +33,7 @@ function generateQuiz() {
                 window.location.href = response.url;
             }
         })
-    removeLoading();
+    // cancelLoading();
 };
 
 // Extracts notes from page as JSON
@@ -50,9 +50,9 @@ function getNotes() {
             const subTitle = sub.querySelector('h3').innerText.trim();
 
             // Get all <span> inside this sub-card as content lines
-            const content = [...sub.querySelectorAll('span')]
-                .map(span => span.innerText.trim())
-                .filter(line => line.length > 0); // skip empty lines
+            const content = [...sub.querySelectorAll('.content')]
+                .flatMap(span => span.innerText.split('\n').map(line => line.trim()))
+                .filter(line => line.length > 0);
 
             data.push({
                 main_title: mainTitle,
@@ -61,6 +61,8 @@ function getNotes() {
             });
         });
     });
+
+    console.log("extracted notes: ", data)
     return data
 }
 

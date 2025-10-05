@@ -73,25 +73,12 @@ button:active {
     gap: 10px;
 }
 
-main{
-  flex-direction: column;
-  display: flex;
-  align-items: center;
-}
-
 .title{
   display: flex;
   align-items: left;
   gap:15px;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-main, .content {
-  flex: 1;
+h2{
+  text-align: center;
 }
