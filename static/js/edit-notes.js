@@ -15,42 +15,24 @@ editableSections.forEach(section => {
 });
 
 function generateQuiz() {
-    showLoading("body")
-    if (isEdited) {
-        const notes = [...document.querySelectorAll('.sub-card')].map(card => card.innerText.trim());
+    showLoading(document.body)
+    console.log("yes")
+    
+    const title = document.getElementById('notes-title')
+    const subject = document.getElementById('notes-subject')
 
-        fetch('/regenerate-notes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ notes: notes })
+    fetch('/generate-quiz', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subject: subject.innerText, title: title.innerText, notes: getNotes() })
+    })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            }
         })
-
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                }
-            });
-
-    } else {
-        console.log("yes")
-        const title = document.getElementById('notes-title')
-        const subject = document.getElementById('notes-subject')
-
-        fetch('/generate-quiz', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ subject: subject.innerText, title: title.innerText, notes: getNotes() })
-        })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                }
-            })
-    }
     removeLoading();
 };
 
@@ -99,9 +81,11 @@ function enhanceNote(event) {
     const subCards = card.querySelectorAll('.sub-card');
     if (subCards.length === 0) return; // No sub-cards to enhance
 
+    showLoading(card)
+
     contentLines = ""
     for (const subCard of subCards) {
-        showLoading(subCard)
+
         const subTitle = subCard.querySelector('h3').innerText.trim();
         const contentSpans = subCard.querySelector('.content').innerText;
         contentLines += "##" + subTitle + "\n" + contentSpans + "\n\n";
@@ -120,7 +104,7 @@ function enhanceNote(event) {
             displayEnhancedNote(data.note, card);
         })
 
-    cancelLoading();
+
 }
 
 // Displays the enhanced note on the page
@@ -153,5 +137,7 @@ function displayEnhancedNote(enhancedText, card) {
         html += `</div></div></div>`
     }
 
+    console.log("new html: ", html)
+    cancelLoading();
     card.outerHTML = html;
 }
