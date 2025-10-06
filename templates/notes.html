@@ -15,42 +15,50 @@
     {% include "menu-bar.html" %}
 
 
-    <main>
-        <h1 contenteditable="true" id="notes-title"> Quiz title </h1>
-        <h2 contenteditable="true" id="notes-subject"> Subject </h2>
-        {% if data %}
-        {% for main_title, notes in data|groupby('main_title') %}
-        {% set safe_title = main_title|replace(' ', '_') %}
+   <main>
+    <h1 contenteditable="true" id="notes-title">Quiz title</h1>
+    <h2 contenteditable="true" id="notes-subject">Subject</h2>
 
-        <div class="card-nav">
-            <div class="title">
-                <h2 contenteditable="true">{{ main_title }}</h2>
-                <button onclick="enhanceNote(event)" contenteditable="false"
-                    class="sub-card-button edit">enhance</button>
-            </div>
-            {% for note in notes %}
-            <div class="sub-card" id="sub_{{ safe_title }}_{{ loop.index0 }}">
-                <div class="sub-note-container">
-                    <h3 contenteditable="true">{{ note.sub_title }}</h3>
-                    <div class="sub-card-btn-container">
-                        <button onclick="deleteNote(event)" contenteditable="false"
-                            class="sub-card-button delete">delete</button>
-                    </div>
+    {% if data %}
+    {% set ns = namespace(prev_title=None) %}
+    {% for note in data %}
+        {% if note.main_title != ns.prev_title %}
+            {% if ns.prev_title is not none %}
                 </div>
-                <div class="content" contenteditable="true">
-                {% for line in note.content %}
-                {{ line }}<br>
-
-                {% endfor %}
+            {% endif %}
+            {% set safe_title = note.main_title|replace(' ', '_') %}
+            <div class="card-nav">
+                <div class="title">
+                    <h2 contenteditable="true">{{ note.main_title }}</h2>
+                    <button onclick="enhanceNote(event)" contenteditable="false"
+                        class="sub-card-button edit">enhance</button>
                 </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
         {% endif %}
-        <button id="generate-button" onclick="generateQuiz()">Generate Quiz</button>
 
-    </main>
+        <div class="sub-card" id="sub_{{ safe_title }}_{{ loop.index0 }}">
+            <div class="sub-note-container">
+                <h3 contenteditable="true">{{ note.sub_title }}</h3>
+                <div class="sub-card-btn-container">
+                    <button onclick="deleteNote(event)" contenteditable="false"
+                        class="sub-card-button delete">delete</button>
+                </div>
+            </div>
+            <div class="content" contenteditable="true">
+                {% for line in note.content %}
+                    {{ line }}<br>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% set ns.prev_title = note.main_title %}
+        {% if loop.last %}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+    <div id="generate-btn-container"><button id="generate-button" onclick="generateQuiz()">Generate Quiz</button></div>
+</main>
 </body>
 
 </html>

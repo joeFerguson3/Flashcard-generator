@@ -16,6 +16,12 @@ def upload():
         if not file or not file.filename.endswith(".pdf"):
             return "Invalid file type."
         
+        file.seek(0, 2)  # move to end
+        size = file.tell()
+        file.seek(0)
+        if size > 25 * 1024 * 1024:
+            return "File too large. Limit is 25 MB."
+
         notes = extract_text(file)
         return render_template("notes.html", data=notes)
 
