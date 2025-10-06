@@ -13,6 +13,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 load_dotenv()
 def create_app():
     app = Flask(__name__)
+    app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024
 
     # For handling proxy server headers
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
