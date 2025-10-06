@@ -1,3 +1,0 @@
-runtime: python311
-
-entrypoint: gunicorn -b :$PORT app:create_app()

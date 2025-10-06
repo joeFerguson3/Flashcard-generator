@@ -360,3 +360,13 @@ def enhance_note():
     note = dict.get("note")
     enhanced_note = extract_definitions(note)
     return {"note": enhanced_note}
+
+@flashcards_bp.route("/delete-quiz", methods=["POST"])
+def delete_quiz():
+    set_id = request.form.get('set-id')
+
+    note_set = NoteSet.query.get(int(set_id))
+    db.session.delete(note_set)
+    db.session.commit()
+   
+    return redirect("/quiz-sets")

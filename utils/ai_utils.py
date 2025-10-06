@@ -123,7 +123,7 @@ def process_chunk(chunk):
       - [Bullet point with key idea or definition]
       -- [Sub-bullet with a supporting detail or example]
       --- [Third level of indentation]
-      Use multiple levels of indentation to show relationships between ideas.
+      Use multiple levels of indentation to show relationships between ideas, you must allways indent points building on other points futher.
            
       Only include essential definitions, concepts, processes, and relevant examples needed for understanding or exams. Exclude irrelevant details like extra dates or background not needed for core concepts. Use clear, simple language and present information in short bullet points as above. Do not make any text bold or itallics. """},
 

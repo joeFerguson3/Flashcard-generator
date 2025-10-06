@@ -68,6 +68,13 @@
                     <h2> Start </h2>
                 </button>
             </form>
+
+            <form method="POST" action="/delete-quiz">
+                <input type="hidden" name="set-name" value="{{ set.name }}">
+                <button class="delete" type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
+                    <h2> Delete </h2>
+                </button>
+            </form>
         </div>
     </main>
 
