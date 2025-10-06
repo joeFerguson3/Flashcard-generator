@@ -62,3 +62,18 @@ button:active {
   transform: translateY(4px);
   box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
+.delete{
+    background-color: #ef4444;
+    box-shadow: 0 4px 0 #b91c1c, 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.delete:hover{
+    background-color: #dc2626;
+    box-shadow: 0 6px 0 #b91c1c, 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.delete:active{
+    transform: translateY(4px);
+  box-shadow: 0 2px 0 #b91c1c, 0 4px 8px rgba(0, 0, 0, 0.2);
+}
