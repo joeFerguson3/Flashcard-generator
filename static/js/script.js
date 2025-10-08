@@ -73,6 +73,11 @@ function next(currentId, skip = true) {
         nextElement.style.display = "grid";
     } else {
         nextElement = document.getElementById("finish-quiz-btn")
+
+        let score = document.getElementById("final-score")
+        score.value = Math.floor(getScore() * 100) / 100
+
+        nextElement.innerText = Math.floor(getScore() * 100) / 100
         nextElement.style.display = "block";
     }
 
@@ -133,10 +138,10 @@ function checkAnswerTF(event, answer) {
         button.classList.add("incorrect-answer");
         question = button.closest(".true-false-form")
         allButtons = question.querySelectorAll("button");
-        console.log(allButtons)
+       
         allButtons.forEach(btn => {
             if (btn.innerText.trim() === answer.trim()) {
-                btn.classList.add("correct-answer");
+                btn.classList.add("corrected-answer");
             }
         });
     }
@@ -241,4 +246,13 @@ function showLoading(element) {
 
 function cancelLoading(){
     document.querySelectorAll('.overlay').forEach(e => e.remove());
+}
+
+function getScore() {
+    let correctQuestions = document.querySelectorAll('.correct-answer').length;
+    let incorrectQuestions = document.querySelectorAll('.incorrect-answer').length;
+
+    let totalQuestions = correctQuestions + incorrectQuestions;
+    let score = (correctQuestions / totalQuestions) * 100;
+    return score;
 }

@@ -7,6 +7,7 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/")
 def home():
+    session["user_id"] = 1 # Simulate a logged-in user for testing
     if('user_id' in session):
         return redirect("/home")
     if not google.authorized:

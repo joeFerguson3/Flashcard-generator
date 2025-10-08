@@ -326,6 +326,7 @@ def quiz_preview_content():
 @flashcards_bp.route("/end-quiz", methods=["POST"])
 def end_quiz():
     current_set_id = request.form.get('set-id')
+    score = request.form.get('final-score')
     current_set = NoteSet.query.filter_by(id=current_set_id, user_id=session.get("user_id")).first()
     
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=current_set.subject).all()
@@ -336,6 +337,10 @@ def end_quiz():
         }
         for set in all_sets
     ]
+
+    current_set = NoteSet.query.get(int(current_set_id))
+    current_set.score = score
+    db.session.commit()
 
     next_set = (
         NoteSet.query
