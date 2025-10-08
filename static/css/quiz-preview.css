@@ -2,16 +2,31 @@
     overflow-y: auto;
     overflow-x: hidden;
     background-color: #3da876;
-    width: 260px;
-    height: 100vh;
-    position: fixed;
+    max-width: 260px;
+    min-width: 130px;
+    width:20%;
+    height: 110vh;
     top: 0;
     left: 0;
     padding-top: 60px;
+     margin-top: -60px;
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
     border-right: 1px solid rgba(255, 255, 255, 0.2);
+    
+    
 }
 
+main {
+    margin: -60px 0 0 0;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: row;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    gap:10px;
+
+}
 .side-bar-btn {
     box-shadow: none;
     width: 100%;
@@ -40,9 +55,10 @@
 }
 
 #main-content {
-    margin: 80px;
+    margin-top: 60px;
+    margin-right:20px;
+    margin-left:20px;
     height:auto;
-    margin-left: 340px;
     flex: 1;
     text-align: center;
     display: flex;

@@ -15,6 +15,7 @@
 
       {% include "menu-bar.html" %}
     
+      <main>
         <div id="side-menu">
             <br>
             {% for set_item in other_sets %}
@@ -55,6 +56,11 @@
         <div id="main-content">
             <h1 id="title">{{ set.name }}</h1>
 
+            <div>
+                <h3>Score</h3>
+                <p>{{ set.score }}%</p>
+                
+            </div>
             <form method="POST" action="/edit-quiz">
                 <input type="hidden" name="set-name" value="{{ set.name }}">
                 <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">

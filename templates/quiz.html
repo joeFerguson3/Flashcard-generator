@@ -88,9 +88,9 @@
             <div class="question-box">
                 <h3>{{q.question}}</h3>
                 <form class="true-false-form">
-                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_T"
+                    <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_T"
                         value="true">True</button>
-                    <button onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_F"
+                    <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_F"
                         value="false">False</button>
                 </form>
             </div>
@@ -157,6 +157,8 @@
         {% endif %}
         <form method="POST" action="/end-quiz">
             <input type="hidden" name="set-id" value="{{ set_id }}">
+            <input type="hidden" name="final-score" id="final-score">
+
             <button type="submit" id="finish-quiz-btn">
                 <h2> Finish </h2>
             </button>
