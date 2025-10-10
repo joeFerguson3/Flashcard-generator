@@ -718,11 +718,10 @@ body.app-shell {
 
 .btn-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 18px 35px rgba(239, 68, 68, 0.25);
 }
-
 .btn-danger:hover {
-    box-shadow: 0 24px 40px rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: none;
 }
 
 .app-panel {
@@ -1259,7 +1258,7 @@ body.app-shell {
     padding: 1.4rem;
     border: 1px solid rgba(148, 163, 184, 0.16);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-    width: min(760px, 100%);
+    width: 100%;
     margin: 0 auto;
     display: grid;
     gap: 1rem;
@@ -1287,7 +1286,7 @@ body.app-shell {
     border-radius: var(--radius-md);
     background: rgba(248, 250, 252, 0.9);
     border: 1px solid rgba(148, 163, 184, 0.2);
-    min-height: 120px;
+    min-height: 50px;
     line-height: 1.45;
 }
 

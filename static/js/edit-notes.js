@@ -111,35 +111,54 @@ function enhanceNote(event) {
 
 // Displays the enhanced note on the page
 function displayEnhancedNote(enhancedText, card) {
-    html = ""
-    mainTitle = ""
-    for (subCard of enhancedText) {
-        if (subCard['main_title'] != mainTitle) {
-            html +=  `<div class="card-nav">
-                <div class="title">
-                    <h2 contenteditable="true">${subCard['main_title']}</h2>
-                    <button onclick="enhanceNote(event)" contenteditable="false"
-                        class="sub-card-button edit">enhance</button>
-                </div>`
-            mainTitle = subCard['main_title']
+    let html = "";
+    let mainTitle = "";
+
+    for (const [index, subCard] of enhancedText.entries()) {
+        // If it's a new main title group
+        if (subCard['main_title'] !== mainTitle) {
+            if (mainTitle !== "") {
+                // Close the previous card-nav if it exists
+                html += `</div>`;
+            }
+
+            html += `
+                <div class="card-nav note-group">
+                    <div class="title note-group__header">
+                        <h2 contenteditable="true">${subCard['main_title']}</h2>
+                        <div class="note-card-btns">
+                            <button onclick="enhanceNote(event)" contenteditable="false" class="sub-card-button edit btn-secondary btn">Enhance</button>
+                        </div>
+                    </div>
+            `;
+
+            mainTitle = subCard['main_title'];
         }
 
-        html += `<div class="sub-card">
-                            <div class="sub-note-container">
-                                <h3 contenteditable="true" >${subCard['sub_title']}</h3>
-                                <div class="sub-card-btn-container">
-                                    <button onclick="deleteNote(event)" contenteditable="false"
-                                        class="sub-card-button delete">delete</button>
-                                </div>
-                            </div>`
-        html += `<div class="content" contenteditable="true">`
-        for (line of subCard['content']) {
-            html += `${line}<br>`
-        }
-        html += `</div></div></div>`
+        // Build each sub-card
+        html += `
+            <div class="sub-card" id="sub_${subCard['main_title'].replace(/\s+/g, '_')}_${index}">
+                <div class="sub-note-container">
+                    <h3 contenteditable="true">${subCard['sub_title']}</h3>
+                    <div class="sub-card-btn-container note-card-btns">
+                        <button onclick="deleteNote(event)" contenteditable="false" class="sub-card-button delete btn btn-danger">Delete</button>
+                    </div>
+                </div>
+                <div class="content note-content" contenteditable="true">
+                    ${subCard['content'].map(line => `${line}<br>`).join('')}
+                </div>
+            </div>
+        `;
     }
 
-    console.log("new html: ", html)
+    // Close last opened note-group if it exists
+    if (html !== "") {
+        html += `</div>`;
+    }
+
     cancelLoading();
+
+    // Replace the existing card with new HTML
     card.outerHTML = html;
 }
+
