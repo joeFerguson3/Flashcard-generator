@@ -5,40 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload PDF | QuizlyNotes</title>
     <link rel="stylesheet" href="static/css/style.css">
-     <link rel="stylesheet" href="static/css/pdf-upload.css">
+    <link rel="stylesheet" href="static/css/pdf-upload.css">
     <script src="static/js/script.js" defer></script>
 </head>
-<body>
+<body class="app-shell">
       {% include "menu-bar.html" %}
 
+    <main class="app-main">
+        <section class="page-header">
+            <div>
+                <span class="page-badge">New quiz</span>
+                <h1>Generate a quiz from your PDF</h1>
+                <p>Upload a document and QuizlyNotes will craft personalized flashcards and quizzes in seconds.</p>
+            </div>
+            <div class="page-actions">
+                <a href="/home" class="btn-secondary btn">Back to dashboard</a>
+            </div>
+        </section>
 
-    <!-- Upload Section -->
-    <section id="home">
-        <h1> Generate Quiz</h1>
-        <p>Choose a PDF to generate an AI-powered quiz with quizlyNotes.</p>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" id="pdfUpload" name="pdfUpload" accept=".pdf" required>
-            <button onclick="showLoading('#home')" type="submit">Upload PDF</button>
-        </form>
-    </section>
+        <section class="app-panel upload-panel">
+            <div class="app-panel__header">
+                <div>
+                    <h2>Upload your study material</h2>
+                    <p>We support PDFs up to 10MB. Keep each file focused on a single topic for the best results.</p>
+                </div>
+            </div>
+            <form action="/upload" method="post" enctype="multipart/form-data" class="app-form">
+                <div class="form-field">
+                    <label for="pdfUpload">Choose a PDF</label>
+                    <input type="file" id="pdfUpload" name="pdfUpload" accept=".pdf" required>
+                </div>
+                <button onclick="showLoading('.upload-panel')" type="submit" class="btn">Upload PDF</button>
+            </form>
+        </section>
 
-        <!-- Instructions Section -->
-    <section id="instructions">
-        <h2>How to Upload Your PDF</h2>
-        <p>
-            1. Make sure your PDF contains the text you want to turn into a quiz.  
-        </p>
-        <p>
-            2. Maximum file size: 10MB. Only PDF files are supported.
-        </p>
-        <p>
-            3. After uploading, LearnlyAI will process your PDF and generate a personalized quiz instantly.  
-        </p>
-        <p>
-            4. Keep your PDF organized by topic for the best results.
-        </p>
-</section>
-
+        <section class="app-panel">
+            <div class="app-panel__header">
+                <div>
+                    <h2>How to get the most accurate quiz</h2>
+                    <p>These quick tips help QuizlyNotes highlight the concepts that matter most.</p>
+                </div>
+            </div>
+            <ol class="upload-instructions">
+                <li>Make sure your PDF contains the text you want to turn into a quiz.</li>
+                <li>Keep each upload under 10MB. Only PDF files are supported.</li>
+                <li>After uploading, QuizlyNotes processes the file and prepares a personalized quiz instantly.</li>
+                <li>Organize PDFs by topic for the sharpest flashcards and question sets.</li>
+            </ol>
+        </section>
+    </main>
 
  {% include "footer.html" %}
 </body>
