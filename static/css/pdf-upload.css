@@ -1,34 +1,57 @@
-/* Instructions Section */
-#instructions {
-    padding: 4rem 2rem;
-    text-align: center;
-    background: #fff0f5; /* light pastel background */
-    border-radius: 15px;
-    margin: 2rem auto;
-    max-width: 800px;
+.upload-panel .app-form {
+    display: grid;
+    gap: 1.5rem;
 }
 
-#instructions h2 {
-    color: #ff6f91; /* playful accent color */
-    margin-bottom: 1.5rem;
-    font-size: 2rem;
+.upload-panel input[type="file"] {
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    border: 1px dashed rgba(99, 102, 241, 0.4);
+    background: rgba(248, 250, 252, 0.95);
+    cursor: pointer;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-#instructions p {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+.upload-panel input[type="file"]:focus,
+.upload-panel input[type="file"]:hover {
+    outline: none;
+    border-color: rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: white;
+}
+
+.upload-instructions {
+    counter-reset: upload-steps;
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.upload-instructions li {
+    position: relative;
+    padding: 1rem 1rem 1rem 3.25rem;
+    border-radius: var(--radius-md);
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #0f172a;
     line-height: 1.6;
 }
 
-#instructions p:last-child {
-    margin-bottom: 0;
-}
-
-#pdfUpload{
-    background-color: aliceblue;
-}
-
-button:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 #3da876, 0 4px 8px rgba(0, 0, 0, 0.2);
+.upload-instructions li::before {
+    counter-increment: upload-steps;
+    content: counter(upload-steps);
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.18);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
 }

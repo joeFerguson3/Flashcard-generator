@@ -1,15 +1,21 @@
-<h1 id="title">{{ set.name }}</h1>
+<div class="quiz-summary">
+    <h1 id="title">{{ set.name }}</h1>
+    <div class="quiz-score">{{ set.score }}%</div>
+</div>
 
-<form method="POST" action="/edit-quiz">
-    <input type="hidden" name="set-name" value="{{ set.name }}">
-    <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-        <h2>Edit</h2>
-    </button>
-</form>
+<div class="quiz-actions">
+    <form method="POST" action="/open-quiz">
+        <input type="hidden" name="set-name" value="{{ set.name }}">
+        <button type="submit" class="btn" name="set-id" value="{{ set.id }}">Start quiz</button>
+    </form>
 
-<form method="POST" action="/open-quiz">
-    <input type="hidden" name="set-name" value="{{ set.name }}">
-    <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-        <h2>Start</h2>
-    </button>
-</form>
+    <form method="POST" action="/edit-quiz">
+        <input type="hidden" name="set-name" value="{{ set.name }}">
+        <button type="submit" class="btn-secondary btn" name="set-id" value="{{ set.id }}">Edit questions</button>
+    </form>
+
+    <form method="POST" action="/delete-quiz">
+        <input type="hidden" name="set-name" value="{{ set.name }}">
+        <button class="btn btn-danger" type="submit" name="set-id" value="{{ set.id }}">Delete quiz</button>
+    </form>
+</div>

@@ -11,14 +11,24 @@
     <script src="static/js/edit-notes.js" defer></script>
 </head>
 
-<body>
+<body class="app-shell">
     {% include "menu-bar.html" %}
 
 
-   <main>
-    <h1 contenteditable="true" id="notes-title">Quiz title</h1>
-    <h2 contenteditable="true" id="notes-subject">Subject</h2>
+   <main class="app-main">
+        <section class="page-header">
+            <div>
+                <span class="page-badge">Notes</span>
+                <h1 contenteditable="true" id="notes-title">Quiz title</h1>
+                <h2 class="note-meta" contenteditable="true" id="notes-subject">Subject</h2>
+                <p class="note-meta">Click any heading or paragraph to fine-tune your notes before generating a quiz.</p>
+            </div>
+            <div class="page-actions">
+                <button id="generate-button" class="btn" onclick="generateQuiz()">Generate quiz</button>
+            </div>
+        </section>
 
+        <section class="note-grid">
     {% if data %}
     {% set ns = namespace(prev_title=None) %}
     {% for note in data %}
@@ -27,23 +37,25 @@
                 </div>
             {% endif %}
             {% set safe_title = note.main_title|replace(' ', '_') %}
-            <div class="card-nav">
-                <div class="title">
+            <div class="card-nav note-group">
+                <div class="title note-group__header">
                     <h2 contenteditable="true">{{ note.main_title }}</h2>
-                    <button onclick="enhanceNote(event)" contenteditable="false"
-                        class="sub-card-button edit">enhance</button>
+                    <div class="note-card-btns">
+                        <button onclick="enhanceNote(event)" contenteditable="false"
+                            class="sub-card-button edit btn-secondary btn">Enhance</button>
+                    </div>
                 </div>
         {% endif %}
 
         <div class="sub-card" id="sub_{{ safe_title }}_{{ loop.index0 }}">
             <div class="sub-note-container">
                 <h3 contenteditable="true">{{ note.sub_title }}</h3>
-                <div class="sub-card-btn-container">
+                <div class="sub-card-btn-container note-card-btns">
                     <button onclick="deleteNote(event)" contenteditable="false"
-                        class="sub-card-button delete">delete</button>
+                        class="sub-card-button delete btn btn-danger">Delete</button>
                 </div>
             </div>
-            <div class="content" contenteditable="true">
+            <div class="content note-content" contenteditable="true">
                 {% for line in note.content %}
                     {{ line }}<br>
                 {% endfor %}
@@ -56,8 +68,7 @@
         {% endif %}
     {% endfor %}
 {% endif %}
-
-    <div id="generate-btn-container"><button id="generate-button" onclick="generateQuiz()">Generate Quiz</button></div>
+        </section>
 </main>
 </body>
 

@@ -7,49 +7,66 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>My Quizzes | QuizlyNotes</title>
         <link rel="stylesheet" href="static/css/style.css">
-        <link rel="stylesheet" href="static/css/home.css">
     </head>
 
 
-    <body>
+    <body class="app-shell">
 
           {% include "menu-bar.html" %}
-        <main>
+        <main class="app-main">
 
-        <div id="new-class-div">
-            <h1>{{subject}}</h1>
-        </div>
-        <div id="subjects-container">
-        <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search flashcard sets...">
-            <select id="sortSelect">
-                <option value="recent">Sort by Recent</option>
-                <option value="az">Sort A-Z</option>
-                <option value="za">Sort Z-A</option>
-            </select>
-        </div>
+        <section class="page-header">
+            <div>
+                <span class="page-badge">{{ subject }}</span>
+                <h1>Quizzes for this subject</h1>
+                <p>Review generated quizzes, make quick edits, and launch the one you want to study right now.</p>
+            </div>
+            <div class="page-actions">
+                <a href="/home" class="btn-secondary btn">All subjects</a>
+                <a href="/upload" class="btn">Create new quiz</a>
+            </div>
+        </section>
 
-         <div class="subjects-container" id="subjectsContainer">
+        <section class="app-panel">
+            <div class="app-panel__header">
+                <div>
+                    <h2>{{ subject }} quizzes</h2>
+                    <p>Use the filters to find the quiz you need in moments.</p>
+                </div>
+            </div>
+            <div class="app-controls">
+                <label class="app-field">
+                    <span class="sr-only">Search quizzes</span>
+                    <input type="text" id="searchInput" placeholder="Search quizzes" aria-label="Search quizzes">
+                </label>
+                <label class="app-field">
+                    <span class="sr-only">Sort quizzes</span>
+                    <select id="sortSelect" aria-label="Sort quizzes">
+                        <option value="recent">Sort by recent</option>
+                        <option value="az">Sort A-Z</option>
+                        <option value="za">Sort Z-A</option>
+                    </select>
+                </label>
+            </div>
+
+         <div class="app-card-grid" id="subjectsContainer">
         {% if quizzes %}
             {% for set in quizzes %}
-            <div class="subject-form">
                 <form method="POST" action="/quiz-preview">
                     <input type="hidden" name="set-id" value="{{ set.id }}">
-                    <button type="submit" class="subject-button">
+                    <button type="submit" class="subject-card">
                         <h2>{{ set.name }}</h2>
+                        <span>Open the quiz summary and start studying.</span>
                     </button>
                 </form>
-            </div>
             {% endfor %}
         {% else %}
-            <p>No quizzes saved yet.</p>
+                <p class="empty-state">No quizzes saved yet. Generate one to get started.</p>
         {% endif %}
     </div>
-        </div>
-           
-        <a href="/upload"> <button id="generate-quiz-btn">Create Quiz</button></a>
-  
-   
+        </section>
+
+
 </main>
  {% include "footer.html" %}
     </body>

@@ -5,48 +5,65 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>My subjects | QuizlyNotes</title>
         <link rel="stylesheet" href="static/css/style.css">
-        <link rel="stylesheet" href="static/css/home.css">
     </head>
 
 
-    <body>
+    <body class="app-shell">
 
           {% include "menu-bar.html" %}
-        <main>
+        <main class="app-main">
 
-        <div id="new-class-div">
-            <h1>Subjects</h1>
-        </div>
-        <div id="subjects-container">
-        <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search subjects...">
-            <select id="sortSelect">
-                <option value="recent">Sort by Recent</option>
-                <option value="az">Sort A-Z</option>
-                <option value="za">Sort Z-A</option>
-            </select>
-            <!-- <button id="new-subject-btn">Create new subject</button> -->
-        </div>
+        <section class="page-header">
+            <div>
+                <span class="page-badge">Subjects</span>
+                <h1>Curate the topics you learn best</h1>
+                <p>Browse every subject you&apos;ve explored with QuizlyNotes. Search, sort, and jump back into a collection in seconds.</p>
+            </div>
+            <div class="page-actions">
+                <a href="/upload" class="btn">Create new quiz</a>
+                <a href="/sets" class="btn-secondary btn">View flashcard sets</a>
+            </div>
+        </section>
 
-         <div class="subjects-container" id="subjectsContainer">
+        <section class="app-panel">
+            <div class="app-panel__header">
+                <div>
+                    <h2>Your subjects</h2>
+                    <p>Pick a subject to open its quizzes and continue refining your study stack.</p>
+                </div>
+            </div>
+            <div class="app-controls">
+                <label class="app-field">
+                    <span class="sr-only">Search subjects</span>
+                    <input type="text" id="searchInput" placeholder="Search subjects" aria-label="Search subjects">
+                </label>
+                <label class="app-field">
+                    <span class="sr-only">Sort subjects</span>
+                    <select id="sortSelect" aria-label="Sort subjects">
+                        <option value="recent">Sort by recent</option>
+                        <option value="az">Sort A-Z</option>
+                        <option value="za">Sort Z-A</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="app-card-grid" id="subjectsContainer">
         {% if subjects %}
             {% for subject in subjects %}
-            <div class="subject-form">
                 <form method="POST" action="/open-subject-folder">
                     <input type="hidden" name="subject-name" value="{{ subject[0] }}">
-                    <button type="submit" class="subject-button">
+                    <button type="submit" class="subject-card">
                         <h2>{{ subject[0] }}</h2>
+                        <span>Jump back into this subject&apos;s quizzes.</span>
                     </button>
                 </form>
-            </div>
             {% endfor %}
         {% else %}
-            <p>No quizzes saved yet.</p>
+                <p class="empty-state">No subjects yet. Upload a PDF to generate your first quiz.</p>
         {% endif %}
-    </div>
-        </div>
-        <a href="/upload"> <button id="generate-quiz-btn">Create Quiz</button></a>
-   
+            </div>
+        </section>
+
 </main>
 
 
