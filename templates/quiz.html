@@ -35,39 +35,43 @@
         {% for main_title, notes in data|groupby('main_title') %}
         {% set title_id = main_title|replace(' ', '_')|lower %}
         {% set is_active = step.count == 0 %}
-        <section id="note-{{ title_id }}" class="quiz-step card-nav quiz-card{% if is_active %} is-active{% endif %}" {% if not is_active %}hidden{% endif %}>
-            <div class="quiz-card__header">
-                <h2>{{ main_title }}</h2>
-                <div class="quiz-card__controls">
-                    <button type="button" onclick="previousCard('{{ title_id }}')" aria-label="Previous card">
-                        <img src="static/images/back-arrow.svg" alt="Previous">
-                    </button>
-                    <button type="button" onclick="nextCard('{{ title_id }}')" aria-label="Next card">
-                        <img src="static/images/foward-arrow.svg" alt="Next">
-                    </button>
+        <section id="note-{{ title_id }}" class="quiz-step card-nav{% if is_active %} is-active{% endif %}" {% if not is_active %}hidden{% endif %}>
+            <div class="quiz-card">
+                <div class="quiz-card__header">
+                    <h2>{{ main_title }}</h2>
+                    <div class="quiz-card__controls">
+                        <button type="button" onclick="previousCard('{{ title_id }}')" aria-label="Previous card">
+                            <img src="static/images/back-arrow.svg" alt="Previous">
+                        </button>
+                        <button type="button" onclick="nextCard('{{ title_id }}')" aria-label="Next card">
+                            <img src="static/images/foward-arrow.svg" alt="Next">
+                        </button>
+                    </div>
+                </div>
+                <div class="quiz-card__body">
+                    {% for note in notes %}
+                    {% if loop.first %}
+                    <div class="sub-card note-card" id="{{ title_id }}{{ loop.index0 }}">
+                    {% else %}
+                    <div class="sub-card note-card" id="{{ title_id }}{{ loop.index0 }}" style="display: none;">
+                    {% endif %}
+                        <h3>{{ note.sub_title }}</h3>
+                        <ul class="quiz-card__list">
+                            {% for line in note.content %}
+                            {% set level = line | length - line.lstrip('-') | length %}
+                            <li style="margin-left: {{ level * 20 }}px;">{{ line | lstrip('- ') }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="quiz-card__footer">
+                    <div id="card_num_container{{ title_id }}" class="card-num">
+                        <span id="card_num_{{ title_id }}">0</span>
+                    </div>
                 </div>
             </div>
-            <div class="quiz-card__body">
-                {% for note in notes %}
-                {% if loop.first %}
-                <div class="sub-card note-card" id="{{ title_id }}{{ loop.index0 }}">
-                {% else %}
-                <div class="sub-card note-card" id="{{ title_id }}{{ loop.index0 }}" style="display: none;">
-                {% endif %}
-                    <h3>{{ note.sub_title }}</h3>
-                    <ul class="quiz-card__list">
-                        {% for line in note.content %}
-                        {% set level = line | length - line.lstrip('-') | length %}
-                        <li style="margin-left: {{ level * 20 }}px;">{{ line | lstrip('- ') }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endfor %}
-            </div>
-            <div class="quiz-card__footer">
-                <div id="card_num_container{{ title_id }}" class="card-num">
-                    <span id="card_num_{{ title_id }}">0</span>
-                </div>
+            <div class="quiz-step__actions">
                 <button class="btn-secondary btn" data-role="next" onclick="next('note-{{ title_id }}')">Continue</button>
             </div>
         </section>
@@ -80,91 +84,101 @@
         {% set q_id = 'question-' ~ title_id ~ '-' ~ question_index %}
         {% set is_question_active = step.count == 0 %}
         {% if q.type == "fill-in-blank" %}
-        <section class="quiz-step question quiz-card{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
-            <div class="quiz-card__body">
-                <h3 class="quiz-question">{{ q.type }}</h3>
-                <form method="post" class="quiz-form">
-                    <p>
-                        {% set parts = q.question.split("{blank}") %}
-                        {% for part in parts %}
-                        {{ part }}
-                        {% if not loop.last %}
-                        <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10"
-                            data-answer="{{ q.answer[loop.index0] }}" />
-                        {% endif %}
-                        {% endfor %}
-                    </p>
-                </form>
+        <section class="quiz-step question{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
+            <div class="quiz-card">
+                <div class="quiz-card__body">
+                    <h3 class="quiz-question">{{ q.type }}</h3>
+                    <form method="post" class="quiz-form">
+                        <p>
+                            {% set parts = q.question.split("{blank}") %}
+                            {% for part in parts %}
+                            {{ part }}
+                            {% if not loop.last %}
+                            <input class="blank-textbox" type="text" name="answer_{{ loop.index0 }}" size="10"
+                                data-answer="{{ q.answer[loop.index0] }}" />
+                            {% endif %}
+                            {% endfor %}
+                        </p>
+                    </form>
+                </div>
             </div>
-            <div class="quiz-card__footer">
+            <div class="quiz-step__actions">
                 <button class="btn" data-role="next" onclick="next('{{ q_id }}')">Continue</button>
             </div>
         </section>
 
         {% elif q.type == "true-false" %}
-        <section class="quiz-step question quiz-card{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
-            <div class="quiz-card__body">
-                <h3 class="quiz-question">{{ q.question }}</h3>
-                <form class="quiz-options">
-                    <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
-                        id="answer_{{ loop.index }}_T" value="true">True</button>
-                    <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
-                        id="answer_{{ loop.index }}_F" value="false">False</button>
-                </form>
+        <section class="quiz-step question{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
+            <div class="quiz-card">
+                <div class="quiz-card__body">
+                    <h3 class="quiz-question">{{ q.question }}</h3>
+                    <form class="quiz-options">
+                        <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                            id="answer_{{ loop.index }}_T" value="true">True</button>
+                        <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                            id="answer_{{ loop.index }}_F" value="false">False</button>
+                    </form>
+                </div>
             </div>
-            <div class="quiz-card__footer">
+            <div class="quiz-step__actions">
                 <button class="btn" data-role="next" onclick="next('{{ q_id }}')">Continue</button>
             </div>
         </section>
 
         {% elif q.type == "multiple-choice" %}
-        <section class="quiz-step question quiz-card{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
-            <div class="quiz-card__body">
-                <h3 class="quiz-question">{{ q.question }}</h3>
-                <form class="quiz-options">
-                    {% set options = q.options | shuffle %}
-                    {% for opt in options %}
-                    <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
-                        value="{{ opt }}">{{ opt }}</button>
-                    {% endfor %}
-                </form>
+        <section class="quiz-step question{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
+            <div class="quiz-card">
+                <div class="quiz-card__body">
+                    <h3 class="quiz-question">{{ q.question }}</h3>
+                    <form class="quiz-options">
+                        {% set options = q.options | shuffle %}
+                        {% for opt in options %}
+                        <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                            value="{{ opt }}">{{ opt }}</button>
+                        {% endfor %}
+                    </form>
+                </div>
             </div>
-            <div class="quiz-card__footer">
+            <div class="quiz-step__actions">
                 <button class="btn" data-role="next" onclick="next('{{ q_id }}')">Continue</button>
             </div>
         </section>
 
         {% elif q.type == "short-answer" %}
-        <section class="quiz-step question quiz-card{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
-            <div class="quiz-card__body">
-                <h3 class="quiz-question">{{ q.question }}</h3>
-                <form method="post" class="quiz-form">
-                    <textarea name="answer_{{ loop.index }}" class="answer-box" data-answer="{{ q.answer }}" rows="3"
-                        cols="40"></textarea>
-                </form>
+        <section class="quiz-step question{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
+            <div class="quiz-card">
+                <div class="quiz-card__body">
+                    <h3 class="quiz-question">{{ q.question }}</h3>
+                    <form method="post" class="quiz-form">
+                        <textarea name="answer_{{ loop.index }}" class="answer-box" data-answer="{{ q.answer }}" rows="3"
+                            cols="40"></textarea>
+                    </form>
+                </div>
             </div>
-            <div class="quiz-card__footer">
+            <div class="quiz-step__actions">
                 <button class="btn" data-role="next" onclick="next('{{ q_id }}')">Continue</button>
             </div>
         </section>
 
         {% elif q.type == "ordering" %}
-        <section class="quiz-step question quiz-card{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
-            <div class="quiz-card__body">
-                <h3 class="quiz-question">{{ q.question }}</h3>
-                <form class="quiz-ordering" onsubmit="checkOrdering(event)" data-answer='{{ q.answer |tojson }}'>
-                    <ol>
-                        {% set options = q.options | shuffle %}
-                        {% for opt in options %}
-                        <li draggable="true" class="draggable">
-                            {{ opt }}
-                        </li>
-                        {% endfor %}
-                    </ol>
-                    <button type="submit" class="btn-secondary btn">Confirm order</button>
-                </form>
+        <section class="quiz-step question{% if is_question_active %} is-active{% endif %}" id="{{ q_id }}" {% if not is_question_active %}hidden{% endif %}>
+            <div class="quiz-card">
+                <div class="quiz-card__body">
+                    <h3 class="quiz-question">{{ q.question }}</h3>
+                    <form class="quiz-ordering" onsubmit="checkOrdering(event)" data-answer='{{ q.answer |tojson }}'>
+                        <ol>
+                            {% set options = q.options | shuffle %}
+                            {% for opt in options %}
+                            <li draggable="true" class="draggable">
+                                {{ opt }}
+                            </li>
+                            {% endfor %}
+                        </ol>
+                        <button type="submit" class="btn-secondary btn">Confirm order</button>
+                    </form>
+                </div>
             </div>
-            <div class="quiz-card__footer">
+            <div class="quiz-step__actions">
                 <button class="btn" data-role="next" onclick="next('{{ q_id }}')">Continue</button>
             </div>
         </section>

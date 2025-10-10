@@ -50,6 +50,17 @@ function quizSteps() {
     return Array.from(document.querySelectorAll('.quiz-step'));
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+    quizSteps().forEach((step, index) => {
+        const isInitiallyActive = step.classList.contains('is-active');
+        if (!isInitiallyActive) {
+            step.hidden = true;
+        } else if (index === 0) {
+            step.hidden = false;
+        }
+    });
+});
+
 function next(currentId, skip = true) {
     const current = document.getElementById(currentId);
     if (!current) return;

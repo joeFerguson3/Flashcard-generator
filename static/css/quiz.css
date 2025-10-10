@@ -56,7 +56,14 @@
     color: var(--muted);
 }
 
-.quiz-card__footer [data-role="next"].is-complete {
+.quiz-step__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+    padding-inline: clamp(1.75rem, 3vw, 2.15rem);
+}
+
+.quiz-step__actions [data-role="next"].is-complete {
     opacity: 0.55;
     pointer-events: none;
 }
