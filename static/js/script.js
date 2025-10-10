@@ -46,55 +46,70 @@ function previousCard(title) {
 // }
 
 // Goes to next question or notes
+function quizSteps() {
+    return Array.from(document.querySelectorAll('.quiz-step'));
+}
+
 function next(currentId, skip = true) {
-    // Hide the current element
     const current = document.getElementById(currentId);
     if (!current) return;
 
-    // When question is skipped
-    if (current.className == "question" && skip) {
-        const inputs = current.querySelectorAll("input, textarea");
-
+    if (current.classList.contains("question") && skip) {
+        const inputs = current.querySelectorAll("input[data-answer], textarea[data-answer]");
         inputs.forEach(input => {
             const span = document.createElement("span");
-            span.textContent = input.dataset.answer; // user input value as answer
+            span.textContent = input.dataset.answer;
             span.classList.add("incorrect-answer");
-
-            input.replaceWith(span); // replace input with span
+            span.classList.add("answer-reveal");
+            input.replaceWith(span);
         });
     }
 
-    const currentButton = document.getElementById("next-button" + currentId);
-    currentButton.style.display = "none";
-
-    // Find the next element
-    let nextElement = current.nextElementSibling;
-    if (nextElement.nextElementSibling.nextElementSibling.classList.contains("card-nav") || nextElement.nextElementSibling.nextElementSibling.classList.contains("question")) {
-        nextElement.style.display = "grid";
-    } else {
-        nextElement = document.getElementById("finish-quiz-btn")
-
-        let score = document.getElementById("final-score")
-        score.value = Math.floor(getScore() * 100) / 100
-
-        nextElement.innerText = Math.floor(getScore() * 100) / 100
-        nextElement.style.display = "block";
+    if (current.classList.contains("question")) {
+        current.dataset.completed = 'true';
+        if (skip && current.dataset.result !== 'correct') {
+            current.dataset.result = 'incorrect';
+        }
     }
 
-    // Scrolls page down
-    nextElement.scrollIntoView({ behavior: "smooth", block: "end" });
+    const nextButton = current.querySelector('[data-role="next"]');
+    if (nextButton) {
+        nextButton.disabled = true;
+        nextButton.setAttribute('aria-disabled', 'true');
+        nextButton.classList.add('is-complete');
+    }
 
-    // Updates progress bar
-    const bar = document.getElementById("progress-bar");
-    let width = (parseFloat(bar.style.width) || 0) + (80 / numElements())
-    bar.style.width = width + "%"
+    const steps = quizSteps();
+    const currentIndex = steps.indexOf(current);
+    const nextStep = steps[currentIndex + 1];
 
+    if (nextStep) {
+        nextStep.hidden = false;
+        nextStep.classList.add('is-active');
+        nextStep.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+        const computedScore = getScore();
+        const normalizedScore = Number.isFinite(computedScore) ? Math.floor(computedScore * 100) / 100 : null;
+        const finishButton = document.getElementById('finish-quiz-btn');
+        if (finishButton) {
+            finishButton.textContent = normalizedScore !== null ? `Finish quiz (${normalizedScore}%)` : 'Finish quiz';
+            finishButton.style.display = 'inline-flex';
+            finishButton.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        const scoreField = document.getElementById("final-score");
+        if (scoreField) {
+            scoreField.value = normalizedScore !== null ? normalizedScore : '';
+        }
+    }
+
+    updateProgress(currentIndex + 1, steps.length);
 }
 
-// Gets the number of elements in the quiz
-function numElements() {
-    const totalCount = document.querySelectorAll('.question, .card-nav').length - 1;
-    return totalCount;
+function updateProgress(completedSteps, totalSteps) {
+    const bar = document.getElementById("progress-bar");
+    if (!bar || totalSteps === 0) return;
+    const percent = Math.min(100, (completedSteps / totalSteps) * 100);
+    bar.style.width = percent + "%";
 }
 
 // Checks user typed answers
@@ -114,10 +129,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 span.textContent = this.dataset.answer;
                 span.classList.add("correct-answer");
 
+                const questionEl = span.closest(".question");
                 this.parentNode.replaceChild(span, this);
                 // Goes to next question
-                if (span.closest(".question").querySelector("input, textarea") == null) {
-                    next(span.closest(".question").id, false);
+                if (questionEl && questionEl.querySelector("input, textarea") == null) {
+                    questionEl.dataset.result = 'correct';
+                    questionEl.dataset.completed = 'true';
+                    next(questionEl.id, false);
                     increaseScore()
                 }
             }
@@ -133,12 +151,21 @@ function checkAnswerTF(event, answer) {
     const userAnswer = button.value;
     if (userAnswer.toLowerCase() == answer.toLowerCase()) {
         button.classList.add("correct-answer");
+        const questionSection = button.closest(".question");
+        if (questionSection) {
+            questionSection.dataset.result = 'correct';
+            questionSection.dataset.completed = 'true';
+        }
         increaseScore()
     } else {
         button.classList.add("incorrect-answer");
-        question = button.closest(".true-false-form")
-        allButtons = question.querySelectorAll("button");
-       
+        const questionSection = button.closest(".question");
+        if (questionSection) {
+            questionSection.dataset.result = 'incorrect';
+            questionSection.dataset.completed = 'true';
+        }
+        const allButtons = questionSection ? questionSection.querySelectorAll("button") : [];
+
         allButtons.forEach(btn => {
             if (btn.innerText.trim() === answer.trim()) {
                 btn.classList.add("corrected-answer");
@@ -146,7 +173,8 @@ function checkAnswerTF(event, answer) {
         });
     }
 
-    next(button.closest(".question").id, false);
+    const questionContainer = button.closest(".question");
+    next(questionContainer.id, false);
 }
 
 
@@ -213,8 +241,13 @@ function checkOrdering(e) {
         }
     }
 
+    const questionEl = form.closest(".question");
+    if (questionEl) {
+        questionEl.dataset.result = correct ? 'correct' : 'incorrect';
+        questionEl.dataset.completed = 'true';
+    }
     if (correct) increaseScore()
-    next(form.closest(".question").id, false);
+    next(questionEl.id, false);
 }
 
 let score = 0
@@ -249,10 +282,13 @@ function cancelLoading(){
 }
 
 function getScore() {
-    let correctQuestions = document.querySelectorAll('.correct-answer').length;
-    let incorrectQuestions = document.querySelectorAll('.incorrect-answer').length;
-
-    let totalQuestions = correctQuestions + incorrectQuestions;
-    let score = (correctQuestions / totalQuestions) * 100;
-    return score;
+    const questions = document.querySelectorAll('.question');
+    if (!questions.length) return 0;
+    let correctCount = 0;
+    questions.forEach(question => {
+        if (question.dataset.result === 'correct') {
+            correctCount += 1;
+        }
+    });
+    return (correctCount / questions.length) * 100;
 }

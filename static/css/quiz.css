@@ -1,10 +1,32 @@
+
+.quiz-step {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.quiz-step.is-active {
+    animation: quiz-step-in 0.25s ease;
+}
+
+@keyframes quiz-step-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .quiz-card {
     overflow: hidden;
 }
 
 .quiz-card__controls img {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
+    margin: 0 auto;
+    filter: brightness(0) saturate(100%) invert(20%) sepia(82%) saturate(2747%) hue-rotate(232deg) brightness(92%) contrast(92%);
 }
 
 .quiz-card__controls button {
@@ -17,7 +39,7 @@
 }
 
 .quiz-form p {
-    line-height: 1.8;
+    line-height: 1.6;
 }
 
 .quiz-options {
@@ -32,6 +54,11 @@
 .card-num {
     font-weight: 600;
     color: var(--muted);
+}
+
+.quiz-card__footer [data-role="next"].is-complete {
+    opacity: 0.55;
+    pointer-events: none;
 }
 
 .answer-box {
