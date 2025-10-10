@@ -13,31 +13,47 @@
 
 </head>
 
-<body>
-    <main>
+<body class="app-shell">
     {% include "menu-bar.html" %}
-    <!-- Progress bar -->
-    <div id="progress-bar-back">
-        <div id="progress-bar"></div>
-    </div>
+    <main class="app-main quiz-layout">
+        <section class="page-header">
+            <div>
+                <span class="page-badge">Quiz</span>
+                <h1>Test your understanding</h1>
+                <p>Work through each note set and interactive question to reinforce what you just learned.</p>
+            </div>
+        </section>
 
-    {% if data %}
-    {% for main_title, notes in data|groupby('main_title') %}
+        <div class="quiz-progress">
+            <div class="quiz-progress__track">
+                <div id="progress-bar" class="quiz-progress__bar"></div>
+            </div>
+        </div>
 
-    <div id="{{ main_title }}" class="card-nav" {% if not loop.first %}style="display:none;" {% endif %}>
-        <h2>{{ main_title }}</h2>
-        <div class="main-title-block" id="{{ main_title }}">
-            <button id="card-nav" style="margin-right: auto;" onclick="previousCard('{{main_title}}')"><img
-                    src="static\images\back-arrow.svg"></button>
-            {% for note in notes %}
-            <!-- Display notes-->
-            {% if loop.first %}
-            <div class="sub-card" id="{{main_title}}{{ loop.index0 }}">
+        {% if data %}
+        {% for main_title, notes in data|groupby('main_title') %}
+
+        <section id="{{ main_title }}" class="card-nav quiz-card" {% if not loop.first %}style="display:none;" {% endif %}>
+            <div class="quiz-card__header">
+                <h2>{{ main_title }}</h2>
+                <div class="quiz-card__controls">
+                    <button type="button" onclick="previousCard('{{main_title}}')" aria-label="Previous card">
+                        <img src="static/images/back-arrow.svg" alt="Previous">
+                    </button>
+                    <button type="button" onclick="nextCard('{{main_title}}')" aria-label="Next card">
+                        <img src="static/images/foward-arrow.svg" alt="Next">
+                    </button>
+                </div>
+            </div>
+            <div class="quiz-card__body">
+                {% for note in notes %}
+                {% if loop.first %}
+                <div class="sub-card note-card" id="{{main_title}}{{ loop.index0 }}">
                 {% else %}
-                <div style="display: none;" class="sub-card" id="{{main_title}}{{ loop.index0 }}">
-                    {% endif %}
+                <div class="sub-card note-card" id="{{main_title}}{{ loop.index0 }}" style="display: none;">
+                {% endif %}
                     <h3>{{ note.sub_title }}</h3>
-                    <ul>
+                    <ul class="quiz-card__list">
                         {% for line in note.content %}
                         {% set level = line | length - line.lstrip('-') | length %}
                         <li style="margin-left: {{ level * 20 }}px;">{{ line | lstrip('- ') }}</li>
@@ -45,28 +61,25 @@
                     </ul>
                 </div>
                 {% endfor %}
-                <button style="margin-left: auto;" id="card-nav" onclick="nextCard('{{main_title}}')"><img
-                        src="static\images\foward-arrow.svg"></button>
             </div>
-
-            {% if loop.nextitem %}
-            <button class="next-button" id="next-button{{main_title}}"
-                onclick="next('{{main_title}}')">Continue</button>
-            {% endif %}
-            <div id="card_num_container{{ main_title }}" class=" card-num">
-                <span id="card_num_{{main_title}}">0</span>
+            <div class="quiz-card__footer">
+                <div id="card_num_container{{ main_title }}" class="card-num">
+                    <span id="card_num_{{main_title}}">0</span>
+                </div>
+                {% if loop.nextitem %}
+                <button class="btn-secondary btn" id="next-button{{main_title}}" onclick="next('{{main_title}}')">Continue</button>
+                {% endif %}
             </div>
-        </div>
+        </section>
 
-        <!-- Display questions -->
         {% for q in questions %}
 
         {% if q.title == main_title %}
         {% if q.type == "fill-in-blank" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
-            <div class="question-box fill-in-blank">
-                <form method="post">
-                    <h3>{{q.type}}</h3>
+        <section class="question quiz-card" id=" q{{main_title}}{{ loop.index }} ">
+            <div class="quiz-card__body">
+                <h3 class="quiz-question">{{ q.type }}</h3>
+                <form method="post" class="quiz-form">
                     <p>
                         {% set parts = q.question.split("{blank}") %}
                         {% for part in parts %}
@@ -79,60 +92,67 @@
                     </p>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
-                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
-        </div>
+            <div class="quiz-card__footer">
+                <button class="btn" id="next-button q{{main_title}}{{ loop.index }} "
+                    onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            </div>
+        </section>
 
         {% elif q.type == "true-false" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
-            <div class="question-box">
-                <h3>{{q.question}}</h3>
-                <form class="true-false-form">
-                    <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_T"
-                        value="true">True</button>
-                    <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')" id="answer_{{ loop.index }}_F"
-                        value="false">False</button>
+        <section class="question quiz-card" id=" q{{main_title}}{{ loop.index }} ">
+            <div class="quiz-card__body">
+                <h3 class="quiz-question">{{ q.question }}</h3>
+                <form class="quiz-options">
+                    <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                        id="answer_{{ loop.index }}_T" value="true">True</button>
+                    <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                        id="answer_{{ loop.index }}_F" value="false">False</button>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
-                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
-        </div>
+            <div class="quiz-card__footer">
+                <button class="btn" id="next-button q{{main_title}}{{ loop.index }} "
+                    onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            </div>
+        </section>
 
         {% elif q.type == "multiple-choice" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
-            <div class="question-box">
-                <h3>{{q.question}}</h3>
-                <form class="true-false-form">
+        <section class="question quiz-card" id=" q{{main_title}}{{ loop.index }} ">
+            <div class="quiz-card__body">
+                <h3 class="quiz-question">{{ q.question }}</h3>
+                <form class="quiz-options">
                     {% set options = q.options | shuffle %}
                     {% for opt in options %}
-                    <button class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
+                    <button type="button" class="multi-choice-btn" onclick="checkAnswerTF(event, '{{ q.answer }}')"
                         value="{{ opt }}">{{ opt }}</button>
                     {% endfor %}
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
-                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
-        </div>
+            <div class="quiz-card__footer">
+                <button class="btn" id="next-button q{{main_title}}{{ loop.index }} "
+                    onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            </div>
+        </section>
 
         {% elif q.type == "short-answer" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
-            <div class="question-box">
-                <p> {{ q.question }}</p>
-                {{ q.answer }}
-                <form method="post">
+        <section class="question quiz-card" id=" q{{main_title}}{{ loop.index }} ">
+            <div class="quiz-card__body">
+                <h3 class="quiz-question">{{ q.question }}</h3>
+                <form method="post" class="quiz-form">
                     <textarea name="answer_{{ loop.index }}" class="answer-box" data-answer="{{ q.answer }}" rows="3"
                         cols="40"></textarea>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
-                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
-        </div>
+            <div class="quiz-card__footer">
+                <button class="btn" id="next-button q{{main_title}}{{ loop.index }} "
+                    onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            </div>
+        </section>
 
         {% elif q.type == "ordering" %}
-        <div class="question" id=" q{{main_title}}{{ loop.index }} ">
-            <div class="question-box">
-                <h3>{{q.question}}</h3>
-                <form onsubmit="checkOrdering(event)" data-answer='{{ q.answer |tojson }}'>
+        <section class="question quiz-card" id=" q{{main_title}}{{ loop.index }} ">
+            <div class="quiz-card__body">
+                <h3 class="quiz-question">{{ q.question }}</h3>
+                <form class="quiz-ordering" onsubmit="checkOrdering(event)" data-answer='{{ q.answer |tojson }}'>
                     <ol>
                         {% set options = q.options | shuffle %}
                         {% for opt in options %}
@@ -141,12 +161,14 @@
                         </li>
                         {% endfor %}
                     </ol>
-                    <button type="submit">Confirm</button>
+                    <button type="submit" class="btn-secondary btn">Confirm order</button>
                 </form>
             </div>
-            <button class="next-button" id="next-button q{{main_title}}{{ loop.index }} "
-                onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
-        </div>
+            <div class="quiz-card__footer">
+                <button class="btn" id="next-button q{{main_title}}{{ loop.index }} "
+                    onclick="next(' q{{main_title}}{{ loop.index }} ')">Continue</button>
+            </div>
+        </section>
         {% endif %}
 
         {% endif %}
@@ -155,12 +177,12 @@
 
         {% endfor %}
         {% endif %}
-        <form method="POST" action="/end-quiz">
+        <form method="POST" action="/end-quiz" class="quiz-finish">
             <input type="hidden" name="set-id" value="{{ set_id }}">
             <input type="hidden" name="final-score" id="final-score">
 
-            <button type="submit" id="finish-quiz-btn">
-                <h2> Finish </h2>
+            <button type="submit" id="finish-quiz-btn" class="btn">
+                Finish quiz
             </button>
         </form>
     </main>

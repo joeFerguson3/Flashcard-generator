@@ -9,34 +9,68 @@
     <link rel="stylesheet" href="static/css/quiz-preview.css">
 </head>
 
-<body>
+<body class="app-shell">
 
 
 
       {% include "menu-bar.html" %}
-    
-      <main>
-        <div id="side-menu">
-            <br>
+
+      <main class="app-main">
+        <section class="page-header">
+            <div>
+                <span class="page-badge">Quiz preview</span>
+                <h1>Review your quiz before you study</h1>
+                <p>Switch between recent quizzes, check your latest score, and jump straight into editing or practice mode.</p>
+            </div>
+            <div class="page-actions">
+                <a href="/home" class="btn-secondary btn">Back to subjects</a>
+                <a href="/upload" class="btn">Create new quiz</a>
+            </div>
+        </section>
+
+        <div class="app-split">
+        <aside id="side-menu" class="app-sidebar">
+            <h3>Saved quizzes</h3>
             {% for set_item in other_sets %}
             <form method="POST" action="/quiz-preview-content" onsubmit="return submitSidebarForm(this)">
                 <input type="hidden" name="set-id" value="{{ set_item.id }}">
-                <button class="side-bar-btn {% if loop.first %}highlight{% endif %}" type="submit">
+                <button class="sidebar-button {% if loop.first %}is-active{% endif %}" type="submit">
                     {{ set_item.name }}
                 </button>
             </form>
             {% endfor %}
-        </div>
+        </aside>
 
-        <!-- only refreshes main content on button press -->
+        <section id="main-content" class="app-content-card">
+            <div class="quiz-summary">
+                <h1 id="title">{{ set.name }}</h1>
+                <div class="quiz-score">{{ set.score }}%</div>
+            </div>
+            <div class="quiz-actions">
+                <form method="POST" action="/open-quiz">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
+                    <button type="submit" class="btn" name="set-id" value="{{ set.id }}">Start quiz</button>
+                </form>
+                <form method="POST" action="/edit-quiz">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
+                    <button type="submit" class="btn-secondary btn" name="set-id" value="{{ set.id }}">Edit questions</button>
+                </form>
+                <form method="POST" action="/delete-quiz">
+                    <input type="hidden" name="set-name" value="{{ set.name }}">
+                    <button class="btn btn-danger" type="submit" name="set-id" value="{{ set.id }}">Delete quiz</button>
+                </form>
+            </div>
+        </section>
+        </div>
+    </main>
+
         <script>
             function submitSidebarForm(form) {
                  const sidebarForms = document.querySelectorAll("#side-menu button");
-                sidebarForms.forEach(f => f.classList.remove("highlight"));
+                sidebarForms.forEach(f => f.classList.remove("is-active"));
 
-                // add highlight to clicked quiz
-                form.querySelector("button").classList.add("highlight");
-                
+                form.querySelector("button").classList.add("is-active");
+
                 const formData = new FormData(form);
 
                 fetch(form.action, {
@@ -49,40 +83,9 @@
                     });
 
                 return false;
-                
+
             }
         </script>
-
-        <div id="main-content">
-            <h1 id="title">{{ set.name }}</h1>
-
-            <div>
-                <h3>Score</h3>
-                <p>{{ set.score }}%</p>
-                
-            </div>
-            <form method="POST" action="/edit-quiz">
-                <input type="hidden" name="set-name" value="{{ set.name }}">
-                <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-                    <h2> Edit </h2>
-                </button>
-            </form>
-
-            <form method="POST" action="/open-quiz">
-                <input type="hidden" name="set-name" value="{{ set.name }}">
-                <button type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-                    <h2> Start </h2>
-                </button>
-            </form>
-
-            <form method="POST" action="/delete-quiz">
-                <input type="hidden" name="set-name" value="{{ set.name }}">
-                <button class="delete" type="submit" class="quiz-button" name="set-id" value="{{ set.id }}">
-                    <h2> Delete </h2>
-                </button>
-            </form>
-        </div>
-    </main>
 
 
 </body>

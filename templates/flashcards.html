@@ -3,35 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading - LearnlyAI</title>
+    <title>Flashcards | QuizlyNotes</title>
     <link rel="stylesheet" href="static/css/style.css">
-    <link rel="stylesheet" href="static/css/flashcards.css">
 </head>
-<body>
+<body class="app-shell">
       {% include "menu-bar.html" %}
 
-     <main class="flashcard-container">
-        <h2>Your AI-Generated Flashcards</h2>
-    
-    <form method="POST" action="/save-flashcards">
-        <label for="set-name">Flashcard Set Name:</label>
-        <input type="text" id="set-name" name="set_name" value ="{{set_name}}" placeholder="Enter set name" required>
+     <main class="app-main">
+        <section class="page-header">
+            <div>
+                <span class="page-badge">Flashcards</span>
+                <h1>Your AI-generated flashcards</h1>
+                <p>Review each question and answer pair, make quick edits, and save the set when it&apos;s ready.</p>
+            </div>
+            <div class="page-actions">
+                <a href="/sets" class="btn-secondary btn">Back to library</a>
+            </div>
+        </section>
+
+    <section class="app-panel">
+        <div class="app-panel__header">
+            <div>
+                <h2>Name your set</h2>
+                <p>Give your flashcards a title so it&apos;s easy to find later.</p>
+            </div>
+        </div>
+        <form method="POST" action="/save-flashcards" class="app-form">
+            <div class="form-field">
+                <label for="set-name">Flashcard set name</label>
+                <input type="text" id="set-name" name="set_name" value ="{{set_name}}" placeholder="Enter set name" required>
+            </div>
         {% if flashcards.questions %}
+            <div class="flashcard-list">
             {% for card in flashcards.questions %}
-                <div class="flashcard">
-                    <label for="set-name">Question:</label>
-                    <textarea name="question-{{ loop.index }}" placeholder="Enter a question" required>{{ card.question }}</textarea>
-                    <label for="set-name">Answer:</label>
-                    <textarea name="answer-{{ loop.index }}" placeholder="Enter an answer" required>{{ card.answer }}</textarea>
+                <div class="flashcard-item">
+                    <h3>Card {{ loop.index }}</h3>
+                    <div class="form-field">
+                        <label>Question</label>
+                        <textarea name="question-{{ loop.index }}" placeholder="Enter a question" required>{{ card.question }}</textarea>
+                    </div>
+                    <div class="form-field">
+                        <label>Answer</label>
+                        <textarea name="answer-{{ loop.index }}" placeholder="Enter an answer" required>{{ card.answer }}</textarea>
+                    </div>
                 </div>
             {% endfor %}
+            </div>
         {% else %}
-            <p>No flashcards generated yet. Try uploading a PDF!</p>
+            <p class="flashcard-empty">No flashcards generated yet. Upload a PDF to create your first deck.</p>
         {% endif %}
 
         <input type="hidden" name="flashcards" value='{{ flashcards | tojson }}'>
-        <button type="submit">Save</button>
+        <button type="submit" class="btn">Save flashcards</button>
     </form>
+    </section>
     </main>
 
 
