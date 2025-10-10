@@ -3,38 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="static/css/style.css">
-    <title>QuizlyNotes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>QuizlyNotes | Study smarter with AI</title>
 </head>
-<body>
-       <!-- Top Navigation Bar -->
-    <header>
-        <div class="logo">QuizlyNotes</div>
-        <ul class="nav-links">
-            <li><a href="">Help</a></li>
-            <li><a href="">Contact Us</a></li>
-            <li><a href="">About</a></li>
-        </ul>
+<body class="landing">
+    <header class="site-header landing-header">
+        <div class="container nav-container">
+            <a href="/" class="logo">QuizlyNotes</a>
+            <nav class="nav-links-wrapper" aria-label="Primary">
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How it works</a></li>
+                    <li><a href="#testimonials">Results</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </nav>
+            <div class="nav-actions">
+                <a href="{{ url_for('google.login') }}" class="btn btn-outline">Log in</a>
+                <a href="{{ url_for('google.login') }}" class="btn btn-primary">Start for free</a>
+            </div>
+            <button class="nav-toggle" type="button" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
     </header>
 
+    <main>
+        <section class="hero" id="home">
+            <div class="container hero-grid">
+                <div class="hero-content">
+                    <span class="hero-badge">Your AI study copilot</span>
+                    <h1>Turn lecture notes into interactive quizzes in seconds.</h1>
+                    <p>Upload PDFs, notes, or slides and QuizlyNotes instantly builds personalised flashcards and quizzes so you can master any subject faster.</p>
+                    <div class="hero-cta">
+                        <a href="{{ url_for('google.login') }}" class="btn btn-primary">Generate my first quiz</a>
+                        <a href="#how-it-works" class="btn btn-text">See how it works</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div>
+                            <strong>5k+</strong>
+                            <span>Quizzes crafted by students like you</span>
+                        </div>
+                        <div>
+                            <strong>15 min</strong>
+                            <span>Average time saved per study session</span>
+                        </div>
+                        <div>
+                            <strong>2×</strong>
+                            <span>Increase in recall with spaced review</span>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Hero Section -->
-    <section id="home">
-        <h1>Learn Faster with AI-Generated Quizzes</h1>
-        <p>Create personalized quizzes in seconds. Let AI help you study smarter, not harder!</p>
-        <a href="{{ url_for('google.login') }}">
-            <button type="button">Login with Google</button>
-        </a>
-    </section>
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="floating-card">
+                        <div class="floating-card__header">
+                            <span class="floating-card__tag">Biology 201</span>
+                            <span class="floating-card__status">Adaptive quiz</span>
+                        </div>
+                        <ul class="floating-card__list">
+                            <li>
+                                <span class="bullet"></span>
+                                <div>
+                                    <h3>Cell Respiration</h3>
+                                    <p>10 questions · confidence 72%</p>
+                                </div>
+                            </li>
+                            <li>
+                                <span class="bullet"></span>
+                                <div>
+                                    <h3>Membrane Transport</h3>
+                                    <p>8 questions · confidence 63%</p>
+                                </div>
+                            </li>
+                            <li>
+                                <span class="bullet"></span>
+                                <div>
+                                    <h3>Photosynthesis</h3>
+                                    <p>Flashcards · 12 terms</p>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="floating-card__footer">
+                            <span class="avatar-group">
+                                <span class="avatar"></span>
+                                <span class="avatar"></span>
+                                <span class="avatar"></span>
+                            </span>
+                            <span class="floating-card__caption">Studying now</span>
+                        </div>
+                    </div>
+                    <div class="floating-badge">
+                        <strong>94%</strong>
+                        <span>quiz mastery reached</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <!-- About Section -->
-    <section id="about" style="padding:6rem 2rem; text-align:center;">
-        <h2>About QuizlyNotes</h2>
-        <p style="max-width:700px; margin:1rem auto; font-size:1.1rem; line-height:1.6;">
-        Studying doesn’t have to be boring. Our app turns your notes into interactive quizzes in seconds, making revision smarter, faster, and way more fun. Upload your material, get instant quizzes, and challenge yourself anytime, anywhere. Whether you’re cramming for exams or just brushing up on topics, we help you learn, remember, and win at studying.
-        </p>
-    </section>
+        <section class="section stats" id="features">
+            <div class="container">
+                <div class="section-intro">
+                    <span class="section-eyebrow">Smarter features</span>
+                    <h2>Everything you need to go from notes to knowledge.</h2>
+                    <p>QuizlyNotes handles the heavy lifting so you can focus on learning. Our AI analyses your material and delivers the right question at the right time.</p>
+                </div>
+                <div class="feature-grid">
+                    <article class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h3>AI-powered question engine</h3>
+                        <p>Create multiple choice quizzes, flashcards, and quick checks tailored to your subject in just a few clicks.</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>Supports every format</h3>
+                        <p>Upload PDFs, lecture slides, or written notes—QuizlyNotes cleans them up and turns them into structured study sessions.</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">⏱️</div>
+                        <h3>Study on your schedule</h3>
+                        <p>Review bite-sized quizzes on mobile or desktop and track your progress across every subject.</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">✨</div>
+                        <h3>Adaptive review</h3>
+                        <p>Struggling concepts resurface automatically so you retain more with spaced repetition and confidence tracking.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
 
-     {% include "footer.html" %}
+        <section class="section workflow" id="how-it-works">
+            <div class="container">
+                <div class="section-intro">
+                    <span class="section-eyebrow">How it works</span>
+                    <h2>From upload to quiz-ready in under a minute.</h2>
+                </div>
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <span class="step-number">01</span>
+                        <h3>Upload your material</h3>
+                        <p>Drop in class notes, PDFs, or study guides. Our AI cleans and highlights the key concepts.</p>
+                    </div>
+                    <div class="workflow-step">
+                        <span class="step-number">02</span>
+                        <h3>Generate custom quizzes</h3>
+                        <p>Choose flashcards, multiple choice, or practice tests. Fine-tune difficulty in a single click.</p>
+                    </div>
+                    <div class="workflow-step">
+                        <span class="step-number">03</span>
+                        <h3>Review & master</h3>
+                        <p>Study with adaptive spacing, confidence tracking, and visual progress dashboards.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section testimonials" id="testimonials">
+            <div class="container">
+                <div class="section-intro">
+                    <span class="section-eyebrow">Results that stick</span>
+                    <h2>Learners see better scores after just two study sessions.</h2>
+                </div>
+                <div class="testimonial-grid">
+                    <article class="testimonial-card">
+                        <p>“QuizlyNotes cuts my study prep in half. I upload my lecture slides, hit generate, and I’m instantly revising with flashcards that feel made just for me.”</p>
+                        <div class="testimonial-meta">
+                            <span class="avatar"></span>
+                            <div>
+                                <h4>Kayla P.</h4>
+                                <span>Undergraduate Biology</span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="testimonial-card">
+                        <p>“I’ve tried a dozen apps—this is the only one that actually adapts to what I know and don’t know. My exam scores jumped from 72 to 88.”</p>
+                        <div class="testimonial-meta">
+                            <span class="avatar"></span>
+                            <div>
+                                <h4>Daniel R.</h4>
+                                <span>Business Administration</span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="testimonial-card">
+                        <p>“It keeps all my quizzes organised by subject. When finals hit, I have everything ready. No more panic-building study guides at midnight.”</p>
+                        <div class="testimonial-meta">
+                            <span class="avatar"></span>
+                            <div>
+                                <h4>Maya L.</h4>
+                                <span>High school senior</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section faq" id="faq">
+            <div class="container">
+                <div class="section-intro">
+                    <span class="section-eyebrow">Questions</span>
+                    <h2>Everything you need to know before diving in.</h2>
+                </div>
+                <div class="faq-grid">
+                    <article class="faq-item">
+                        <h3>Is QuizlyNotes free to use?</h3>
+                        <p>Yes! You can create unlimited quizzes with our free plan. Upgrade anytime for team collaboration or advanced analytics.</p>
+                    </article>
+                    <article class="faq-item">
+                        <h3>What file types can I upload?</h3>
+                        <p>We support PDFs, DOCX, PPTX, and raw text notes. Drag-and-drop works on both desktop and mobile.</p>
+                    </article>
+                    <article class="faq-item">
+                        <h3>Can I share quizzes with classmates?</h3>
+                        <p>Absolutely. Invite friends to collaborate and keep everyone synced with shared folders.</p>
+                    </article>
+                    <article class="faq-item">
+                        <h3>Does it work for every subject?</h3>
+                        <p>From STEM to humanities, QuizlyNotes tailors quizzes to your material and learning goals.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section cta-section">
+            <div class="container cta-card">
+                <div>
+                    <h2>Ready to study smarter?</h2>
+                    <p>Join thousands of learners turning messy notes into confident results with QuizlyNotes.</p>
+                </div>
+                <a href="{{ url_for('google.login') }}" class="btn btn-primary">Start for free</a>
+            </div>
+        </section>
+    </main>
+
+    {% include "footer.html" %}
+
+    <script>
+        const navToggle = document.querySelector('.nav-toggle');
+        const navLinksWrapper = document.querySelector('.nav-links-wrapper');
+        const navLinks = document.querySelector('.nav-links');
+        const navActions = document.querySelector('.nav-actions');
+        const siteHeader = document.querySelector('.landing-header');
+
+        if (navToggle) {
+            navToggle.addEventListener('click', () => {
+                document.body.classList.toggle('nav-open');
+                navToggle.classList.toggle('is-open');
+                navLinksWrapper.classList.toggle('is-open');
+                if (navLinks) {
+                    navLinks.classList.toggle('is-open');
+                }
+                if (navActions) {
+                    navActions.classList.toggle('is-open');
+                }
+            });
+        }
+
+        const toggleHeaderState = () => {
+            if (!siteHeader) return;
+            if (window.scrollY > 12) {
+                siteHeader.classList.add('scrolled');
+            } else {
+                siteHeader.classList.remove('scrolled');
+            }
+        };
+
+        toggleHeaderState();
+        window.addEventListener('scroll', toggleHeaderState);
+    </script>
 </body>
 </html>

@@ -1,3 +1,40 @@
-    <footer>
-        <p>&copy; 2025 QuizlyNotes. All rights reserved.</p>
-    </footer>
+<footer class="site-footer">
+    <div class="container footer-content">
+        <div class="footer-brand">
+            <h3>QuizlyNotes</h3>
+            <p>AI-crafted quizzes and flashcards that help you retain more in less time. Study smarter, not harder.</p>
+        </div>
+        <div class="footer-column">
+            <h4>Product</h4>
+            <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
+                <li><a href="#testimonials">Testimonials</a></li>
+            </ul>
+        </div>
+        <div class="footer-column">
+            <h4>Resources</h4>
+            <ul>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="mailto:hello@quizlynotes.com">Support</a></li>
+                <li><a href="/upload">Create a quiz</a></li>
+            </ul>
+        </div>
+        <div class="footer-column">
+            <h4>Stay updated</h4>
+            <ul>
+                <li><a href="mailto:hello@quizlynotes.com">hello@quizlynotes.com</a></li>
+                <li><a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a></li>
+                <li><a href="https://twitter.com" target="_blank" rel="noreferrer">Twitter</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="container footer-bottom">
+        <p>&copy; {{ current_year|default(2025, true) }} QuizlyNotes. All rights reserved.</p>
+        <nav>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="mailto:hello@quizlynotes.com">Contact</a>
+        </nav>
+    </div>
+</footer>
