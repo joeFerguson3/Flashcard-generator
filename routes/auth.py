@@ -63,3 +63,20 @@ def delete_account():
 
     session.clear()
     return redirect(url_for("auth.home"))
+
+
+@auth_bp.route("/settings")
+def settings():
+    user_id = session.get("user_id") or session.get("user-id")
+    if not user_id:
+        return redirect(url_for("auth.home"))
+
+    user = User.query.get(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for("auth.home"))
+
+    if user.email and not session.get("user_email"):
+        session["user_email"] = user.email
+
+    return render_template("settings.html", user=user)
