@@ -7,5 +7,26 @@
                 <li><a href="/upload">New Quiz</a></li>
             </ul>
         </nav>
+        <div class="nav-actions">
+            <div class="profile-menu" data-profile-menu>
+                <button type="button" class="profile-toggle" data-profile-toggle aria-haspopup="true" aria-expanded="false">
+                    <span class="profile-toggle__avatar" aria-hidden="true">{{ (nav_user.email or 'U')[:1]|upper }}</span>
+                    <span class="profile-toggle__label">Profile</span>
+                    <svg class="profile-toggle__chevron" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                        <path d="M5.5 7l4.5 5 4.5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+                    </svg>
+                </button>
+                <div class="profile-dropdown" data-profile-dropdown hidden tabindex="-1" role="dialog" aria-label="User profile menu">
+                    <div class="profile-dropdown__section">
+                        <p class="profile-dropdown__eyebrow">Signed in as</p>
+                        <p class="profile-dropdown__email">{{ nav_user.email or 'Unknown email' }}</p>
+                        <p class="profile-dropdown__meta">User ID: {{ nav_user.id or 'N/A' }}</p>
+                    </div>
+                    <form action="{{ url_for('auth.delete_account') }}" method="post" class="profile-dropdown__actions" data-confirm-delete>
+                        <button type="submit" class="profile-dropdown__delete">Delete account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </header>

@@ -198,6 +198,54 @@ document.querySelectorAll('.draggable').forEach(item => {
     item.addEventListener('dragleave', dragLeave);
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const profileToggle = document.querySelector('[data-profile-toggle]');
+    const profileDropdown = document.querySelector('[data-profile-dropdown]');
+
+    if (profileToggle && profileDropdown) {
+        const closeDropdown = () => {
+            profileDropdown.hidden = true;
+            profileDropdown.classList.remove('is-open');
+            profileToggle.setAttribute('aria-expanded', 'false');
+        };
+
+        profileToggle.addEventListener('click', event => {
+            event.preventDefault();
+            const isExpanded = profileToggle.getAttribute('aria-expanded') === 'true';
+            if (isExpanded) {
+                closeDropdown();
+            } else {
+                profileDropdown.hidden = false;
+                profileDropdown.classList.add('is-open');
+                profileToggle.setAttribute('aria-expanded', 'true');
+                profileDropdown.focus();
+            }
+        });
+
+        document.addEventListener('click', event => {
+            if (!profileDropdown.contains(event.target) && !profileToggle.contains(event.target)) {
+                closeDropdown();
+            }
+        });
+
+        profileDropdown.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                closeDropdown();
+                profileToggle.focus();
+            }
+        });
+    }
+
+    document.querySelectorAll('[data-confirm-delete]').forEach(form => {
+        form.addEventListener('submit', event => {
+            const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    });
+});
+
 let dragSrcEl = null;
 let prev = null;
 
