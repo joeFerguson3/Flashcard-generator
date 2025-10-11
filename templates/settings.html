@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Settings | QuizlyNotes</title>
+        <link rel="stylesheet" href="static/css/style.css">
+    </head>
+    <body class="app-shell">
+        {% include "menu-bar.html" %}
+        <main class="app-main">
+            <section class="page-header">
+                <div>
+                    <span class="page-badge">Account</span>
+                    <h1>Adjust your QuizlyNotes experience</h1>
+                    <p>Update personal details, manage preferences, and configure the tools that help you study better.</p>
+                </div>
+            </section>
+
+            <section class="settings-grid">
+                <article class="settings-card">
+                    <header class="settings-card__header">
+                        <div>
+                            <h2>Profile</h2>
+                            <p>Quick overview of the information tied to your account.</p>
+                        </div>
+                        <span class="settings-status">Signed in</span>
+                    </header>
+                    <dl class="settings-details">
+                        <div>
+                            <dt>Email</dt>
+                            <dd>{{ user.email or 'Unknown email' }}</dd>
+                        </div>
+                        <div>
+                            <dt>User ID</dt>
+                            <dd>{{ user.id or 'N/A' }}</dd>
+                        </div>
+                    </dl>
+                </article>
+
+                <article class="settings-card">
+                    <header class="settings-card__header">
+                        <div>
+                            <h2>Appearance</h2>
+                            <p>Choose the look that works best in any lighting.</p>
+                        </div>
+                    </header>
+                    <div class="settings-control">
+                        <div>
+                            <h3>Dark mode</h3>
+                            <p>Switch between light and dark themes. Your choice is saved on this device.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" aria-label="Toggle dark mode" data-theme-toggle>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </article>
+
+                <article class="settings-card">
+                    <header class="settings-card__header">
+                        <div>
+                            <h2>Study preferences</h2>
+                            <p>Fine-tune reminders that keep you on track.</p>
+                        </div>
+                    </header>
+                    <div class="settings-list">
+                        <div class="settings-toggle">
+                            <div>
+                                <span class="settings-toggle__title">Email study reminders</span>
+                                <span class="settings-toggle__description">Get gentle nudges when it&apos;s time to review your notes.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" data-pref-toggle="qn-study-reminders" aria-label="Toggle study reminders">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-toggle">
+                            <div>
+                                <span class="settings-toggle__title">Daily streak tracking</span>
+                                <span class="settings-toggle__description">Track consistent practice days to stay motivated.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" data-pref-toggle="qn-daily-streaks" aria-label="Toggle daily streak tracking">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="settings-card settings-card--danger">
+                    <header class="settings-card__header">
+                        <div>
+                            <h2>Danger zone</h2>
+                            <p>Deleting your account removes all flashcards, quizzes, and stored progress.</p>
+                        </div>
+                    </header>
+                    <form action="{{ url_for('auth.delete_account') }}" method="post" class="settings-danger" data-confirm-delete>
+                        <button type="submit" class="btn-danger">Delete account</button>
+                        <p>This action is permanent. You&apos;ll need to sign up again to use QuizlyNotes.</p>
+                    </form>
+                </article>
+            </section>
+        </main>
+        {% include "footer.html" %}
+    </body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 from extensions import db
 from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
@@ -47,6 +47,21 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(flashcards_bp)
     app.register_blueprint(main_bp)
+
+    @app.context_processor
+    def inject_user_profile():
+        user_id = session.get("user-id") or session.get("user_id")
+        email = session.get("user_email")
+
+        if user_id and not email:
+            from models import User
+
+            user = User.query.get(user_id)
+            if user:
+                email = user.email
+                session["user_email"] = email
+
+        return {"nav_user": {"id": user_id, "email": email}}
 
     with app.app_context():
         from models import User, Flashcard, FlashcardSet
