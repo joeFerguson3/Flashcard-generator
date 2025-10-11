@@ -22,11 +22,12 @@
                         <p class="profile-dropdown__email">{{ nav_user.email or 'Unknown email' }}</p>
                         <p class="profile-dropdown__meta">User ID: {{ nav_user.id or 'N/A' }}</p>
                     </div>
-                    <form action="{{ url_for('auth.delete_account') }}" method="post" class="profile-dropdown__actions" data-confirm-delete>
-                        <button type="submit" class="profile-dropdown__delete">Delete account</button>
-                    </form>
+                    <div class="profile-dropdown__actions">
+                        <a href="{{ url_for('auth.settings') }}" class="profile-dropdown__action">Open settings</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </header>
+<script defer src="{{ url_for('static', filename='js/app-shell.js') }}"></script>
