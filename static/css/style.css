@@ -930,11 +930,37 @@ body.app-shell {
 
 .app-card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
 }
 
-.subject-card,
+.subject-card {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.subject-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.25);
+    box-shadow: 0 12px 24px rgba(99, 102, 241, 0.12);
+}
+
+.subject-card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
 .library-card {
     display: flex;
     flex-direction: column;
@@ -949,21 +975,18 @@ body.app-shell {
     min-height: 168px;
 }
 
-.subject-card:hover,
 .library-card:hover {
     transform: translateY(-3px);
     border-color: rgba(99, 102, 241, 0.3);
     box-shadow: 0 16px 30px rgba(99, 102, 241, 0.14);
 }
 
-.subject-card h2,
 .library-card h2 {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-color);
 }
 
-.subject-card span,
 .library-card span {
     margin-top: 0.65rem;
     font-size: 0.9rem;
