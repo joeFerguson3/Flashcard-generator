@@ -9,6 +9,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def question(text, title):
+    print("gen q")
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -75,7 +76,7 @@ Your output must be a single JSON object, matching exactly one schema above, wit
 
     response = json.loads(response.choices[0].message.content)
     response["title"] = title
-
+    print("generated q")
     return response
 
 
