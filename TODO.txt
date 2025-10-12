@@ -25,3 +25,8 @@ auto select next question text box
 
 
 filter text generated e.g remove '
+
+generate quiz bootom of notes
+new questions
+input sanitisation#
+gdpr
