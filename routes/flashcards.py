@@ -24,6 +24,7 @@ def upload():
             return "File too large. Limit is 25 MB."
 
         notes = extract_text(file)
+        notes = sanitize_structure(notes, max_length=4096)
         return render_template("notes.html", data=notes)
 
     return render_template("pdf-upload.html")
@@ -112,7 +113,10 @@ def flashcards_edit():
     # Get flash cards
     flashcards = Flashcard.query.filter_by(set_id=set_id).all()
     flashcards_data = [
-        {"question": f.question, "answer": f.answer}
+        {
+            "question": sanitize_text(f.question, max_length=2048),
+            "answer": sanitize_text(f.answer, max_length=2048),
+        }
         for f in flashcards
     ]
 
@@ -190,18 +194,25 @@ def save_notes():
         note = Note(
             main_title=sanitize_text(d.get("main_title", ""), max_length=255),
             sub_title=sanitize_text(d.get("sub_title", ""), max_length=255),
-            content=json.dumps([sanitize_text(line, max_length=4096) for line in d.get("content", [])])
+            content=json.dumps([
+                sanitize_text(line, max_length=4096)
+                for line in d.get("content", [])
+            ])
         )
         note_set.notes.append(note)
 
     for q in questions:
 
         question_db = Question(
-            question=q["question"],
-            answer=json.dumps(q["answer"]),
-            title=q['title'],
-            type=q['type'],
-            options = json.dumps(q.get("options")) if q.get("options") is not None else None
+            question=sanitize_text(q.get("question"), max_length=2048),
+            answer=json.dumps(sanitize_structure(q.get("answer"), max_length=2048)),
+            title=sanitize_text(q.get('title'), max_length=255),
+            type=sanitize_text(q.get('type'), max_length=64),
+            options=(
+                json.dumps(sanitize_structure(q.get("options"), max_length=1024))
+                if q.get("options") is not None
+                else None
+            ),
         )
         note_set.questions.append(question_db)
 
@@ -226,22 +237,27 @@ def quiz():
 
     notes = [
         {
-            "main_title": note.main_title,
-            "sub_title": note.sub_title,
-            "content": json.loads(note.content)
+            "main_title": sanitize_text(note.main_title, max_length=255),
+            "sub_title": sanitize_text(note.sub_title, max_length=255),
+            "content": [
+                sanitize_text(line, max_length=4096)
+                for line in json.loads(note.content)
+            ],
         }
         for note in note_set.notes
     ]
 
     questions = [
-    {
-        "question": q.question,
-        "answer": json.loads(q.answer),
-        "title": q.title,
-        "type": q.type,
-        "options": json.loads(q.options) if q.options else None
-    }
-    for q in note_set.questions
+        {
+            "question": sanitize_text(q.question, max_length=2048),
+            "answer": sanitize_structure(json.loads(q.answer), max_length=2048),
+            "title": sanitize_text(q.title, max_length=255),
+            "type": sanitize_text(q.type, max_length=64),
+            "options": sanitize_structure(json.loads(q.options), max_length=1024)
+            if q.options
+            else None,
+        }
+        for q in note_set.questions
     ]
     print(questions)
     return render_template("quiz.html", data=notes, questions=questions,set_id=set_id)
@@ -250,16 +266,29 @@ def quiz():
 # Displays different Subjects
 @flashcards_bp.route("/home")
 def home_page():
-    subjects = db.session.query(NoteSet.subject).filter_by(user_id=session.get("user_id")).distinct().all()
-    return render_template("/home.html", subjects=subjects)
+    subjects = (
+        db.session.query(NoteSet.subject)
+        .filter_by(user_id=session.get("user_id"))
+        .distinct()
+        .all()
+    )
+    subjects_clean = [
+        (sanitize_text(subject[0], max_length=255),)
+        for subject in subjects
+    ]
+    return render_template("/home.html", subjects=subjects_clean)
 
 
 # Display quizzes for a class
 @flashcards_bp.route("/quiz-sets")
 def quiz_sets():
-    subject = session.get('subject-name')
+    subject = sanitize_text(session.get('subject-name'), max_length=255)
     quizzes = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=subject).all()
-    return render_template("quiz-sets.html", quizzes=quizzes, subject=subject)
+    quizzes_data = [
+        {"id": quiz.id, "name": sanitize_text(quiz.name, max_length=255)}
+        for quiz in quizzes
+    ]
+    return render_template("quiz-sets.html", quizzes=quizzes_data, subject=subject)
 
 # Redirects to subject quiz
 @flashcards_bp.route("/open-subject-folder", methods=["POST"])
@@ -297,9 +326,12 @@ def edit_notes():
 
     notes = [
         {
-            "main_title": note.main_title,
-            "sub_title": note.sub_title,
-            "content": json.loads(note.content)
+            "main_title": sanitize_text(note.main_title, max_length=255),
+            "sub_title": sanitize_text(note.sub_title, max_length=255),
+            "content": [
+                sanitize_text(line, max_length=4096)
+                for line in json.loads(note.content)
+            ],
         }
         for note in note_set.notes
     ]
@@ -320,16 +352,22 @@ def quiz_preview():
     if not note_set:
         return redirect(url_for("flashcards.quiz_sets"))
 
+    sanitized_set = {
+        "id": note_set.id,
+        "name": sanitize_text(note_set.name, max_length=255),
+        "subject": sanitize_text(note_set.subject, max_length=255),
+        "score": note_set.score or 0,
+    }
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=note_set.subject).all()
     all_set_info = [
         {
-            "name": set.name,
-            "id": set.id
+            "name": sanitize_text(set.name, max_length=255),
+            "id": set.id,
         }
         for set in all_sets
     ]
 
-    return render_template("quiz-preview.html", set=note_set, other_sets=all_set_info)
+    return render_template("quiz-preview.html", set=sanitized_set, other_sets=all_set_info)
 
 # Only updates quiz preview content
 @flashcards_bp.route("/quiz-preview-content", methods=["POST"])
@@ -343,16 +381,22 @@ def quiz_preview_content():
     if not note_set:
         return redirect(url_for("flashcards.quiz_sets"))
 
+    sanitized_set = {
+        "id": note_set.id,
+        "name": sanitize_text(note_set.name, max_length=255),
+        "subject": sanitize_text(note_set.subject, max_length=255),
+        "score": note_set.score or 0,
+    }
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=note_set.subject).all()
     all_set_info = [
         {
-            "name": set.name,
-            "id": set.id
+            "name": sanitize_text(set.name, max_length=255),
+            "id": set.id,
         }
         for set in all_sets
     ]
 
-    return render_template("quiz-preview-content.html", set=note_set, other_sets=all_set_info)
+    return render_template("quiz-preview-content.html", set=sanitized_set, other_sets=all_set_info)
 
 
 
@@ -376,8 +420,8 @@ def end_quiz():
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=current_set.subject).all()
     all_set_info = [
         {
-            "name": set.name,
-            "id": set.id
+            "name": sanitize_text(set.name, max_length=255),
+            "id": set.id,
         }
         for set in all_sets
     ]
@@ -408,7 +452,7 @@ def enhance_note():
     payload = sanitize_structure(request.get_json() or {}, max_length=4096)
     note = sanitize_text(payload.get("note"), max_length=4096)
     enhanced_note = extract_definitions(note)
-    return {"note": enhanced_note}
+    return {"note": sanitize_structure(enhanced_note, max_length=4096)}
 
 @flashcards_bp.route("/delete-quiz", methods=["POST"])
 def delete_quiz():
