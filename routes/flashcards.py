@@ -12,6 +12,8 @@ flashcards_bp = Blueprint("flashcards", __name__)
 
 @flashcards_bp.route("/upload", methods=["GET", "POST"])
 def upload():
+    if "user_id" not in session:
+        return redirect("/")
     if request.method == "POST":
         file = request.files.get("pdfUpload")
         if not file or not file.filename.endswith(".pdf"):
@@ -44,6 +46,8 @@ def upload():
 # Saves flashcards to database
 @flashcards_bp.route("/save-flashcards", methods=["POST"])
 def save_flashcards():
+    if "user_id" not in session:
+        return redirect("/")
 
     # Checks if editing or creating new set
     if('set_id' in session):
@@ -103,6 +107,9 @@ def save_flashcards():
 # Edit flashcard set
 @flashcards_bp.route("/edit-set", methods=["POST"])
 def flashcards_edit():
+    if "user_id" not in session:
+        return redirect("/")
+
     set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     set_name = sanitize_text(request.form.get('set-name'), max_length=255)
     try:
@@ -127,12 +134,17 @@ def flashcards_edit():
     
 @flashcards_bp.route("/notes")
 def notes():
+    if "user_id" not in session:
+        return redirect("/")
     
     return render_template("notes.html", sections=parse_notes())
 
 # Regenerates edited notes
 @flashcards_bp.route("/regenerate-notes", methods=['POST'])
 def regenerate_notes():
+    if "user_id" not in session:
+        return redirect("/")
+    
     # Data to regenerate
     data = request.get_json()
     data = data.get("notes")
@@ -143,6 +155,9 @@ def regenerate_notes():
 
 @flashcards_bp.route("/generate-quiz", methods=["POST"])
 def save_notes():
+    if "user_id" not in session:
+        return redirect("/")
+    
     print("generating quiz")
     payload = sanitize_structure(request.get_json() or {}, max_length=4096)
     data = payload.get("notes", [])
@@ -230,6 +245,8 @@ def save_notes():
 
 @flashcards_bp.route("/quiz")
 def quiz():
+    if "user_id" not in session:
+        return redirect("/")
     set_id = session.get('set-id')
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
     if not note_set:
@@ -266,6 +283,8 @@ def quiz():
 # Displays different Subjects
 @flashcards_bp.route("/home")
 def home_page():
+    if "user_id" not in session:
+        return redirect("/")
     subjects = (
         db.session.query(NoteSet.subject)
         .filter_by(user_id=session.get("user_id"))
@@ -282,6 +301,8 @@ def home_page():
 # Display quizzes for a class
 @flashcards_bp.route("/quiz-sets")
 def quiz_sets():
+    if "user_id" not in session:
+        return redirect("/")
     subject = sanitize_text(session.get('subject-name'), max_length=255)
     quizzes = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=subject).all()
     quizzes_data = [
@@ -293,12 +314,16 @@ def quiz_sets():
 # Redirects to subject quiz
 @flashcards_bp.route("/open-subject-folder", methods=["POST"])
 def subject_folder():
+    if "user_id" not in session:
+        return redirect("/")
     session['subject-name'] = sanitize_text(request.form.get('subject-name'), max_length=255)
     return redirect("/quiz-sets")
 
 # Opens selected quiz
 @flashcards_bp.route("/open-quiz", methods=["POST"])
 def open_quiz():
+    if "user_id" not in session:
+        return redirect("/")
     set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     try:
         session['set-id'] = int(set_id_raw)
@@ -309,6 +334,8 @@ def open_quiz():
 # Edit notes
 @flashcards_bp.route("/edit-quiz", methods=["POST"])
 def edit_quiz():
+    if "user_id" not in session:
+        return redirect("/")
     set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     try:
         session['set-id'] = int(set_id_raw)
@@ -318,6 +345,8 @@ def edit_quiz():
 
 @flashcards_bp.route("/edit-notes")
 def edit_notes():
+    if "user_id" not in session:
+        return redirect("/")
     set_id = session.get('set-id')
 
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
@@ -343,6 +372,8 @@ def edit_notes():
 # Opens quiz preview
 @flashcards_bp.route("/quiz-preview", methods=["POST"])
 def quiz_preview():
+    if "user_id" not in session:
+        return redirect("/")
     set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     try:
         set_id = int(set_id_raw)
@@ -372,6 +403,8 @@ def quiz_preview():
 # Only updates quiz preview content
 @flashcards_bp.route("/quiz-preview-content", methods=["POST"])
 def quiz_preview_content():
+    if "user_id" not in session:
+        return redirect("/")
     set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     try:
         set_id = int(set_id_raw)
@@ -403,6 +436,8 @@ def quiz_preview_content():
 # Ends the quiz and directs to the next question
 @flashcards_bp.route("/end-quiz", methods=["POST"])
 def end_quiz():
+    if "user_id" not in session:
+        return redirect("/")
     current_set_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     score_raw = sanitize_text(request.form.get('final-score'), max_length=16)
     try:
@@ -449,6 +484,8 @@ def end_quiz():
 # Enhances given notes
 @flashcards_bp.route("/enhance-note", methods=["POST"])
 def enhance_note():
+    if "user_id" not in session:
+        return redirect("/")
     payload = sanitize_structure(request.get_json() or {}, max_length=4096)
     note = sanitize_text(payload.get("note"), max_length=4096)
     enhanced_note = extract_definitions(note)
@@ -456,6 +493,8 @@ def enhance_note():
 
 @flashcards_bp.route("/delete-quiz", methods=["POST"])
 def delete_quiz():
+    if "user_id" not in session:
+        return redirect("/")
     set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
     try:
         set_id = int(set_id_raw)
