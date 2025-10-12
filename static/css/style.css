@@ -1496,6 +1496,10 @@ body.app-shell {
     color: #0f172a;
 }
 
+ul {
+    list-style-type: disc; 
+}
+
 .quiz-card__list li {
     line-height: 1.4;
 }
