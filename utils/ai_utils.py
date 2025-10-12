@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import json
 from utils.notes import parse_notes
+from utils.sanitization import sanitize_text, sanitize_structure
 from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
@@ -75,7 +76,8 @@ Your output must be a single JSON object, matching exactly one schema above, wit
     )
 
     response = json.loads(response.choices[0].message.content)
-    response["title"] = title
+    response = sanitize_structure(response, max_length=2048)
+    response["title"] = sanitize_text(title, max_length=255)
     print("generated q")
     return response
 
@@ -132,7 +134,7 @@ def process_chunk(chunk):
     ]
     )
   
-  return response.choices[0].message.content
+  return sanitize_text(response.choices[0].message.content, max_length=4096)
 
 # Splits text into chunks for higher quality repsonse
 def chunk_text(text, chunk_size=850, step=800):
