@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, session, url_fo
 from utils.pdf_utils import extract_text
 from utils.notes import parse_notes
 from utils.ai_utils import question, extract_definitions
+from utils.sanitization import sanitize_text, sanitize_structure
 from models import Flashcard, FlashcardSet, Note, NoteSet, Question
 from extensions import db  
 import json
@@ -48,7 +49,10 @@ def save_flashcards():
         # Update set name
         set_id = session['set_id']
         set = FlashcardSet.query.filter_by(id=set_id).first()
-        set.name = request.form.get("set_name")
+        if not set:
+            return redirect(url_for("main.sets"))
+        set_name = sanitize_text(request.form.get("set_name"), max_length=255)
+        set.name = set_name
         db.session.commit()
         session.pop('set_id')
 
@@ -57,12 +61,12 @@ def save_flashcards():
         flashcard_ids = [card.id for card in flashcards]
         i = 1
         while True:
-            question = request.form.get(f"question-{i}")
-            answer = request.form.get(f"answer-{i}")
+            question = sanitize_text(request.form.get(f"question-{i}"), max_length=2048)
+            answer = sanitize_text(request.form.get(f"answer-{i}"), max_length=2048)
             if not question or not answer:
                 print("empty")
                 break
-           
+
             if(i < len(flashcard_ids)):
                 flashcard = Flashcard.query.get(flashcard_ids[i - 1])
                 flashcard.question = question
@@ -75,15 +79,16 @@ def save_flashcards():
         db.session.commit()
     else:
         # Create new flashcard set
-        flashcard_set = FlashcardSet(name=request.form.get("set_name"), user_id=session["user_id"])
+        set_name = sanitize_text(request.form.get("set_name"), max_length=255)
+        flashcard_set = FlashcardSet(name=set_name, user_id=session["user_id"])
         db.session.add(flashcard_set)
         db.session.commit()
 
         set_id = flashcard_set.id
         i = 1
         while True:
-            question = request.form.get(f"question-{i}")
-            answer = request.form.get(f"answer-{i}")
+            question = sanitize_text(request.form.get(f"question-{i}"), max_length=2048)
+            answer = sanitize_text(request.form.get(f"answer-{i}"), max_length=2048)
             if not question or not answer:
                 break
             new_card = Flashcard(question=question, answer=answer, set_id=set_id)
@@ -97,8 +102,12 @@ def save_flashcards():
 # Edit flashcard set
 @flashcards_bp.route("/edit-set", methods=["POST"])
 def flashcards_edit():
-    set_id = request.form.get('set-id')
-    set_name = request.form.get('set-name')
+    set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    set_name = sanitize_text(request.form.get('set-name'), max_length=255)
+    try:
+        set_id = int(set_id_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("main.sets"))
 
     # Get flash cards
     flashcards = Flashcard.query.filter_by(set_id=set_id).all()
@@ -131,10 +140,10 @@ def regenerate_notes():
 @flashcards_bp.route("/generate-quiz", methods=["POST"])
 def save_notes():
     print("generating quiz")
-    dict = request.get_json()
-    data = dict.get("notes")
-    title = dict.get("title")
-    subject = dict.get("subject")
+    payload = sanitize_structure(request.get_json() or {}, max_length=4096)
+    data = payload.get("notes", [])
+    title = sanitize_text(payload.get("title"), max_length=255)
+    subject = sanitize_text(payload.get("subject"), max_length=255)
     questions = []
 
     questions = []
@@ -144,9 +153,9 @@ def save_notes():
     data_array = []
     with ThreadPoolExecutor(max_workers=20) as executor:
         for d in data:
-            main = d.get("main_title", "")
+            main = sanitize_text(d.get("main_title", ""), max_length=255)
 
-            if main != prev_main and data_array: 
+            if main != prev_main and data_array:
                 num_of_q = max(round(len(data_array)/3), 1)
                 for _ in range(num_of_q):
                     rand_q = random.randint(0, len(data_array)-1)
@@ -157,8 +166,9 @@ def save_notes():
                 data_array = []
 
             prev_main = main
-            sub = d.get("sub_title", "")
-            content = "\n".join(d.get("content", []))
+            sub = sanitize_text(d.get("sub_title", ""), max_length=255)
+            content_list = [sanitize_text(line, max_length=4096) for line in d.get("content", [])]
+            content = "\n".join(content_list)
             data_array.append({"main":main, "sub":sub, "content":content})
 
         # handle last heading after loop
@@ -171,16 +181,16 @@ def save_notes():
 
         # collect results in order
         for f in futures:
-            questions.append(f.result())
+            questions.append(sanitize_structure(f.result(), max_length=2048))
 
     # Saves notes and questions to database
-    note_set = NoteSet(name=title, user_id=session.get("user_id"), subject=subject)  
-    
+    note_set = NoteSet(name=title, user_id=session.get("user_id"), subject=subject)
+
     for d in data:
         note = Note(
-            main_title=d.get("main_title", ""),
-            sub_title=d.get("sub_title", ""),
-            content=json.dumps(d.get("content", ""))
+            main_title=sanitize_text(d.get("main_title", ""), max_length=255),
+            sub_title=sanitize_text(d.get("sub_title", ""), max_length=255),
+            content=json.dumps([sanitize_text(line, max_length=4096) for line in d.get("content", [])])
         )
         note_set.notes.append(note)
 
@@ -211,6 +221,8 @@ def save_notes():
 def quiz():
     set_id = session.get('set-id')
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
+    if not note_set:
+        return redirect(url_for("flashcards.quiz_sets"))
 
     notes = [
         {
@@ -252,19 +264,27 @@ def quiz_sets():
 # Redirects to subject quiz
 @flashcards_bp.route("/open-subject-folder", methods=["POST"])
 def subject_folder():
-    session['subject-name'] = request.form.get('subject-name')
+    session['subject-name'] = sanitize_text(request.form.get('subject-name'), max_length=255)
     return redirect("/quiz-sets")
 
 # Opens selected quiz
 @flashcards_bp.route("/open-quiz", methods=["POST"])
 def open_quiz():
-    session['set-id'] = request.form.get('set-id')
+    set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    try:
+        session['set-id'] = int(set_id_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("flashcards.quiz_sets"))
     return redirect("/quiz")
 
 # Edit notes
 @flashcards_bp.route("/edit-quiz", methods=["POST"])
 def edit_quiz():
-    session['set-id'] = request.form.get('set-id')
+    set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    try:
+        session['set-id'] = int(set_id_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("flashcards.quiz_sets"))
     return redirect('/edit-notes')
 
 @flashcards_bp.route("/edit-notes")
@@ -272,6 +292,8 @@ def edit_notes():
     set_id = session.get('set-id')
 
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
+    if not note_set:
+        return redirect(url_for("flashcards.quiz_sets"))
 
     notes = [
         {
@@ -289,8 +311,14 @@ def edit_notes():
 # Opens quiz preview
 @flashcards_bp.route("/quiz-preview", methods=["POST"])
 def quiz_preview():
-    set_id = request.form.get('set-id')
+    set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    try:
+        set_id = int(set_id_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("flashcards.quiz_sets"))
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
+    if not note_set:
+        return redirect(url_for("flashcards.quiz_sets"))
 
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=note_set.subject).all()
     all_set_info = [
@@ -306,8 +334,14 @@ def quiz_preview():
 # Only updates quiz preview content
 @flashcards_bp.route("/quiz-preview-content", methods=["POST"])
 def quiz_preview_content():
-    set_id = request.form.get('set-id')
+    set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    try:
+        set_id = int(set_id_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("flashcards.quiz_sets"))
     note_set = NoteSet.query.filter_by(id=set_id, user_id=session.get("user_id")).first()
+    if not note_set:
+        return redirect(url_for("flashcards.quiz_sets"))
 
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=note_set.subject).all()
     all_set_info = [
@@ -325,9 +359,19 @@ def quiz_preview_content():
 # Ends the quiz and directs to the next question
 @flashcards_bp.route("/end-quiz", methods=["POST"])
 def end_quiz():
-    current_set_id = request.form.get('set-id')
-    score = request.form.get('final-score')
+    current_set_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    score_raw = sanitize_text(request.form.get('final-score'), max_length=16)
+    try:
+        current_set_id = int(current_set_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("flashcards.quiz_sets"))
+    try:
+        score = int(score_raw)
+    except (TypeError, ValueError):
+        score = 0
     current_set = NoteSet.query.filter_by(id=current_set_id, user_id=session.get("user_id")).first()
+    if not current_set:
+        return redirect(url_for("flashcards.quiz_sets"))
     
     all_sets = NoteSet.query.filter_by(user_id=session.get("user_id"), subject=current_set.subject).all()
     all_set_info = [
@@ -354,24 +398,29 @@ def end_quiz():
     )
 
     if not next_set:
-        session['subject-name'] = current_set.subject
+        session['subject-name'] = sanitize_text(current_set.subject, max_length=255)
         return redirect('quiz-sets')
     return render_template("quiz-preview.html", set=next_set, other_sets=all_set_info)
 
 # Enhances given notes
 @flashcards_bp.route("/enhance-note", methods=["POST"])
 def enhance_note():
-    dict = request.get_json()
-    note = dict.get("note")
+    payload = sanitize_structure(request.get_json() or {}, max_length=4096)
+    note = sanitize_text(payload.get("note"), max_length=4096)
     enhanced_note = extract_definitions(note)
     return {"note": enhanced_note}
 
 @flashcards_bp.route("/delete-quiz", methods=["POST"])
 def delete_quiz():
-    set_id = request.form.get('set-id')
+    set_id_raw = sanitize_text(request.form.get('set-id'), max_length=32)
+    try:
+        set_id = int(set_id_raw)
+    except (TypeError, ValueError):
+        return redirect(url_for("flashcards.quiz_sets"))
 
     note_set = NoteSet.query.get(int(set_id))
-    db.session.delete(note_set)
-    db.session.commit()
-   
+    if note_set:
+        db.session.delete(note_set)
+        db.session.commit()
+
     return redirect("/quiz-sets")
