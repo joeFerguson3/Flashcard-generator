@@ -52,6 +52,8 @@ class Config:
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     # Cheaper model for small jobs (guest demo, "improve section").
     GEMINI_FAST_MODEL = os.getenv("GEMINI_FAST_MODEL", "gemini-3.5-flash-lite")
+    # Tried automatically when the main model is overloaded.
+    GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash")
 
     # Google sign-in
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")

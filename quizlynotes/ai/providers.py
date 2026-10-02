@@ -47,13 +47,15 @@ class BaseProvider:
 
 
 class GeminiProvider(BaseProvider):
-    def __init__(self, api_key: str, model: str, fast_model: str):
+    def __init__(self, api_key: str, model: str, fast_model: str, fallback_model: str = ""):
         from google import genai
         from google.genai import types
 
         self.types = types
         self.model = model
         self.fast_model = fast_model or model
+        # Used when the main model is overloaded (503) or rate limited (429).
+        self.fallback_model = fallback_model if fallback_model and fallback_model != model else ""
         self.client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
@@ -72,11 +74,12 @@ class GeminiProvider(BaseProvider):
             temperature=temperature,
             max_output_tokens=32768,
         )
+        models = [model] + ([self.fallback_model] if self.fallback_model and self.fallback_model != model else [])
         last_error: Exception | None = None
-        for attempt in range(2):
+        for attempt, current in enumerate(models + [models[-1]]):
             try:
                 response = self.client.models.generate_content(
-                    model=model, contents=contents, config=config
+                    model=current, contents=contents, config=config
                 )
                 parsed = getattr(response, "parsed", None)
                 if isinstance(parsed, schema):
@@ -87,8 +90,14 @@ class GeminiProvider(BaseProvider):
             except AIError as exc:
                 last_error = exc
             except Exception as exc:  # network errors, invalid JSON, safety blocks
-                log.warning("Gemini call failed (attempt %s): %s", attempt + 1, exc)
+                code = getattr(exc, "code", None)
+                log.warning("Gemini call failed (model %s, attempt %s): %s", current, attempt + 1, exc)
                 last_error = exc
+                if code in (400, 401, 402, 403, 404):
+                    # Bad key, no credit, unknown model: retrying won't help.
+                    log.error("Gemini configuration problem (HTTP %s). Check GEMINI_API_KEY, "
+                              "billing/credits in AI Studio, and GEMINI_MODEL.", code)
+                    break
             time.sleep(1.5)
         log.error("Gemini generation failed: %s", last_error)
         raise AIError("The AI couldn't process that just now. Please try again in a minute.")
@@ -270,7 +279,8 @@ def get_provider() -> BaseProvider:
             raise AIError("AI generation isn't configured on the server.")
         provider: BaseProvider = FakeProvider()
     else:
-        provider = GeminiProvider(cfg["GEMINI_API_KEY"], cfg["GEMINI_MODEL"], cfg["GEMINI_FAST_MODEL"])
+        provider = GeminiProvider(cfg["GEMINI_API_KEY"], cfg["GEMINI_MODEL"], cfg["GEMINI_FAST_MODEL"],
+                                  cfg["GEMINI_FALLBACK_MODEL"])
     current_app.extensions["ai_provider"] = provider
     return provider
 
