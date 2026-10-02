@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% set seo_title = "QuizlyNotes: Turn Notes into Quizzes & Flashcards (Free)" %}
+{% set seo_description = "Turn your notes, PDFs and lecture slides into practice quizzes and flashcards in seconds. QuizlyNotes is a free AI quiz notes maker with spaced repetition." %}
+{% set seo_path = "/" %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta %}{% include "partials/seo_meta.html" %}
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type": "WebSite", "@id": site.url ~ "/#website", "url": site.url ~ "/", "name": "QuizlyNotes",
+     "alternateName": ["Quizly Notes", "Quiz Notes", "QuizNotes"], "inLanguage": "en-GB"},
+    {"@type": "Organization", "@id": site.url ~ "/#org", "name": "QuizlyNotes", "url": site.url ~ "/",
+     "logo": site.url ~ url_for('static', filename='img/icon-512.png'), "email": site.email},
+    {"@type": "WebApplication", "name": "QuizlyNotes", "url": site.url ~ "/",
+     "applicationCategory": "EducationalApplication", "operatingSystem": "Any (web browser)",
+     "description": seo_description, "publisher": {"@id": site.url ~ "/#org"},
+     "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
+     "featureList": ["Turn notes into quiz questions", "PDF and lecture slides to quiz",
+                     "AI flashcard maker", "Spaced repetition", "Multiple choice, true/false, fill-in-the-blank, short answer and ordering questions"]}
+  ]
+}|tojson }}
+</script>
+{% endblock %}
+{% block body_class %}page-home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="wrap hero__grid">
+    <div class="hero__copy">
+      <p class="eyebrow">Free AI study tool</p>
+      <h1 class="display">Turn your notes into <mark>quizzes</mark> and flashcards</h1>
+      <p class="lede">QuizlyNotes reads your lecture slides, PDFs and class notes, writes clean revision notes, then quizzes you on them. Practice questions with explanations, and flashcards that come back when you're about to forget them.</p>
+      <ul class="ticks">
+        <li>Reads slides, diagrams and scanned pages</li>
+        <li>Six question types, every answer explained</li>
+        <li>Free, with sign-in through Google</li>
+      </ul>
+    </div>
+    <div class="hero__try">
+      {% if site.guest_demo %}{% include "partials/tryit.html" %}{% else %}
+      <div class="card-paper tryit"><a class="btn btn--primary btn--lg" href="{{ url_for('auth.login') }}">Start for free</a></div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="band" id="how-it-works">
+  <div class="wrap">
+    <h2 class="section-title">From notes to a quiz in three steps</h2>
+    <ol class="steps">
+      <li class="steps__item">
+        <span class="steps__n">1</span>
+        <h3>Add your material</h3>
+        <p>Upload a PDF, lecture slides, a Word document or PowerPoint, or paste your notes.</p>
+      </li>
+      <li class="steps__item">
+        <span class="steps__n">2</span>
+        <h3>Check your notes</h3>
+        <p>The AI turns your material into tidy revision notes grouped by topic. Edit anything before you're quizzed on it.</p>
+      </li>
+      <li class="steps__item">
+        <span class="steps__n">3</span>
+        <h3>Quiz yourself</h3>
+        <p>Work through each topic: read the notes, answer the questions, see what you missed and why.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="wrap section">
+  <div class="split">
+    <div>
+      <p class="eyebrow">Question types</p>
+      <h2 class="section-title">Quiz notes that test what you know</h2>
+      <p class="muted">Every question is written from your material, never from the internet, and covers each topic in proportion to how much there is to learn. Pick the types you want, and the difficulty.</p>
+    </div>
+    {% include "partials/qtypes.html" %}
+  </div>
+</section>
+
+<section class="band band--ink">
+  <div class="wrap features">
+    <div class="feature">
+      <h3>Made for lecture slides</h3>
+      <p>Your whole slide deck is read at once, so labelled diagrams and tables become questions too. Module codes, image credits and repeated title slides are skipped.</p>
+    </div>
+    <div class="feature">
+      <h3>Spaced repetition</h3>
+      <p>Rate each flashcard Again, Hard, Good or Easy. Cards you struggle with come back sooner, so a few minutes a day keeps everything fresh.</p>
+    </div>
+    <div class="feature">
+      <h3>Organised by subject</h3>
+      <p>Every set is saved to your library under its subject, with your best and latest scores, so you can see what needs another go before the exam.</p>
+    </div>
+    <div class="feature">
+      <h3>Your data stays yours</h3>
+      <p>Uploaded files aren't kept. Export all your notes and questions as a file, or delete your account and everything in it, at any time.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap section">
+  <h2 class="section-title">Popular ways to use QuizlyNotes</h2>
+  <div class="link-cards">
+    {% for slug, label in related %}
+    <a class="link-card" href="{{ pages[slug].path }}">
+      <span class="eyebrow">{{ pages[slug].eyebrow }}</span>
+      <strong>{{ pages[slug].h1 }}</strong>
+      <span class="muted">{{ pages[slug].description[:110] }}…</span>
+      <span class="link-card__arrow" aria-hidden="true">→</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="wrap section section--narrow" id="faq">
+  <h2 class="section-title">Questions about QuizlyNotes</h2>
+  {% include "partials/faq.html" %}
+</section>
+
+<section class="wrap section">
+  <div class="cta">
+    <h2>Your next exam, sorted one quiz at a time</h2>
+    <p>Sign in with Google and turn your first set of notes into a quiz.</p>
+    <a href="{{ url_for('auth.login') }}" class="btn btn--hl btn--lg">Start for free</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('js/tryit.js') }}" defer></script>{% endblock %}

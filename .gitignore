@@ -1,5 +1,12 @@
-Lecture12.pdf
-instance/flashcards.db
 .env
-TODO.txt
+instance/
+*.db
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+Lecture12.pdf
 flashcardJSON.JSON
+TODO.txt
+.ruff_cache/

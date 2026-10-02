@@ -1,0 +1,13 @@
+{% extends "app/base_app.html" %}
+{% block title %}Quiz: {{ s.title }} | QuizlyNotes{% endblock %}
+{% block body_class %}page-player{% endblock %}
+{% block content %}
+<section class="wrap player-wrap">
+  <header class="player-head">
+    <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← {{ s.title }}</a>
+  </header>
+  <div id="player" class="player"></div>
+</section>
+<script type="application/json" id="quiz-data">{{ payload|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/quiz.js') }}" defer></script>{% endblock %}

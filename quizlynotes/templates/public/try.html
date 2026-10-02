@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Your quiz: {{ data.title }} | QuizlyNotes{% endblock %}
+{% block body_class %}page-player{% endblock %}
+{% block content %}
+<section class="wrap player-wrap">
+  <div class="guest-banner">
+    <p><strong>This is a preview.</strong> Sign in to save this quiz and its {{ flashcards|length }} flashcards to your library.</p>
+    <a class="btn btn--primary btn--sm" href="{{ url_for('auth.login') }}">Save with Google</a>
+  </div>
+  <header class="player-head">
+    <p class="eyebrow">{{ data.subject }}</p>
+    <h1 class="player-title">{{ data.title }}</h1>
+  </header>
+  <div id="player" class="player"></div>
+</section>
+<script type="application/json" id="quiz-data">{{ payload|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/quiz.js') }}" defer></script>{% endblock %}

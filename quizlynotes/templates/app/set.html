@@ -1,0 +1,114 @@
+{% extends "app/base_app.html" %}
+{% block title %}{{ s.title }} | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page set-layout">
+  <aside class="set-aside" aria-label="Sets in {{ s.subject }}">
+    <a class="back" href="{{ url_for('study.library', subject=s.subject) }}">← {{ s.subject }}</a>
+    <ul class="side-list">
+      {% for other in siblings %}
+      <li><a href="{{ url_for('study.study_set', set_id=other.id) }}" {% if other.id == s.id %}aria-current="page"{% endif %}>
+        <span>{{ other.title }}</span><span class="side-list__score">{{ other.best_score|pct }}</span>
+      </a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="set-main">
+    <header class="set-head">
+      <p class="eyebrow">{{ s.subject }}</p>
+      <h1 class="page-title">{{ s.title }}</h1>
+      <p class="muted small">{% if s.source_name %}From {{ s.source_name }} · {% endif %}Created {{ s.created_at|ago }}</p>
+    </header>
+
+    {% if not s.has_quiz %}
+    <div class="callout">
+      <div>
+        <strong>Your notes are ready.</strong>
+        <p class="muted">Review them, then generate the quiz and flashcards.</p>
+      </div>
+      <a class="btn btn--primary" href="{{ url_for('study.edit_notes', set_id=s.id) }}">Review notes &amp; make quiz</a>
+    </div>
+    {% else %}
+    <div class="stat-row">
+      <div class="stat"><span class="stat__n">{{ s.best_score|pct }}</span><span class="stat__l">Best score</span></div>
+      <div class="stat"><span class="stat__n">{{ s.last_score|pct }}</span><span class="stat__l">Last score</span></div>
+      <div class="stat"><span class="stat__n">{{ s.quiz_cards|length }}</span><span class="stat__l">Questions</span></div>
+      <div class="stat"><span class="stat__n">{{ due }}<small>/{{ s.flashcards|length }}</small></span><span class="stat__l">Flashcards due</span></div>
+    </div>
+
+    <div class="action-cards">
+      <a class="action-card action-card--primary" href="{{ url_for('study.quiz', set_id=s.id) }}">
+        <span class="action-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 5l12 7-12 7V5z" fill="currentColor"/></svg>
+        </span>
+        <strong>{{ 'Retake quiz' if s.attempts else 'Start quiz' }}</strong>
+        <span>Notes and questions, topic by topic</span>
+      </a>
+      <a class="action-card" href="{{ url_for('study.flashcards', set_id=s.id) }}">
+        <span class="action-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="6" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7 4h12a2 2 0 012 2v9" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        </span>
+        <strong>Flashcards</strong>
+        <span>{% if due %}{{ due }} due for review{% else %}All caught up. Review anyway{% endif %}</span>
+      </a>
+    </div>
+    {% endif %}
+
+    {% if attempts %}
+    <section class="block">
+      <h2 class="block__title">Recent scores</h2>
+      <ol class="history" aria-label="Recent quiz scores, oldest to newest">
+        {% for a in attempts|reverse %}
+        <li class="history__item">
+          <span class="history__val">{{ a.score|pct }}</span>
+          <span class="history__bar" style="--h: {{ [a.score, 3]|max|round|int }}"></span>
+          <span class="history__when">{{ a.created_at|ago }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+
+    <section class="block">
+      <div class="block__head">
+        <h2 class="block__title">Notes</h2>
+        <div class="btn-row">
+          <a class="btn btn--ghost btn--sm" href="{{ url_for('study.edit_notes', set_id=s.id) }}">Edit notes</a>
+          {% if s.cards %}<a class="btn btn--ghost btn--sm" href="{{ url_for('study.edit_cards', set_id=s.id) }}">Edit cards</a>{% endif %}
+        </div>
+      </div>
+      <div class="notes-read">
+        {% for group in s.heading_groups() %}
+        <details class="notes-read__group" {% if loop.first %}open{% endif %}>
+          <summary><h3>{{ group.heading }}</h3><span class="muted small">{{ group.sections|length }} section{{ 's' if group.sections|length != 1 }}</span></summary>
+          {% for sec in group.sections %}
+          <div class="notes-read__sec">
+            <h4>{{ sec.subheading }}</h4>
+            <ul class="points">
+              {% for p in sec.points %}<li class="lvl-{{ p.level }}">{{ p.text }}</li>{% endfor %}
+            </ul>
+          </div>
+          {% endfor %}
+        </details>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="block block--quiet">
+      <details class="manage">
+        <summary>Rename, move or delete</summary>
+        <form method="post" action="{{ url_for('study.rename_set', set_id=s.id) }}" class="grid-2 manage__form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="field"><span class="field__label">Title</span><input name="title" value="{{ s.title }}" maxlength="200" required></label>
+          <label class="field"><span class="field__label">Subject</span><input name="subject" value="{{ s.subject }}" maxlength="120" required></label>
+          <div><button class="btn btn--ghost btn--sm" type="submit">Save</button></div>
+        </form>
+        <form method="post" action="{{ url_for('study.delete_set', set_id=s.id) }}" data-confirm="Delete “{{ s.title }}” and all its questions and scores? This can't be undone.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--danger btn--sm" type="submit">Delete this set</button>
+        </form>
+      </details>
+    </section>
+  </div>
+</section>
+{% endblock %}

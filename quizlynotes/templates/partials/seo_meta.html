@@ -1,0 +1,17 @@
+{# Expects: seo_title, seo_description, seo_path #}
+<meta name="description" content="{{ seo_description }}">
+<link rel="canonical" href="{{ site.url }}{{ seo_path }}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:site_name" content="QuizlyNotes">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ seo_title }}">
+<meta property="og:description" content="{{ seo_description }}">
+<meta property="og:url" content="{{ site.url }}{{ seo_path }}">
+<meta property="og:image" content="{{ site.url }}{{ url_for('static', filename='img/og-image.png') }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ seo_title }}">
+<meta name="twitter:description" content="{{ seo_description }}">
+<meta name="twitter:image" content="{{ site.url }}{{ url_for('static', filename='img/og-image.png') }}">

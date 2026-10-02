@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% set seo_title = "Terms of Use | QuizlyNotes" %}
+{% set seo_description = "The terms for using QuizlyNotes, the AI tool that turns notes into quizzes and flashcards." %}
+{% set seo_path = "/terms" %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta %}{% include "partials/seo_meta.html" %}{% endblock %}
+{% block content %}
+<article class="wrap section section--narrow prose">
+  <h1 class="display display--sm">Terms of use</h1>
+  <p class="muted">Last updated 2 October 2026</p>
+  <p>By using QuizlyNotes you agree to these terms.</p>
+  <h2>The service</h2>
+  <p>QuizlyNotes uses AI to turn study material into notes, quizzes and flashcards. AI can make mistakes, so check anything important against your course material. The service is provided "as is", without guarantees of availability or accuracy.</p>
+  <h2>Your content</h2>
+  <p>You keep ownership of everything you upload and create. Only upload material you have the right to use. You give us permission to process it only so we can provide the service to you.</p>
+  <h2>Fair use</h2>
+  <p>To keep QuizlyNotes free, there are limits on how much you can generate in a given period. Don't attempt to abuse, overload or reverse-engineer the service, or use it to create unlawful content.</p>
+  <h2>Accounts</h2>
+  <p>You can delete your account at any time from Settings. We may suspend accounts that break these terms.</p>
+  <h2>Contact</h2>
+  <p>Questions? Email <a href="mailto:{{ site.email }}">{{ site.email }}</a>.</p>
+</article>
+{% endblock %}

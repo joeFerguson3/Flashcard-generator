@@ -1,0 +1,28 @@
+<header class="site-header site-header--app">
+  <div class="wrap site-header__inner">
+    <a href="{{ url_for('study.library') }}" class="logo" aria-label="QuizlyNotes library">
+      {% include "partials/logo.html" %}<span class="logo__word">Quizly<span>Notes</span></span>
+    </a>
+    <nav class="app-nav" aria-label="App">
+      <a href="{{ url_for('study.library') }}" {% if request.endpoint == 'study.library' %}aria-current="page"{% endif %}>Library</a>
+      <a href="{{ url_for('study.new_set') }}" class="btn btn--primary btn--sm">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        New set
+      </a>
+    </nav>
+    <details class="menu">
+      <summary class="avatar" aria-label="Account menu">
+        {% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" width="32" height="32" referrerpolicy="no-referrer">{% else %}{{ current_user.initial }}{% endif %}
+      </summary>
+      <div class="menu__panel">
+        <p class="menu__who"><strong>{{ current_user.display_name }}</strong><span>{{ current_user.email }}</span></p>
+        <a href="{{ url_for('study.settings') }}">Settings</a>
+        <button type="button" data-theme-cycle>Theme: <span data-theme-label>System</span></button>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Log out</button>
+        </form>
+      </div>
+    </details>
+  </div>
+</header>

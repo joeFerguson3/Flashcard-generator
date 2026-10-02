@@ -1,0 +1,25 @@
+{% extends "app/base_app.html" %}
+{% block title %}Flashcards: {{ s.title }} | QuizlyNotes{% endblock %}
+{% block body_class %}page-player{% endblock %}
+{% block content %}
+<section class="wrap player-wrap">
+  <header class="player-head player-head--row">
+    <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← {{ s.title }}</a>
+    <nav class="seg-links" aria-label="Which cards">
+      <a href="{{ url_for('study.flashcards', set_id=s.id, mode='due') }}" {% if mode == 'due' %}aria-current="page"{% endif %}>Due</a>
+      <a href="{{ url_for('study.flashcards', set_id=s.id, mode='all') }}" {% if mode == 'all' %}aria-current="page"{% endif %}>All</a>
+    </nav>
+  </header>
+  {% if not payload.cards %}
+  <div class="empty">
+    <h2>No flashcards yet</h2>
+    <p class="muted">Generate a quiz for this set and flashcards are made at the same time.</p>
+    <a class="btn btn--primary" href="{{ url_for('study.edit_notes', set_id=s.id) }}">Go to notes</a>
+  </div>
+  {% else %}
+  <div id="deck" class="deck"></div>
+  {% endif %}
+</section>
+<script type="application/json" id="deck-data">{{ payload|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/flashcards.js') }}" defer></script>{% endblock %}

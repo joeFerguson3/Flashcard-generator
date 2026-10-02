@@ -1,0 +1,98 @@
+{% extends "app/base_app.html" %}
+{% block title %}Edit cards: {{ s.title }} | QuizlyNotes{% endblock %}
+{% set kind_labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering', 'flashcard': 'Flashcard'} %}
+{% block content %}
+<section class="wrap page page--narrow">
+  <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← Back to set</a>
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Edit cards</h1>
+      <p class="muted">{{ s.title }}</p>
+    </div>
+  </header>
+
+  <nav class="seg-links" aria-label="Card type">
+    <a href="{{ url_for('study.edit_cards', set_id=s.id, tab='quiz') }}" {% if tab != 'flash' %}aria-current="page"{% endif %}>Quiz questions ({{ s.quiz_cards|length }})</a>
+    <a href="{{ url_for('study.edit_cards', set_id=s.id, tab='flash') }}" {% if tab == 'flash' %}aria-current="page"{% endif %}>Flashcards ({{ s.flashcards|length }})</a>
+  </nav>
+
+  <form method="post" class="card-editor">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="tab" value="{{ tab }}">
+
+    {% if tab == 'flash' %}
+    <div class="edit-card edit-card--new">
+      <h2 class="edit-card__kind">Add a flashcard</h2>
+      <div class="grid-2">
+        <label class="field"><span class="field__label">Front</span><textarea name="new-front" rows="2" maxlength="1000"></textarea></label>
+        <label class="field"><span class="field__label">Back</span><textarea name="new-back" rows="2" maxlength="600"></textarea></label>
+      </div>
+      <button class="btn btn--ghost btn--sm" type="submit" name="action" value="add_flashcard">Add card</button>
+    </div>
+    {% endif %}
+
+    {% set cards = s.flashcards if tab == 'flash' else s.quiz_cards %}
+    {% for c in cards %}
+    {% set p = 'c' ~ c.id %}
+    <fieldset class="edit-card" data-edit-card>
+      <legend class="edit-card__kind">{{ loop.index }}. {{ kind_labels[c.kind] }}</legend>
+      <label class="delete-toggle"><input type="checkbox" name="{{ p }}-delete" value="1" data-delete-toggle> Delete</label>
+
+      {% if c.kind == 'flashcard' %}
+      <div class="grid-2">
+        <label class="field"><span class="field__label">Front</span><textarea name="{{ p }}-prompt" rows="2" maxlength="1000" required>{{ c.prompt }}</textarea></label>
+        <label class="field"><span class="field__label">Back</span><textarea name="{{ p }}-answer" rows="2" maxlength="600" required>{{ c.answers[0] if c.answers else '' }}</textarea></label>
+      </div>
+      {% else %}
+      <label class="field">
+        <span class="field__label">{{ 'Statement' if c.kind == 'true_false' else 'Question' }}{% if c.kind == 'fill_blank' %} <span class="muted">(write {blank} for each gap)</span>{% endif %}</span>
+        <textarea name="{{ p }}-prompt" rows="2" maxlength="1000" required>{{ c.prompt }}</textarea>
+      </label>
+
+      {% if c.kind == 'multiple_choice' %}
+      <div class="grid-2">
+        <label class="field"><span class="field__label">Options (one per line)</span><textarea name="{{ p }}-options" rows="4">{{ c.options|join('\n') }}</textarea></label>
+        <label class="field"><span class="field__label">Correct option</span>
+          <select name="{{ p }}-correct">
+            {% for o in c.options %}<option value="{{ loop.index0 }}" {% if c.answers and o == c.answers[0] %}selected{% endif %}>{{ loop.index }}. {{ o }}</option>{% endfor %}
+          </select>
+          <span class="muted small">Numbers match the lines on the left.</span>
+        </label>
+      </div>
+      {% elif c.kind == 'true_false' %}
+      <label class="field field--short"><span class="field__label">Answer</span>
+        <select name="{{ p }}-answer">
+          <option value="true" {% if c.answers == ['true'] %}selected{% endif %}>True</option>
+          <option value="false" {% if c.answers == ['false'] %}selected{% endif %}>False</option>
+        </select>
+      </label>
+      {% elif c.kind in ['fill_blank', 'short_answer'] %}
+      <label class="field"><span class="field__label">{{ 'Answers, one per blank in order' if c.kind == 'fill_blank' else 'Accepted answers (best answer first, one per line)' }}</span>
+        <textarea name="{{ p }}-answers" rows="2">{{ c.answers|join('\n') }}</textarea>
+      </label>
+      {% elif c.kind == 'ordering' %}
+      <label class="field"><span class="field__label">Items in the correct order (one per line)</span>
+        <textarea name="{{ p }}-options" rows="4">{{ c.options|join('\n') }}</textarea>
+      </label>
+      {% endif %}
+
+      <label class="field"><span class="field__label">Explanation</span><textarea name="{{ p }}-explanation" rows="2" maxlength="1000">{{ c.explanation }}</textarea></label>
+      {% endif %}
+    </fieldset>
+    {% else %}
+    <p class="muted">No {{ 'flashcards' if tab == 'flash' else 'quiz questions' }} yet.</p>
+    {% endfor %}
+
+    {% if cards %}
+    <div class="sticky-actions">
+      <button class="btn btn--primary" type="submit" name="action" value="save">Save changes</button>
+    </div>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}<script>
+document.querySelectorAll('[data-delete-toggle]').forEach(function (box) {
+  box.addEventListener('change', function () { box.closest('[data-edit-card]').classList.toggle('is-deleted', box.checked); });
+});
+</script>{% endblock %}

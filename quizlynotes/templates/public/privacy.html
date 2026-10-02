@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set seo_title = "Privacy Policy | QuizlyNotes" %}
+{% set seo_description = "How QuizlyNotes collects, uses and protects your data, and how to export or delete it." %}
+{% set seo_path = "/privacy" %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta %}{% include "partials/seo_meta.html" %}{% endblock %}
+{% block content %}
+<article class="wrap section section--narrow prose">
+  <h1 class="display display--sm">Privacy policy</h1>
+  <p class="muted">Last updated 2 October 2026</p>
+  <p>This policy explains what QuizlyNotes ("we") collects when you use quizlynotes.com, why, and the choices you have. If you have any questions, email <a href="mailto:{{ site.email }}">{{ site.email }}</a>.</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Account details from Google sign-in:</strong> your email address, name and profile picture.</li>
+    <li><strong>Study content:</strong> the notes, questions, flashcards and titles created in your account, plus quiz scores and flashcard review history.</li>
+    <li><strong>Files you upload:</strong> these are processed to create your notes and are not stored by QuizlyNotes after processing.</li>
+    <li><strong>Technical data:</strong> standard server logs (IP address, browser, pages requested), used for security, rate limiting and fixing problems.</li>
+  </ul>
+
+  <h2>How we use it</h2>
+  <ul>
+    <li>To provide the service: generating notes and quizzes, saving them to your library and tracking your progress.</li>
+    <li>To keep the service secure and prevent abuse.</li>
+  </ul>
+  <p>We do not sell your data or use it for advertising. The legal basis for processing is to perform our agreement with you (providing the service) and our legitimate interest in keeping it secure.</p>
+
+  <h2>Who processes your data</h2>
+  <ul>
+    <li><strong>Google Gemini API</strong> receives uploaded files and notes to generate study content.</li>
+    <li><strong>Google Cloud</strong> hosts the application.</li>
+    <li><strong>Our database provider</strong> stores your account and study content.</li>
+    <li><strong>Google</strong> provides sign-in.</li>
+  </ul>
+
+  <h2>Cookies</h2>
+  <p>We use a small number of essential cookies to keep you signed in and to protect forms against cross-site attacks. Your theme choice is stored in your browser. We do not use advertising cookies.</p>
+
+  <h2>Your rights</h2>
+  <p>You can export all of your data as a file, or permanently delete your account and everything in it, from <strong>Settings</strong> at any time. Under UK GDPR you also have the right to access, correct or restrict the processing of your data, and to complain to the Information Commissioner's Office (ico.org.uk).</p>
+
+  <h2>Retention</h2>
+  <p>Your data is kept while your account exists, and is deleted when you delete your account. Results from the "try it" box that are never saved to an account are removed periodically.</p>
+
+  <h2>Children</h2>
+  <p>QuizlyNotes is intended for students aged 13 and over.</p>
+</article>
+{% endblock %}

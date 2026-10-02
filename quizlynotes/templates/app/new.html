@@ -1,0 +1,66 @@
+{% extends "app/base_app.html" %}
+{% block title %}New set | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page page--narrow">
+  <header class="page-head">
+    <div>
+      <a class="back" href="{{ url_for('study.library') }}">← Library</a>
+      <h1 class="page-title">New study set</h1>
+      <p class="muted">Add one topic or lecture at a time for the best questions.</p>
+    </div>
+  </header>
+
+  <form class="panel new-form" data-new-form action="{{ url_for('api.create_study_set') }}" enctype="multipart/form-data">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-tab="upload">Upload a file</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="paste">Paste text</button>
+    </div>
+
+    <div data-panel="upload">
+      <label class="dropzone" data-dropzone>
+        <input type="file" name="file" accept=".pdf,.docx,.pptx,.txt,.md,application/pdf" data-file>
+        <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0l-4 4m4-4l4 4M5 16v3a1 1 0 001 1h12a1 1 0 001-1v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="dropzone__title" data-file-label>Drop a file here or <u>browse</u></span>
+        <span class="muted small">PDF, lecture slides, Word or PowerPoint · up to 30MB</span>
+      </label>
+    </div>
+    <div data-panel="paste" hidden>
+      <label class="field">
+        <span class="field__label">Your notes</span>
+        <textarea name="text" rows="12" placeholder="Paste your notes here…"></textarea>
+      </label>
+    </div>
+
+    <div class="grid-2">
+      <label class="field">
+        <span class="field__label">Subject <span class="muted">(optional)</span></span>
+        <input type="text" name="subject" list="subject-list" maxlength="120" placeholder="Leave blank to detect it">
+        <datalist id="subject-list">{% for s in subjects %}<option value="{{ s }}">{% endfor %}</datalist>
+      </label>
+      <label class="field">
+        <span class="field__label">Title <span class="muted">(optional)</span></span>
+        <input type="text" name="title" maxlength="200" placeholder="e.g. Lecture 12: How vision works">
+      </label>
+    </div>
+
+    <fieldset class="field">
+      <legend class="field__label">After the notes are made</legend>
+      <label class="radio-card">
+        <input type="radio" name="skip_review" value="0" checked>
+        <span><strong>Let me review the notes first</strong><span class="muted">Edit or trim them, then choose question types and generate the quiz.</span></span>
+      </label>
+      <label class="radio-card">
+        <input type="radio" name="skip_review" value="1">
+        <span><strong>Make the quiz straight away</strong><span class="muted">Auto number of questions, medium difficulty, all question types.</span></span>
+      </label>
+    </fieldset>
+
+    <p class="form-error" data-error hidden></p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary btn--lg">Create notes</button>
+    </div>
+  </form>
+</section>
+<div class="overlay" data-overlay hidden>{% include "partials/loader.html" %}</div>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/new.js') }}" defer></script>{% endblock %}

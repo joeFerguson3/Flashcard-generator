@@ -1,0 +1,74 @@
+{% extends "app/base_app.html" %}
+{% block title %}Library | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Library</p>
+      <h1 class="page-title">Hi {{ current_user.display_name.split(' ')[0] }}</h1>
+      {% if sets %}
+      <p class="muted">{{ sets|length }} set{{ 's' if sets|length != 1 }} across {{ subjects|length }} subject{{ 's' if subjects|length != 1 }}{% if due_total %} · <strong class="due-text">{{ due_total }} flashcard{{ 's' if due_total != 1 }} due</strong>{% endif %}</p>
+      {% endif %}
+    </div>
+    <a class="btn btn--primary" href="{{ url_for('study.new_set') }}">New set</a>
+  </header>
+
+  {% if not sets %}
+  <div class="empty">
+    <div class="empty__art" aria-hidden="true">
+      <div class="mini-card mini-card--back"></div><div class="mini-card"><span></span><span></span><span></span></div>
+    </div>
+    <h2>Make your first set</h2>
+    <p class="muted">Upload lecture slides or a PDF, or paste your notes. You'll get revision notes, a quiz and flashcards.</p>
+    <a class="btn btn--primary btn--lg" href="{{ url_for('study.new_set') }}">Add notes</a>
+  </div>
+  {% else %}
+  <div class="toolbar" data-library-filters>
+    <div class="chips" role="group" aria-label="Filter by subject">
+      <button type="button" class="chip" data-subject="" aria-pressed="{{ 'true' if not active_subject else 'false' }}">All</button>
+      {% for subject in subjects %}
+      <button type="button" class="chip" data-subject="{{ subject }}" aria-pressed="{{ 'true' if active_subject == subject else 'false' }}">{{ subject }}</button>
+      {% endfor %}
+    </div>
+    <div class="toolbar__right">
+      <label class="field field--inline">
+        <span class="sr-only">Search sets</span>
+        <input type="search" placeholder="Search" data-search>
+      </label>
+      <label class="field field--inline">
+        <span class="sr-only">Sort</span>
+        <select data-sort>
+          <option value="recent">Recently updated</option>
+          <option value="az">A–Z</option>
+          <option value="score">Lowest score first</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <ul class="set-grid" data-set-grid>
+    {% for s in sets %}
+    {% set due = s.due_flashcards()|length %}
+    <li class="set-card" data-subject="{{ s.subject }}" data-title="{{ s.title|lower }}" data-updated="{{ s.updated_at.timestamp()|int }}" data-score="{{ s.best_score if s.best_score is not none else -1 }}">
+      <a href="{{ url_for('study.study_set', set_id=s.id) }}" class="set-card__link">
+        <span class="set-card__subject">{{ s.subject }}</span>
+        <h2 class="set-card__title">{{ s.title }}</h2>
+        <p class="set-card__meta">
+          {% if s.has_quiz %}{{ s.quiz_cards|length }} questions · {{ s.flashcards|length }} flashcards{% else %}<span class="pill pill--warn">Notes only</span>{% endif %}
+        </p>
+        <div class="set-card__foot">
+          <div class="scorebar" title="Best score">
+            <span class="scorebar__track"><span class="scorebar__fill" style="--w: {{ s.best_score or 0 }}%"></span></span>
+            <span class="scorebar__label">{{ s.best_score|pct }}</span>
+          </div>
+          {% if due %}<span class="pill pill--due">{{ due }} due</span>{% else %}<span class="muted small">{{ s.last_studied_at|ago }}</span>{% endif %}
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted center" data-no-results hidden>No sets match that search.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/library.js') }}" defer></script>{% endblock %}

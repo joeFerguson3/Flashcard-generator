@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap section section--narrow center">
+  <p class="eyebrow">Error {{ code }}</p>
+  <h1 class="display display--sm">{{ title }}</h1>
+  <p class="lede">{{ message }}</p>
+  <p><a class="btn btn--primary" href="{{ url_for('study.library') if current_user.is_authenticated else url_for('public.home') }}">Go back home</a></p>
+</section>
+{% endblock %}

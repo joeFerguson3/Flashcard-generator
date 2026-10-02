@@ -1,0 +1,9 @@
+<ul class="qtypes">
+  {% for name, text in question_types %}
+  <li class="qtypes__item">
+    <span class="qtypes__tag">{{ loop.index }}</span>
+    <h3>{{ name }}</h3>
+    <p>{{ text }}</p>
+  </li>
+  {% endfor %}
+</ul>

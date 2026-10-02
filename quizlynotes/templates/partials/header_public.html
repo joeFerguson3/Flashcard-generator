@@ -1,0 +1,20 @@
+<header class="site-header">
+  <div class="wrap site-header__inner">
+    <a href="{{ url_for('public.home') }}" class="logo" aria-label="QuizlyNotes home">
+      {% include "partials/logo.html" %}<span class="logo__word">Quizly<span>Notes</span></span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="{{ url_for('public.notes_to_quiz') }}">Notes to quiz</a>
+      <a href="{{ url_for('public.pdf_to_quiz') }}">PDF to quiz</a>
+      <a href="{{ url_for('public.notes_to_flashcards') }}">Flashcards</a>
+    </nav>
+    <div class="site-header__actions">
+      {% if current_user.is_authenticated %}
+        <a class="btn btn--primary btn--sm" href="{{ url_for('study.library') }}">My library</a>
+      {% else %}
+        <a class="btn btn--ghost btn--sm hide-sm" href="{{ url_for('auth.login') }}">Log in</a>
+        <a class="btn btn--primary btn--sm" href="{{ url_for('auth.login') }}">Start free</a>
+      {% endif %}
+    </div>
+  </div>
+</header>

@@ -1,0 +1,76 @@
+{% extends "app/base_app.html" %}
+{% block title %}Edit notes: {{ s.title }} | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page page--editor">
+  <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← Back to set</a>
+
+  <div class="editor-head">
+    <div class="editor-head__fields">
+      <label class="sr-only" for="set-title">Title</label>
+      <input id="set-title" class="title-input" value="{{ s.title }}" maxlength="200" data-title>
+      <label class="subject-input">
+        <span class="muted small">Subject</span>
+        <input value="{{ s.subject }}" maxlength="120" list="subject-list" data-subject>
+        <datalist id="subject-list">{% for x in subjects %}<option value="{{ x }}">{% endfor %}</datalist>
+      </label>
+    </div>
+    <p class="save-state muted small" data-save-state aria-live="polite">All changes saved</p>
+  </div>
+
+  <div class="editor-help muted small">
+    One point per line. Press <kbd>Tab</kbd> to indent a line (supporting detail) and <kbd>Shift</kbd>+<kbd>Tab</kbd> to outdent. Changes save automatically.
+  </div>
+
+  <div class="editor" data-editor></div>
+  <button type="button" class="btn btn--ghost add-topic" data-add-topic>+ Add topic</button>
+
+  <div class="gen-bar" data-gen-bar>
+    <div class="gen-bar__inner">
+      <details class="gen-options">
+        <summary>Quiz options</summary>
+        <div class="gen-options__panel">
+          <label class="field">
+            <span class="field__label">Number of questions</span>
+            <select data-count>
+              <option value="">Auto (based on your notes)</option>
+              {% for n in [5, 10, 15, 20, 30, 40, 60] %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+            </select>
+          </label>
+          <fieldset class="field">
+            <legend class="field__label">Difficulty</legend>
+            <div class="segmented">
+              {% for d in ['easy', 'medium', 'hard'] %}
+              <label><input type="radio" name="difficulty" value="{{ d }}" {% if d == 'medium' %}checked{% endif %}><span>{{ d|capitalize }}</span></label>
+              {% endfor %}
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend class="field__label">Question types</legend>
+            <div class="checks">
+              {% set labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering'} %}
+              {% for k in kinds %}
+              <label><input type="checkbox" value="{{ k }}" data-kind checked> {{ labels[k] }}</label>
+              {% endfor %}
+            </div>
+          </fieldset>
+          <p class="muted small">Flashcards are always included.</p>
+        </div>
+      </details>
+      <p class="form-error" data-error hidden></p>
+      <button type="button" class="btn btn--primary" data-generate>
+        {{ 'Regenerate quiz' if s.has_quiz else 'Generate quiz & flashcards' }}
+      </button>
+    </div>
+  </div>
+</section>
+<div class="overlay" data-overlay hidden>{% include "partials/loader.html" %}</div>
+<script type="application/json" id="notes-data">{{ {
+  "sections": notes_json,
+  "save_url": url_for('api.update_notes', set_id=s.id),
+  "generate_url": url_for('api.generate_quiz', set_id=s.id),
+  "enhance_url": url_for('api.enhance', set_id=s.id),
+  "has_quiz": s.has_quiz,
+  "has_attempts": (s.attempts|length) > 0
+}|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/notes.js') }}" defer></script>{% endblock %}

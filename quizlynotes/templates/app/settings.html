@@ -1,0 +1,42 @@
+{% extends "app/base_app.html" %}
+{% block title %}Settings | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page page--narrow">
+  <header class="page-head"><h1 class="page-title">Settings</h1></header>
+
+  <section class="panel settings-row">
+    <div class="who">
+      <span class="avatar avatar--lg">{% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" width="48" height="48" referrerpolicy="no-referrer">{% else %}{{ current_user.initial }}{% endif %}</span>
+      <div>
+        <strong>{{ current_user.display_name }}</strong>
+        <p class="muted small">{{ current_user.email }} · signed in with Google · member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="block__title">Appearance</h2>
+    <div class="segmented" role="radiogroup" aria-label="Theme" data-theme-choice>
+      <label><input type="radio" name="theme" value="system"><span>System</span></label>
+      <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+      <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="block__title">Your data</h2>
+    <p class="muted">You have {{ set_count }} study set{{ 's' if set_count != 1 }}. Download everything (notes, questions, flashcards and scores) as a JSON file.</p>
+    <a class="btn btn--ghost" href="{{ url_for('study.export_data') }}">Export my data</a>
+  </section>
+
+  <section class="panel panel--danger">
+    <h2 class="block__title">Delete account</h2>
+    <p class="muted">This permanently deletes your account and all of your sets, cards and scores. It can't be undone.</p>
+    <form method="post" action="{{ url_for('study.delete_account') }}" class="inline-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="field field--inline"><span class="sr-only">Type DELETE to confirm</span><input name="confirm" placeholder="Type DELETE" autocomplete="off" required></label>
+      <button type="submit" class="btn btn--danger">Delete my account</button>
+    </form>
+  </section>
+</section>
+{% endblock %}

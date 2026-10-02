@@ -1,16 +1,18 @@
-# Use official lightweight Python image
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Set working directory inside the container
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    APP_ENV=production \
+    PORT=8080
+
 WORKDIR /app
 
-# Copy project files into the container
-COPY . .
-
-# Install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port Cloud Run will use
-EXPOSE 8080
+COPY . .
 
-CMD ["gunicorn", "-b", ":8080", "app:create_app()"]
+# Apply database migrations, then serve. Generation requests can take a
+# minute, so use threads and a long timeout (match Cloud Run's --timeout).
+CMD flask --app wsgi db upgrade && \
+    exec gunicorn wsgi:app --bind :$PORT --workers 2 --threads 8 --timeout 300 --access-logfile -
