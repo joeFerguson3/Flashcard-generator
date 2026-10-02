@@ -13,3 +13,10 @@ tests/
 legacy/
 .venv/
 venv/
+node_modules/
+.neon
+.agents/
+.claude/
+.codex/
+.mcp.json
+skills-lock.json
