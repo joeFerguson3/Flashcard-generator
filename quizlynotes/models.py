@@ -27,6 +27,11 @@ CARD_KINDS = (
     "fill_blank",
     "short_answer",
     "ordering",
+    "matching",
+    "multi_select",
+    "categorize",
+    "numeric",
+    "explain",
 )
 QUIZ_KINDS = tuple(k for k in CARD_KINDS if k != "flashcard")
 

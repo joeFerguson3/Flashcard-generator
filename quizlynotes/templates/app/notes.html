@@ -17,8 +17,11 @@
     <p class="save-state muted small" data-save-state aria-live="polite">All changes saved</p>
   </div>
 
-  <div class="editor-help muted small">
-    One point per line. Press <kbd>Tab</kbd> to indent a line (supporting detail) and <kbd>Shift</kbd>+<kbd>Tab</kbd> to outdent. Changes save automatically.
+  <div class="editor-bar">
+    <p class="editor-help muted small">
+      <kbd>Enter</kbd> adds a point · <kbd>Tab</kbd> indents it as a detail · <kbd>Shift</kbd>+<kbd>Tab</kbd> outdents · changes save automatically
+    </p>
+    <button type="button" class="btn btn--ghost btn--sm" data-simplify-all title="Keep only the most important points in every topic">Simplify all</button>
   </div>
 
   <div class="editor" data-editor></div>
@@ -47,7 +50,7 @@
           <fieldset class="field">
             <legend class="field__label">Question types</legend>
             <div class="checks">
-              {% set labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering'} %}
+              {% set labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering', 'matching': 'Matching', 'multi_select': 'Select all that apply', 'categorize': 'Sort into groups', 'numeric': 'Numeric', 'explain': 'Explain'} %}
               {% for k in kinds %}
               <label><input type="checkbox" value="{{ k }}" data-kind checked> {{ labels[k] }}</label>
               {% endfor %}

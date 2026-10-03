@@ -45,6 +45,15 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s.strip().lower())
 
 
+def _unique(items: list[str]) -> list[str]:
+    seen, out = set(), []
+    for item in items:
+        if _norm(item) not in seen:
+            seen.add(_norm(item))
+            out.append(item)
+    return out
+
+
 def clean_card(raw: dict, section_count: int) -> dict | None:
     kind = raw.get("kind")
     prompt = clean_text(raw.get("prompt"), 1000)
@@ -123,6 +132,54 @@ def clean_card(raw: dict, section_count: int) -> dict | None:
         if not 3 <= len(unique) <= 8:
             return None
         options, answers = unique, []
+
+    elif kind == "matching":
+        if len(options) != len(answers) or not 3 <= len(options) <= 6:
+            return None
+        if len({_norm(o) for o in options}) != len(options) or len({_norm(a) for a in answers}) != len(answers):
+            return None
+
+    elif kind == "multi_select":
+        options = _unique(options)
+        if not 4 <= len(options) <= 7:
+            return None
+        lookup = {_norm(o): o for o in options}
+        correct = []
+        for a in answers:
+            match = lookup.get(_norm(a))
+            if match and match not in correct:
+                correct.append(match)
+        if not 2 <= len(correct) < len(options):
+            return None
+        answers = correct
+
+    elif kind == "categorize":
+        if len(options) != len(answers) or not 3 <= len(options) <= 10:
+            return None
+        if len({_norm(o) for o in options}) != len(options):
+            return None
+        # Normalise category spelling to the first form used.
+        canon = {}
+        answers = [canon.setdefault(_norm(a), a) for a in answers]
+        if not 2 <= len(canon) <= 4:
+            return None
+
+    elif kind == "numeric":
+        if not answers:
+            return None
+        number = answers[0].replace(",", "").replace(" ", "")
+        try:
+            float(number)
+        except ValueError:
+            return None
+        answers = [number] + ([answers[1][:30]] if len(answers) > 1 else [])
+        options = []
+
+    elif kind == "explain":
+        answers = answers[:5]
+        if len(answers) < 2:
+            return None
+        options = []
 
     else:
         return None

@@ -56,6 +56,22 @@ Question kinds:
   words). Put acceptable alternative phrasings after the main answer.
 - ordering: only when the notes describe a real sequence (stages, steps,
   chronology). 3 to 6 items, listed in the correct order in `options`.
+- matching: 3 to 6 related terms in `options` and their matching definitions
+  or descriptions in `answers` (same order). Definitions must be short (under
+  12 words) and each must match exactly one term. Prompt e.g. "Match each term
+  to its definition".
+- multi_select: "Select all that apply" questions with 4 to 6 options, of which
+  at least 2 are correct and at least 1 is wrong. `answers` lists every correct
+  option exactly as written in `options`.
+- categorize: 4 to 8 short items in `options` to sort into 2 or 3 categories
+  (e.g. "Aerobic" vs "Anaerobic"). `answers` gives the category for each item
+  in the same order. Every category needs at least one item.
+- numeric: only when the notes contain numbers, quantities or a calculation the
+  student should know. `answers` is [the number with no units or commas,
+  optional unit], e.g. ["120", "million"] or ["9.81", "m/s²"].
+- explain: an open "Explain why/how..." question needing 2 to 4 sentences.
+  `answers` lists 2 to 4 short key points a good answer must include. Use for
+  the most important mechanisms or arguments only.
 - flashcard: front is a question or a term, back is a concise answer
   (under 25 words) that a student could recall from memory.
 
@@ -67,6 +83,8 @@ CARDS_USER = """Create study cards from the notes below.
 
 Make exactly {quiz_count} quiz questions using these kinds: {kinds}.
 Use a good mix of the allowed kinds, choosing the kind that best suits each fact.
+You don't have to use every kind: skip kinds that don't fit the material (e.g. numeric
+with no numbers, ordering with no sequence).
 Also make {flash_count} flashcards (kind "flashcard") covering the key terms and ideas.
 
 Difficulty: {difficulty_text}
@@ -93,6 +111,22 @@ complete for exam revision:
 """
 
 ENHANCE_USER = "Improve these notes for the topic \"{heading}\":\n\n{notes}"
+
+SIMPLIFY_SYSTEM = """You condense a student's revision notes for one topic down to what
+matters for understanding and exams.
+
+- Keep only the key ideas: core definitions, main mechanisms or steps, key
+  numbers, names and formulas, and one example only if it is essential.
+- Remove trivia and noise: file names, file sizes, prices, sources, credits,
+  repeated points, and anything a student would not be tested on.
+- Merge points that say the same thing. Prefer 2 to 5 short points per section
+  and merge sections that cover the same idea.
+- Rewrite each point to be short and direct (ideally under 15 words).
+- Never add new facts. Keep the same heading. Plain text only.
+  Levels: 1 key idea, 2 supporting detail (use sparingly).
+"""
+
+SIMPLIFY_USER = "Simplify these notes for the topic \"{heading}\", keeping only the most important points:\n\n{notes}"
 
 
 QUICK_SYSTEM = NOTES_SYSTEM + "\n\nThen, from those notes, write study cards.\n\n" + CARDS_SYSTEM

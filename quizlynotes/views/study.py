@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
 from ..extensions import db
@@ -102,6 +102,39 @@ def flashcards(set_id: int):
         "cards": [{"id": c.id, "front": c.prompt, "back": (c.answers or [""])[0]} for c in cards],
     }
     return render_template("app/flashcards.html", s=s, payload=payload, mode=mode)
+
+
+GAMES = {
+    "match": {"title": "Match", "min": 3,
+              "blurb": "Pair each term with its answer as fast as you can."},
+    "speed": {"title": "Speed round", "min": 4,
+              "blurb": "60 seconds. Answer as many as you can and build a streak."},
+    "write": {"title": "Write it", "min": 1,
+              "blurb": "Type each answer from memory, then check yourself."},
+}
+
+
+@study_bp.route("/sets/<int:set_id>/play/<game>")
+def play(set_id: int, game: str):
+    s = get_owned_set(set_id, current_user)
+    if game not in GAMES:
+        abort(404)
+    flash_cards = [{"id": c.id, "front": c.prompt, "back": (c.answers or [""])[0]} for c in s.flashcards]
+    choice_cards = [
+        {"id": c.id, "prompt": c.prompt,
+         "options": c.options if c.kind == "multiple_choice" else ["True", "False"],
+         "answer": c.answers[0] if c.kind == "multiple_choice" else c.answers[0].capitalize(),
+         "explanation": c.explanation}
+        for c in s.quiz_cards if c.kind in ("multiple_choice", "true_false") and c.answers
+    ]
+    payload = {
+        "game": game, "set_id": s.id, "title": s.title,
+        "set_url": url_for("study.study_set", set_id=s.id),
+        "flashcards": flash_cards, "choices": choice_cards,
+    }
+    enough = len(flash_cards) >= GAMES[game]["min"] or (game == "speed" and len(choice_cards) >= 4)
+    return render_template("app/game.html", s=s, game=game, info=GAMES[game], games=GAMES,
+                           payload=payload, enough=enough)
 
 
 @study_bp.route("/sets/<int:set_id>/cards", methods=["GET", "POST"])

@@ -12,6 +12,11 @@ QUESTION_TYPES = [
     ("Fill in the blank", "Key terms removed from a sentence, so you practise recalling the exact word."),
     ("Short answer", "Type the answer from memory. Small typos and alternative wordings still count."),
     ("Ordering", "Put stages, steps or events in sequence. Made only when your notes describe a real process."),
+    ("Matching", "Pair key terms with their definitions, so you learn how ideas connect."),
+    ("Select all that apply", "Questions with more than one right answer, which test whether you really know the topic."),
+    ("Sort into groups", "Put each item in the right category, for comparing and classifying."),
+    ("Numeric", "Calculation and number answers, with sensible rounding allowed."),
+    ("Explain", "Write a short explanation, then check it against the key points a good answer covers."),
     ("Flashcards", "One idea per card, reviewed with spaced repetition so you see hard cards more often."),
 ]
 

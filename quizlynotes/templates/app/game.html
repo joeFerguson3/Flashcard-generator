@@ -1,0 +1,26 @@
+{% extends "app/base_app.html" %}
+{% block title %}{{ info.title }}: {{ s.title }} | QuizlyNotes{% endblock %}
+{% block body_class %}page-player{% endblock %}
+{% block content %}
+<section class="wrap player-wrap player-wrap--wide">
+  <header class="player-head player-head--row">
+    <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← {{ s.title }}</a>
+    <nav class="seg-links" aria-label="Games">
+      {% for key, g in games.items() %}
+      <a href="{{ url_for('study.play', set_id=s.id, game=key) }}" {% if key == game %}aria-current="page"{% endif %}>{{ g.title }}</a>
+      {% endfor %}
+    </nav>
+  </header>
+  {% if not enough %}
+  <div class="empty">
+    <h2>Not enough cards yet</h2>
+    <p class="muted">{{ info.title }} needs at least {{ info.min }} flashcards. Generate a quiz for this set, or add flashcards yourself.</p>
+    <a class="btn btn--primary" href="{{ url_for('study.edit_cards', set_id=s.id, tab='flash') }}">Add flashcards</a>
+  </div>
+  {% else %}
+  <div id="game" class="game" data-game="{{ game }}"></div>
+  {% endif %}
+</section>
+<script type="application/json" id="game-data">{{ payload|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('js/games.js') }}" defer></script>{% endblock %}

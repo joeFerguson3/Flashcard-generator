@@ -216,3 +216,67 @@ def test_clean_card_repairs_and_rejects():
 def test_clean_notes_strips_bullets_and_tags():
     out = clean_notes([{"heading": "<b>H</b>", "subheading": "S", "points": [{"text": "- <i>point</i>", "level": 7}]}])
     assert out == [{"heading": "H", "subheading": "S", "points": [{"text": "point", "level": 3}]}]
+
+
+def test_simplify_and_improve(client, app):
+    login(client)
+    set_id = make_set(client)
+    with app.app_context():
+        sections = [s.to_dict() for s in db.session.get(StudySet, set_id).sections]
+    long_section = dict(sections[1], points=sections[1]["points"] + [{"text": "trivia", "level": 2}])
+    res = client.post(f"/api/sets/{set_id}/enhance", json={"heading": "Cell respiration", "sections": [long_section], "mode": "simplify"})
+    assert res.status_code == 200
+    simplified = res.json["sections"][0]["points"]
+    assert len(simplified) < len(long_section["points"]) and all(p["level"] == 1 for p in simplified)
+    res = client.post(f"/api/sets/{set_id}/enhance", json={"heading": "Cell respiration", "sections": [long_section]})
+    assert len(res.json["sections"][0]["points"]) > len(long_section["points"])
+
+
+@pytest.mark.parametrize("game", ["match", "speed", "write"])
+def test_games(client, game):
+    login(client)
+    set_id = make_set(client)
+    page = client.get(f"/sets/{set_id}/play/{game}").get_data(as_text=True)
+    assert "Not enough cards yet" in page  # no cards generated yet
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    page = client.get(f"/sets/{set_id}/play/{game}").get_data(as_text=True)
+    assert 'id="game"' in page and '"flashcards"' in page
+    assert client.get(f"/sets/{set_id}/play/nope").status_code == 404
+
+
+def test_new_question_kinds_validation():
+    ok = clean_card({"kind": "matching", "prompt": "Match", "options": ["a", "b", "c"], "answers": ["1", "2", "3"]}, 1)
+    assert ok["options"] == ["a", "b", "c"]
+    assert clean_card({"kind": "matching", "prompt": "Match", "options": ["a", "b", "c"], "answers": ["1", "2"]}, 1) is None
+    ms = clean_card({"kind": "multi_select", "prompt": "Pick", "options": ["A", "B", "C", "D"], "answers": ["a", "c"]}, 1)
+    assert ms["answers"] == ["A", "C"]
+    assert clean_card({"kind": "multi_select", "prompt": "Pick", "options": ["A", "B", "C", "D"], "answers": ["A", "B", "C", "D"]}, 1) is None
+    cat = clean_card({"kind": "categorize", "prompt": "Sort", "options": ["x", "y", "z"], "answers": ["Hot", "cold", "hot"]}, 1)
+    assert cat["answers"] == ["Hot", "cold", "Hot"]
+    assert clean_card({"kind": "categorize", "prompt": "Sort", "options": ["x", "y", "z"], "answers": ["a", "a", "a"]}, 1) is None
+    num = clean_card({"kind": "numeric", "prompt": "How many?", "answers": ["1,200", "cells"]}, 1)
+    assert num["answers"] == ["1200", "cells"]
+    assert clean_card({"kind": "numeric", "prompt": "How many?", "answers": ["lots"]}, 1) is None
+    assert clean_card({"kind": "explain", "prompt": "Why?", "answers": ["only one"]}, 1) is None
+
+
+def test_quiz_includes_new_kinds_and_editing(client, app):
+    login(client)
+    set_id = make_set(client)
+    client.post(f"/api/sets/{set_id}/generate", json={"count": 20})
+    with app.app_context():
+        s = db.session.get(StudySet, set_id)
+        kinds = {c.kind for c in s.quiz_cards}
+        assert {"matching", "multi_select", "categorize", "numeric", "explain"} <= kinds
+        ids = {c.kind: c.id for c in s.quiz_cards}
+    assert client.get(f"/sets/{set_id}/cards").status_code == 200
+    res = client.post(f"/sets/{set_id}/cards", data={
+        f"c{ids['matching']}-prompt": "Match these", f"c{ids['matching']}-pairs": "A = 1\nB = 2\nC = 3",
+        f"c{ids['multi_select']}-prompt": "Pick", f"c{ids['multi_select']}-options": "*W\nX\n*Y\nZ",
+        f"c{ids['numeric']}-prompt": "How many?", f"c{ids['numeric']}-number": "42", f"c{ids['numeric']}-unit": "kg",
+    })
+    assert res.status_code == 302
+    with app.app_context():
+        assert db.session.get(Card, ids["matching"]).answers == ["1", "2", "3"]
+        assert db.session.get(Card, ids["multi_select"]).answers == ["W", "Y"]
+        assert db.session.get(Card, ids["numeric"]).answers == ["42", "kg"]

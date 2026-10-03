@@ -1,6 +1,6 @@
 {% extends "app/base_app.html" %}
 {% block title %}Edit cards: {{ s.title }} | QuizlyNotes{% endblock %}
-{% set kind_labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering', 'flashcard': 'Flashcard'} %}
+{% set kind_labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering', 'matching': 'Matching', 'multi_select': 'Select all that apply', 'categorize': 'Sort into groups', 'numeric': 'Numeric', 'explain': 'Explain', 'flashcard': 'Flashcard'} %}
 {% block content %}
 <section class="wrap page page--narrow">
   <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← Back to set</a>
@@ -73,6 +73,30 @@
       {% elif c.kind == 'ordering' %}
       <label class="field"><span class="field__label">Items in the correct order (one per line)</span>
         <textarea name="{{ p }}-options" rows="4">{{ c.options|join('\n') }}</textarea>
+      </label>
+      {% elif c.kind == 'matching' %}
+      <label class="field"><span class="field__label">Pairs, one per line: <span class="muted">term = matching answer</span></span>
+        <textarea name="{{ p }}-pairs" rows="4">{% for o in c.options %}{{ o }} = {{ c.answers[loop.index0] }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+      </label>
+      {% elif c.kind == 'multi_select' %}
+      <label class="field"><span class="field__label">Options, one per line: <span class="muted">start correct ones with *</span></span>
+        <textarea name="{{ p }}-options" rows="5">{% for o in c.options %}{{ '*' if o in c.answers else '' }}{{ o }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+      </label>
+      {% elif c.kind == 'categorize' %}
+      <label class="field"><span class="field__label">Items, one per line: <span class="muted">item = group</span></span>
+        <textarea name="{{ p }}-pairs" rows="5">{% for o in c.options %}{{ o }} = {{ c.answers[loop.index0] }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+      </label>
+      {% elif c.kind == 'numeric' %}
+      <div class="grid-2">
+        <label class="field"><span class="field__label">Answer (number)</span><input name="{{ p }}-number" value="{{ c.answers[0] if c.answers else '' }}" inputmode="decimal"></label>
+        <label class="field"><span class="field__label">Unit <span class="muted">(optional)</span></span><input name="{{ p }}-unit" value="{{ c.answers[1] if c.answers|length > 1 else '' }}" maxlength="30"></label>
+      </div>
+      {% elif c.kind == 'explain' %}
+      <label class="field"><span class="field__label">Key points a good answer covers (one per line)</span>
+        <textarea name="{{ p }}-answers" rows="4">{{ c.answers|join('\n') }}</textarea>
       </label>
       {% endif %}
 

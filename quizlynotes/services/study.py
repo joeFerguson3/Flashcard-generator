@@ -97,6 +97,17 @@ def update_card_from_form(card: Card, form, prefix: str) -> bool:
         raw.update(options=[], answers=lines("answers"))
     elif card.kind == "ordering":
         raw.update(options=lines("options"), answers=[])
+    elif card.kind in ("matching", "categorize"):
+        pairs = [line.split("=", 1) for line in lines("pairs") if "=" in line]
+        raw.update(options=[a.strip() for a, _ in pairs], answers=[b.strip() for _, b in pairs])
+    elif card.kind == "multi_select":
+        items = lines("options")
+        raw.update(options=[i.lstrip("*").strip() for i in items],
+                   answers=[i.lstrip("*").strip() for i in items if i.startswith("*")])
+    elif card.kind == "numeric":
+        raw.update(options=[], answers=[field("number", 40)] + ([field("unit", 30)] if field("unit", 30) else []))
+    elif card.kind == "explain":
+        raw.update(options=[], answers=lines("answers"))
     cleaned = clean_card(raw, 1)
     if cleaned is None:
         return False

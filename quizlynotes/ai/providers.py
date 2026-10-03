@@ -39,7 +39,7 @@ class BaseProvider:
     def make_cards(self, sections, quiz_count, flash_count, kinds, difficulty) -> list[dict]:
         raise NotImplementedError
 
-    def enhance(self, heading: str, sections: list[dict]) -> list[dict]:
+    def enhance(self, heading: str, sections: list[dict], mode: str = "improve") -> list[dict]:
         raise NotImplementedError
 
     def quick_study(self, text: str) -> dict:
@@ -165,11 +165,15 @@ class GeminiProvider(BaseProvider):
             raise AIError("The AI didn't produce any usable questions. Please try again.")
         return cards
 
-    def enhance(self, heading: str, sections: list[dict]) -> list[dict]:
+    def enhance(self, heading: str, sections: list[dict], mode: str = "improve") -> list[dict]:
+        system, user = (
+            (prompts.SIMPLIFY_SYSTEM, prompts.SIMPLIFY_USER) if mode == "simplify"
+            else (prompts.ENHANCE_SYSTEM, prompts.ENHANCE_USER)
+        )
         result = self._generate(
             model=self.fast_model,
-            contents=prompts.ENHANCE_USER.format(heading=heading, notes=prompts.format_notes_for_prompt(sections)),
-            system=prompts.ENHANCE_SYSTEM, schema=NoteSections, temperature=0.4,
+            contents=user.format(heading=heading, notes=prompts.format_notes_for_prompt(sections)),
+            system=system, schema=NoteSections, temperature=0.3,
         )
         cleaned = clean_notes([s.model_dump() for s in result.sections])
         for s in cleaned:
@@ -208,10 +212,13 @@ class FakeProvider(BaseProvider):
         flash = [c for c in cards if c["kind"] == "flashcard"][:flash_count]
         return quiz + flash
 
-    def enhance(self, heading, sections):
+    def enhance(self, heading, sections, mode="improve"):
         out = clean_notes(sections)
         for s in out:
-            s["points"].append({"text": "Example: added by the offline demo provider.", "level": 2})
+            if mode == "simplify":
+                s["points"] = [p for p in s["points"] if p["level"] == 1][:3] or s["points"][:1]
+            else:
+                s["points"].append({"text": "Example: added by the offline demo provider.", "level": 2})
         return out
 
     def quick_study(self, text: str) -> dict:
@@ -243,6 +250,24 @@ _SAMPLE_SECTIONS = [
 ]
 
 _SAMPLE_CARDS = [
+    {"section": 1, "kind": "matching", "prompt": "Match each stage to where it happens.",
+     "options": ["Glycolysis", "Krebs cycle", "Electron transport chain"],
+     "answers": ["Cytoplasm", "Mitochondrial matrix", "Inner mitochondrial membrane"],
+     "explanation": "Glycolysis is cytoplasmic; the later stages happen in the mitochondria."},
+    {"section": 0, "kind": "multi_select", "prompt": "Which are products of aerobic respiration? Select all that apply.",
+     "options": ["Carbon dioxide", "Water", "ATP", "Oxygen", "Glucose"],
+     "answers": ["Carbon dioxide", "Water", "ATP"],
+     "explanation": "Oxygen and glucose are reactants; CO2, water and ATP are produced."},
+    {"section": 2, "kind": "categorize", "prompt": "Sort each feature into aerobic or anaerobic respiration.",
+     "options": ["Needs oxygen", "Produces lactate", "About 30-32 ATP", "2 ATP per glucose"],
+     "answers": ["Aerobic", "Anaerobic", "Aerobic", "Anaerobic"],
+     "explanation": "Aerobic respiration uses oxygen and yields far more ATP than anaerobic."},
+    {"section": 2, "kind": "numeric", "prompt": "How many ATP does anaerobic respiration produce per glucose?",
+     "options": [], "answers": ["2", "ATP"], "explanation": "Only glycolysis runs, giving a net 2 ATP."},
+    {"section": 0, "kind": "explain", "prompt": "Explain why cells need oxygen for efficient respiration.",
+     "options": [], "answers": ["Oxygen is the final electron acceptor", "It keeps the electron transport chain running",
+                                "This produces most of the ATP"],
+     "explanation": "Without oxygen the electron transport chain stops, so only glycolysis makes ATP."},
     {"section": 0, "kind": "multiple_choice", "prompt": "What is the main purpose of cellular respiration?",
      "options": ["To make ATP", "To make glucose", "To absorb light", "To store oxygen"],
      "answers": ["To make ATP"], "explanation": "Respiration releases energy from glucose and stores it as ATP."},

@@ -122,7 +122,8 @@ def enhance(set_id: int):
     sections = payload.get("sections") or []
     if not sections:
         return error("Nothing to improve yet.")
-    improved = get_provider().enhance(heading, sections[:20])
+    mode = "simplify" if payload.get("mode") == "simplify" else "improve"
+    improved = get_provider().enhance(heading, sections[:20], mode=mode)
     return jsonify(sections=improved)
 
 

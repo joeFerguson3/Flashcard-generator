@@ -13,7 +13,9 @@
 
   var KIND_LABEL = {
     multiple_choice: 'Multiple choice', true_false: 'True or false', fill_blank: 'Fill in the blank',
-    short_answer: 'Short answer', ordering: 'Put in order'
+    short_answer: 'Short answer', ordering: 'Put in order', matching: 'Match up',
+    multi_select: 'Select all that apply', categorize: 'Sort into groups', numeric: 'Numeric answer',
+    explain: 'Explain'
   };
 
   // ---- helpers -----------------------------------------------------------
@@ -167,7 +169,10 @@
       continueBtn.focus({ preventScroll: true });
     }
 
-    var renderers = { multiple_choice: mcq, true_false: tf, fill_blank: blanks, short_answer: shortAnswer, ordering: ordering };
+    var renderers = {
+      multiple_choice: mcq, true_false: tf, fill_blank: blanks, short_answer: shortAnswer, ordering: ordering,
+      matching: matchUp, multi_select: multiSelect, categorize: categorize, numeric: numeric, explain: explain
+    };
     (renderers[card.kind] || shortAnswer)(card, article, actions, finish);
     article.appendChild(actions);
     return article;
@@ -380,6 +385,174 @@
     actions.appendChild(check);
   }
 
+  // Match up: choose the right definition for each term from a dropdown.
+  function matchUp(card, article, actions, finish) {
+    article.appendChild(h('h2', { class: 'step__q', text: card.prompt }));
+    var choices = shuffle(card.answers);
+    var selects = [];
+    var rows = card.options.map(function (term, i) {
+      var select = h('select', { class: 'match-select', 'aria-label': 'Match for ' + term, 'data-autofocus': i === 0 ? true : null },
+        [h('option', { value: '', text: 'Choose…' })].concat(choices.map(function (c) { return h('option', { value: c, text: c }); })));
+      selects.push(select);
+      select.addEventListener('change', update);
+      return h('div', { class: 'match-row' }, [h('span', { class: 'match-row__term', text: term }), select]);
+    });
+    article.appendChild(h('div', { class: 'match-rows' }, rows));
+    var check = h('button', { type: 'button', class: 'btn btn--primary', text: 'Check', disabled: true });
+    function update() {
+      // Each definition can only be used once: grey it out in the other dropdowns.
+      var used = selects.map(function (s) { return s.value; });
+      selects.forEach(function (s) {
+        Array.prototype.forEach.call(s.options, function (o) {
+          o.disabled = !!o.value && o.value !== s.value && used.indexOf(o.value) !== -1;
+        });
+      });
+      check.disabled = used.some(function (v) { return !v; });
+    }
+    check.addEventListener('click', function () {
+      var all = true;
+      selects.forEach(function (sel, i) {
+        var ok = sel.value === card.answers[i];
+        all = all && ok;
+        sel.disabled = true;
+        sel.parentNode.classList.add(ok ? 'is-correct' : 'is-wrong');
+        if (!ok) sel.parentNode.appendChild(h('span', { class: 'match-row__fix', text: '→ ' + card.answers[i] }));
+      });
+      finish(all, null);
+    });
+    actions.appendChild(h('span', { class: 'step__hint', text: 'Pick a match for every term' }));
+    actions.appendChild(check);
+  }
+
+  // Select all that apply: toggle options, then check.
+  function multiSelect(card, article, actions, finish) {
+    article.appendChild(h('h2', { class: 'step__q', text: card.prompt }));
+    var opts = shuffle(card.options);
+    var buttons = opts.map(function (o, i) {
+      var b = h('button', { type: 'button', class: 'opt opt--check', 'aria-pressed': 'false', 'data-value': o, 'data-autofocus': i === 0 ? true : null },
+        [h('span', { class: 'opt__key opt__box', 'aria-hidden': 'true' }), h('span', { text: o })]);
+      b.addEventListener('click', function () { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); });
+      return b;
+    });
+    article.appendChild(h('div', { class: 'options', role: 'group' }, buttons));
+    var check = h('button', { type: 'button', class: 'btn btn--primary', text: 'Check' });
+    check.addEventListener('click', function () {
+      var all = true;
+      buttons.forEach(function (b) {
+        var picked = b.getAttribute('aria-pressed') === 'true';
+        var right = card.answers.indexOf(b.getAttribute('data-value')) !== -1;
+        b.disabled = true;
+        if (right && picked) b.classList.add('is-correct');
+        else if (right && !picked) { b.classList.add('is-missed'); all = false; }
+        else if (!right && picked) { b.classList.add('is-wrong'); all = false; }
+        else b.classList.add('is-dim');
+      });
+      finish(all, all ? null : card.answers.join(', '));
+    });
+    actions.appendChild(h('span', { class: 'step__hint', text: card.answers.length > 1 ? 'More than one answer is correct' : '' }));
+    actions.appendChild(check);
+  }
+
+  // Sort into groups: pick a category for each item.
+  function categorize(card, article, actions, finish) {
+    article.appendChild(h('h2', { class: 'step__q', text: card.prompt }));
+    var cats = [];
+    card.answers.forEach(function (a) { if (cats.indexOf(a) === -1) cats.push(a); });
+    var order = shuffle(card.options.map(function (o, i) { return i; }));
+    var picks = {};
+    var check = h('button', { type: 'button', class: 'btn btn--primary', text: 'Check', disabled: true });
+    var rows = order.map(function (idx, n) {
+      var group = h('div', { class: 'segmented segmented--cats', role: 'radiogroup', 'aria-label': card.options[idx] });
+      cats.forEach(function (c) {
+        var btn = h('button', { type: 'button', class: 'cat-btn', 'aria-pressed': 'false', text: c, 'data-autofocus': n === 0 && c === cats[0] ? true : null });
+        btn.addEventListener('click', function () {
+          if (btn.disabled) return;
+          picks[idx] = c;
+          group.querySelectorAll('.cat-btn').forEach(function (x) { x.setAttribute('aria-pressed', String(x === btn)); });
+          check.disabled = Object.keys(picks).length < card.options.length;
+        });
+        group.appendChild(btn);
+      });
+      var row = h('div', { class: 'cat-row' }, [h('span', { class: 'cat-row__item', text: card.options[idx] }), group]);
+      row._idx = idx;
+      return row;
+    });
+    article.appendChild(h('div', { class: 'cat-rows' }, rows));
+    check.addEventListener('click', function () {
+      var all = true;
+      rows.forEach(function (row) {
+        var ok = picks[row._idx] === card.answers[row._idx];
+        all = all && ok;
+        row.classList.add(ok ? 'is-correct' : 'is-wrong');
+        row.querySelectorAll('.cat-btn').forEach(function (b) {
+          b.disabled = true;
+          if (b.textContent === card.answers[row._idx]) b.classList.add('is-answer');
+        });
+      });
+      finish(all, null);
+    });
+    actions.appendChild(h('span', { class: 'step__hint', text: 'Choose a group for every item' }));
+    actions.appendChild(check);
+  }
+
+  // Numeric: type a number; small rounding differences are accepted.
+  function numeric(card, article, actions, finish) {
+    article.appendChild(h('h2', { class: 'step__q', text: card.prompt }));
+    var unit = card.answers[1] || '';
+    var input = h('input', { class: 'answer-input answer-input--num', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'Your answer', 'aria-label': 'Your answer', 'data-autofocus': true });
+    article.appendChild(h('div', { class: 'num-row' }, [input, unit ? h('span', { class: 'num-row__unit', text: unit }) : null]));
+    var expected = parseFloat(card.answers[0]);
+    var decimals = (card.answers[0].split('.')[1] || '').length;
+    function grade(reveal) {
+      var given = parseFloat(String(input.value).replace(/,/g, '').replace(/[^\d.eE+-]/g, ''));
+      var tol = Math.max(Math.abs(expected) * 0.01, 0.5 * Math.pow(10, -decimals));
+      var ok = !reveal && isFinite(given) && Math.abs(given - expected) <= tol + 1e-12;
+      input.readOnly = true;
+      input.classList.add(ok ? 'is-correct' : 'is-wrong');
+      finish(ok, card.answers[0] + (unit ? ' ' + unit : ''));
+    }
+    var check = h('button', { type: 'button', class: 'btn btn--primary', text: 'Check' });
+    var giveUp = h('button', { type: 'button', class: 'link-btn small', text: 'Show answer' });
+    check.addEventListener('click', function () { if (input.value.trim()) grade(false); else input.focus(); });
+    giveUp.addEventListener('click', function () { grade(true); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); e.stopPropagation(); grade(false); }
+    });
+    actions.appendChild(giveUp);
+    actions.appendChild(check);
+  }
+
+  // Explain: write an answer, then tick which key points you covered.
+  function explain(card, article, actions, finish) {
+    article.appendChild(h('h2', { class: 'step__q', text: card.prompt }));
+    var area = h('textarea', { class: 'answer-input', rows: '5', placeholder: 'Write your explanation in a few sentences…', 'aria-label': 'Your explanation', 'data-autofocus': true });
+    article.appendChild(area);
+    var reveal = h('button', { type: 'button', class: 'btn btn--primary', text: 'Compare with key points' });
+    reveal.addEventListener('click', function () {
+      area.readOnly = true;
+      var boxes = card.answers.map(function (point) {
+        return h('label', { class: 'keypoint' }, [h('input', { type: 'checkbox' }), h('span', { text: point })]);
+      });
+      var panel = h('div', { class: 'keypoints' }, [
+        h('p', { class: 'keypoints__title', text: 'Tick the key points your answer covered:' })
+      ].concat(boxes));
+      article.insertBefore(panel, actions);
+      var done = h('button', { type: 'button', class: 'btn btn--primary', text: 'Done' });
+      done.addEventListener('click', function () {
+        var ticked = boxes.filter(function (b) { return b.querySelector('input').checked; }).length;
+        boxes.forEach(function (b) { b.querySelector('input').disabled = true; });
+        var ok = ticked >= Math.ceil(card.answers.length * 0.6);
+        finish(ok, ok ? null : 'Covered ' + ticked + ' of ' + card.answers.length + ' key points');
+      });
+      actions.innerHTML = '';
+      actions.appendChild(h('span', { class: 'step__hint', text: 'Be honest, it helps you learn' }));
+      actions.appendChild(done);
+      done.focus({ preventScroll: true });
+    });
+    actions.appendChild(h('span', { class: 'step__hint', text: 'Self-marked against the key points' }));
+    actions.appendChild(reveal);
+  }
+
   // ---- results -----------------------------------------------------------
   function renderResults() {
     var correctCount = questions.filter(function (q) { return q.result === true; }).length;
@@ -415,6 +588,11 @@
         var c = q.card;
         var answer = c.kind === 'true_false' ? (c.answers[0] === 'true' ? 'True' : 'False')
           : c.kind === 'ordering' ? c.options.join(' → ')
+          : c.kind === 'matching' ? c.options.map(function (o, i) { return o + ' = ' + c.answers[i]; }).join(' · ')
+          : c.kind === 'multi_select' ? c.answers.join(', ')
+          : c.kind === 'categorize' ? c.options.map(function (o, i) { return o + ' → ' + c.answers[i]; }).join(' · ')
+          : c.kind === 'numeric' ? c.answers[0] + (c.answers[1] ? ' ' + c.answers[1] : '')
+          : c.kind === 'explain' ? 'Key points: ' + c.answers.join('; ')
           : c.kind === 'fill_blank' ? c.prompt.split('{blank}').reduce(function (acc, part, i) { return acc + part + (c.answers[i] !== undefined && i < c.answers.length ? '[' + c.answers[i] + ']' : ''); }, '')
           : c.answers[0];
         review.appendChild(h('div', { class: 'review__item' }, [

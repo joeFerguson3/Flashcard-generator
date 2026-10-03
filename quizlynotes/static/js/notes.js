@@ -1,7 +1,5 @@
-/* Notes editor: topics -> sections -> points, with autosave.
- *
- * Points are edited as plain text, one per line. Indentation (2 spaces per
- * level, or Tab) sets the level: "Key idea" / "  detail" / "    example".
+/* Notes editor: topics -> sections -> bullet points, with autosave.
+ * Each point is its own row; Tab / Shift+Tab sets its level (1-3).
  */
 (function () {
   'use strict';
@@ -14,22 +12,6 @@
   var subjectInput = document.querySelector('[data-subject]');
   var overlay = document.querySelector('[data-overlay]');
   var errorEl = document.querySelector('[data-gen-bar] [data-error]');
-
-  // ---- model <-> text --------------------------------------------------
-  function pointsToText(points) {
-    return (points || []).map(function (p) {
-      return '  '.repeat(Math.max(0, (p.level || 1) - 1)) + p.text;
-    }).join('\n');
-  }
-  function textToPoints(text) {
-    return text.split('\n').map(function (line) {
-      var m = line.replace(/\t/g, '  ').match(/^(\s*)(?:[-*•]\s*)?(.*)$/);
-      var text = (m[2] || '').trim();
-      if (!text) return null;
-      var level = Math.min(3, Math.floor(m[1].length / 2) + 1);
-      return { text: text, level: level };
-    }).filter(Boolean);
-  }
 
   // ---- rendering ---------------------------------------------------------
   function el(tag, attrs, children) {
@@ -45,15 +27,120 @@
 
   function autosize(textarea) {
     textarea.style.height = 'auto';
-    textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+
+  /* One bullet point = one auto-growing textarea.
+     Enter: new point, Backspace on empty: remove, Tab / Shift+Tab: indent. */
+  function renderPoint(point) {
+    var ta = el('textarea', { rows: '1', class: 'pt__text', 'aria-label': 'Point', placeholder: 'Add a point…', spellcheck: 'true' });
+    ta.value = point.text || '';
+    var li = el('li', { class: 'pt', 'data-pt': '' }, [ta]);
+    setLevel(li, point.level || 1);
+    ta.addEventListener('input', function () { autosize(ta); });
+    ta.addEventListener('keydown', onPointKey);
+    ta.addEventListener('paste', onPointPaste);
+    requestAnimationFrame(function () { autosize(ta); });
+    return li;
+  }
+  function setLevel(li, level) {
+    level = Math.max(1, Math.min(3, level));
+    li.dataset.level = level;
+    li.className = 'pt lvl-' + level;
+  }
+  function focusAt(ta, pos) {
+    ta.focus();
+    pos = pos === 'end' ? ta.value.length : pos;
+    ta.setSelectionRange(pos, pos);
+  }
+  function onPointKey(e) {
+    var ta = e.target, li = ta.closest('[data-pt]');
+    var level = parseInt(li.dataset.level, 10);
+    var atStart = ta.selectionStart === 0 && ta.selectionEnd === 0;
+    var atEnd = ta.selectionStart === ta.value.length;
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      var after = ta.value.slice(ta.selectionEnd);
+      ta.value = ta.value.slice(0, ta.selectionStart);
+      autosize(ta);
+      var next = renderPoint({ text: after, level: level });
+      li.after(next);
+      focusAt(next.querySelector('textarea'), 0);
+      changed();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      var prev = li.previousElementSibling;
+      var max = prev ? parseInt(prev.dataset.level, 10) + 1 : 1;
+      setLevel(li, e.shiftKey ? level - 1 : Math.min(level + 1, max));
+      changed();
+    } else if (e.key === 'Backspace' && atStart) {
+      if (level > 1) {
+        e.preventDefault();
+        setLevel(li, level - 1);
+        changed();
+        return;
+      }
+      var before = li.previousElementSibling;
+      if (!before) return;
+      e.preventDefault();
+      var pta = before.querySelector('textarea');
+      var join = pta.value.length;
+      pta.value += (pta.value && ta.value ? ' ' : '') + ta.value;
+      li.remove();
+      autosize(pta);
+      focusAt(pta, join);
+      changed();
+    } else if (e.key === 'ArrowUp' && atStart && li.previousElementSibling) {
+      e.preventDefault();
+      focusAt(li.previousElementSibling.querySelector('textarea'), 'end');
+    } else if (e.key === 'ArrowDown' && atEnd && li.nextElementSibling) {
+      e.preventDefault();
+      focusAt(li.nextElementSibling.querySelector('textarea'), 0);
+    }
+  }
+  // Pasting several lines creates several points.
+  function onPointPaste(e) {
+    var text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text || text.indexOf('\n') === -1) return;
+    e.preventDefault();
+    var ta = e.target, li = ta.closest('[data-pt]');
+    var lines = textToPoints(text);
+    if (!lines.length) return;
+    var tail = ta.value.slice(ta.selectionEnd);
+    ta.value = ta.value.slice(0, ta.selectionStart) + lines[0].text;
+    autosize(ta);
+    var last = li;
+    lines.slice(1).forEach(function (p) {
+      var node = renderPoint(p);
+      last.after(node);
+      last = node;
+    });
+    var lta = last.querySelector('textarea');
+    var pos = lta.value.length;
+    lta.value += tail;
+    focusAt(lta, pos);
+    changed();
+  }
+  function textToPoints(text) {
+    return text.split('\n').map(function (line) {
+      var m = line.replace(/\t/g, '  ').match(/^(\s*)(?:[-*•–]+\s*)?(.*)$/);
+      var t = (m[2] || '').trim();
+      if (!t) return null;
+      return { text: t, level: Math.min(3, Math.floor(m[1].length / 2) + 1) };
+    }).filter(Boolean);
+  }
+  function readPoints(sec) {
+    return Array.prototype.map.call(sec.querySelectorAll('[data-pt]'), function (li) {
+      return { text: li.querySelector('textarea').value.replace(/\s+/g, ' ').trim(), level: parseInt(li.dataset.level, 10) };
+    }).filter(function (p) { return p.text; });
   }
 
   function renderSection(section) {
-    var sub = el('input', { value: section.subheading || '', 'aria-label': 'Section title', 'data-sub': '', maxlength: '200' });
+    var sub = el('input', { value: section.subheading || '', 'aria-label': 'Section title', placeholder: 'Section title', 'data-sub': '', maxlength: '200' });
     var del = el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Delete section', text: 'Delete' });
-    var area = el('textarea', { 'aria-label': 'Points', rows: '2', spellcheck: 'true', 'data-points': '' });
-    area.value = pointsToText(section.points);
-    var node = el('div', { class: 'sec', 'data-sec': '' }, [el('div', { class: 'sec__head' }, [sub, del]), area]);
+    var points = (section.points && section.points.length) ? section.points : [{ text: '', level: 1 }];
+    var list = el('ul', { class: 'pts', 'data-points': '' }, points.map(renderPoint));
+    var node = el('div', { class: 'sec', 'data-sec': '' }, [el('div', { class: 'sec__head' }, [sub, del]), list]);
     if (section.id) node.dataset.id = section.id;
     del.addEventListener('click', function () {
       var topic = node.closest('[data-topic]');
@@ -61,20 +148,32 @@
       if (!topic.querySelector('[data-sec]')) topic.remove();
       changed();
     });
-    area.addEventListener('keydown', handleTab);
-    area.addEventListener('input', function () { autosize(area); });
-    requestAnimationFrame(function () { autosize(area); });
+    // Clicking the empty space under the last point focuses it.
+    list.addEventListener('click', function (e) {
+      if (e.target === list) focusAt(list.lastElementChild.querySelector('textarea'), 'end');
+    });
     return node;
   }
 
+  function topicSections(topic) {
+    var heading = topic.querySelector('[data-heading]').value.trim();
+    return Array.prototype.map.call(topic.querySelectorAll('[data-sec]'), function (sec) {
+      return {
+        id: sec.dataset.id ? parseInt(sec.dataset.id, 10) : null,
+        heading: heading, subheading: sec.querySelector('[data-sub]').value, points: readPoints(sec)
+      };
+    });
+  }
+
   function renderTopic(heading, sections) {
-    var input = el('input', { value: heading || '', 'aria-label': 'Topic', 'data-heading': '', maxlength: '200' });
-    var improve = el('button', { type: 'button', class: 'icon-btn icon-btn--hl', title: 'Let AI tidy up and fill gaps in this topic', text: '✦ Improve' });
+    var input = el('input', { value: heading || '', 'aria-label': 'Topic', placeholder: 'Topic', 'data-heading': '', maxlength: '200' });
+    var simplify = el('button', { type: 'button', class: 'icon-btn icon-btn--hl', 'data-ai': 'simplify', title: 'Keep only the most important points', text: 'Simplify' });
+    var improve = el('button', { type: 'button', class: 'icon-btn', 'data-ai': 'improve', title: 'Tidy up and fill gaps in this topic', text: '✦ Improve' });
     var del = el('button', { type: 'button', class: 'icon-btn', text: 'Delete topic' });
     var body = el('div', { 'data-secs': '' }, sections.map(renderSection));
     var add = el('button', { type: 'button', class: 'icon-btn', text: '+ Add section' });
     var topic = el('section', { class: 'topic', 'data-topic': '' }, [
-      el('div', { class: 'topic__head' }, [input, improve, del]),
+      el('div', { class: 'topic__head' }, [input, el('div', { class: 'topic__actions' }, [simplify, improve, del])]),
       body,
       el('div', { class: 'topic__foot' }, [add])
     ]);
@@ -88,7 +187,8 @@
       topic.remove();
       changed();
     });
-    improve.addEventListener('click', function () { enhanceTopic(topic); });
+    simplify.addEventListener('click', function () { aiTopic(topic, 'simplify'); });
+    improve.addEventListener('click', function () { aiTopic(topic, 'improve'); });
     return topic;
   }
 
@@ -102,42 +202,21 @@
     groups.forEach(function (g) { editor.appendChild(renderTopic(g.heading, g.sections)); });
   }
 
+  function hasContent(sec) {
+    return readPoints(sec).length || sec.querySelector('[data-sub]').value.trim();
+  }
+
   function collect() {
     var out = [];
     editor.querySelectorAll('[data-topic]').forEach(function (topic) {
       var heading = topic.querySelector('[data-heading]').value.trim() || 'Untitled topic';
       topic.querySelectorAll('[data-sec]').forEach(function (sec) {
-        var points = textToPoints(sec.querySelector('[data-points]').value);
+        if (!hasContent(sec)) return;
         var sub = sec.querySelector('[data-sub]').value.trim();
-        if (!points.length && !sub) return;
-        out.push({ id: sec.dataset.id ? parseInt(sec.dataset.id, 10) : null, heading: heading, subheading: sub || heading, points: points });
+        out.push({ id: sec.dataset.id ? parseInt(sec.dataset.id, 10) : null, heading: heading, subheading: sub || heading, points: readPoints(sec) });
       });
     });
     return out;
-  }
-
-  function handleTab(e) {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    var ta = e.target;
-    var start = ta.selectionStart, end = ta.selectionEnd, v = ta.value;
-    var lineStart = v.lastIndexOf('\n', start - 1) + 1;
-    var lineEnd = v.indexOf('\n', end);
-    if (lineEnd === -1) lineEnd = v.length;
-    var original = v.slice(lineStart, lineEnd);
-    var block = original.split('\n');
-    var updated = block.map(function (line) {
-      if (e.shiftKey) return line.replace(/^ {1,2}/, '');
-      return line.match(/^ {4}/) ? line : '  ' + line;
-    }).join('\n');
-    ta.value = v.slice(0, lineStart) + updated + v.slice(lineEnd);
-    if (block.length > 1) {
-      ta.selectionStart = lineStart;
-      ta.selectionEnd = lineStart + updated.length;
-    } else {
-      ta.selectionStart = ta.selectionEnd = Math.max(lineStart, start + updated.length - original.length);
-    }
-    changed();
   }
 
   // ---- autosave ----------------------------------------------------------
@@ -164,9 +243,7 @@
     }).then(function (res) {
       // Give new sections their ids so later saves update rather than duplicate.
       var nodes = editor.querySelectorAll('[data-sec]');
-      var withContent = Array.prototype.filter.call(nodes, function (n) {
-        return textToPoints(n.querySelector('[data-points]').value).length || n.querySelector('[data-sub]').value.trim();
-      });
+      var withContent = Array.prototype.filter.call(nodes, hasContent);
       if (res.sections && res.sections.length === withContent.length) {
         withContent.forEach(function (n, i) { n.dataset.id = res.sections[i].id; });
       }
@@ -190,29 +267,56 @@
     t.querySelector('input').focus();
   });
 
-  // ---- AI improve --------------------------------------------------------
-  function enhanceTopic(topic) {
+  // ---- AI: simplify / improve (with undo) ---------------------------------
+  var AI_LABELS = {
+    simplify: { busy: 'Simplifying…', done: 'Simplified to the key points.' },
+    improve: { busy: 'Improving…', done: 'Topic improved.' }
+  };
+  function aiTopic(topic, mode) {
     var heading = topic.querySelector('[data-heading]').value.trim();
-    var sections = [];
-    topic.querySelectorAll('[data-sec]').forEach(function (sec) {
-      sections.push({ heading: heading, subheading: sec.querySelector('[data-sub]').value, points: textToPoints(sec.querySelector('[data-points]').value) });
-    });
-    if (!sections.length) return;
+    var before = topicSections(topic);
+    var sections = before.filter(function (s) { return s.points.length || s.subheading.trim(); });
+    if (!sections.length) return Promise.resolve();
     topic.classList.add('is-busy');
-    var btn = topic.querySelector('.icon-btn--hl');
-    btn.textContent = 'Improving…';
-    QN.request(config.enhance_url, { body: { heading: heading, sections: sections } })
+    var btn = topic.querySelector('[data-ai="' + mode + '"]');
+    var label = btn.textContent;
+    btn.textContent = AI_LABELS[mode].busy;
+    return QN.request(config.enhance_url, { body: { heading: heading, sections: sections, mode: mode } })
       .then(function (res) {
         var fresh = renderTopic(heading, res.sections);
+        var undo = el('button', { type: 'button', class: 'link-btn small', text: 'Undo' });
+        var note = el('div', { class: 'topic__note' }, [el('span', { text: AI_LABELS[mode].done + ' ' }), undo]);
+        fresh.insertBefore(note, fresh.querySelector('[data-secs]'));
+        undo.addEventListener('click', function () {
+          fresh.replaceWith(renderTopic(heading, before));
+          changed();
+        });
         topic.replaceWith(fresh);
         changed();
-        QN.toast('Topic improved. Review the changes, they save automatically.');
       })
       .catch(function (err) {
         topic.classList.remove('is-busy');
-        btn.textContent = '✦ Improve';
+        btn.textContent = label;
         QN.toast(err.message, 'error');
       });
+  }
+
+  var simplifyAll = document.querySelector('[data-simplify-all]');
+  if (simplifyAll) {
+    simplifyAll.addEventListener('click', function () {
+      var topics = Array.prototype.slice.call(editor.querySelectorAll('[data-topic]'));
+      if (!topics.length) return;
+      simplifyAll.disabled = true;
+      simplifyAll.textContent = 'Simplifying…';
+      // One topic at a time keeps each request small and fast.
+      topics.reduce(function (chain, t) {
+        return chain.then(function () { return aiTopic(t, 'simplify'); });
+      }, Promise.resolve()).then(function () {
+        simplifyAll.disabled = false;
+        simplifyAll.textContent = 'Simplify all';
+        QN.toast('Notes simplified. Use Undo on any topic to restore it.');
+      });
+    });
   }
 
   // ---- generate quiz -----------------------------------------------------
