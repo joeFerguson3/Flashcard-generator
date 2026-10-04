@@ -53,7 +53,8 @@
     ta.value = point.text || '';
     var view = el('div', { class: 'pt__view', tabindex: '0', role: 'button', 'aria-label': 'Edit point' });
     paintView(view, ta.value);
-    var li = el('li', { class: 'pt', 'data-pt': '' }, [view, ta]);
+    var tools = renderTools();
+    var li = el('li', { class: 'pt', 'data-pt': '' }, [el('div', { class: 'pt__body' }, [view, ta]), tools]);
     setLevel(li, point.level || 1);
     if (!ta.value) li.classList.add('is-editing');
     view.addEventListener('click', function () { focusAt(ta, 'end'); });
@@ -62,18 +63,52 @@
     });
     ta.addEventListener('input', function () { autosize(ta); });
     ta.addEventListener('focus', function () { startEdit(li); });
-    ta.addEventListener('blur', function () {
-      paintView(view, ta.value);
-      if (ta.value.trim()) li.classList.remove('is-editing');
+    // Wait a moment so tapping this point's own controls keeps it open.
+    li.addEventListener('focusout', function () {
+      setTimeout(function () {
+        if (li.contains(document.activeElement)) return;
+        paintView(view, ta.value);
+        if (ta.value.trim()) li.classList.remove('is-editing');
+      }, 150);
     });
     ta.addEventListener('keydown', onPointKey);
     ta.addEventListener('paste', onPointPaste);
     requestAnimationFrame(function () { autosize(ta); });
     return li;
   }
+  /* Per-point controls: change its type, add a point below, delete it. */
+  var LEVELS = [['1', 'Main point'], ['2', 'Detail'], ['3', 'Sub-detail']];
+  function renderTools() {
+    var select = el('select', { class: 'pt__level', 'aria-label': 'Point type', title: 'Point type' },
+      LEVELS.map(function (l) { return el('option', { value: l[0], text: l[1] }); }));
+    var add = el('button', { type: 'button', class: 'pt__btn', title: 'Add a point below', 'aria-label': 'Add a point below', text: '+' });
+    var del = el('button', { type: 'button', class: 'pt__btn pt__btn--del', title: 'Delete this point', 'aria-label': 'Delete this point', text: '×' });
+    select.addEventListener('change', function () {
+      setLevel(select.closest('[data-pt]'), parseInt(select.value, 10));
+      changed();
+    });
+    add.addEventListener('click', function () {
+      var li = add.closest('[data-pt]');
+      var next = renderPoint({ text: '', level: parseInt(li.dataset.level, 10) });
+      li.after(next);
+      focusAt(next.querySelector('textarea'), 0);
+    });
+    del.addEventListener('click', function () {
+      var li = del.closest('[data-pt]');
+      var list = li.parentNode;
+      var neighbour = li.nextElementSibling || li.previousElementSibling;
+      li.remove();
+      if (!list.children.length) list.appendChild(renderPoint({ text: '', level: 1 }));
+      else if (neighbour) neighbour.querySelector('.pt__btn--del').focus();
+      changed();
+    });
+    return el('div', { class: 'pt__tools' }, [select, add, del]);
+  }
   function setLevel(li, level) {
     level = Math.max(1, Math.min(3, level));
     li.dataset.level = level;
+    var select = li.querySelector('.pt__level');
+    if (select) select.value = String(level);
     li.classList.remove('lvl-1', 'lvl-2', 'lvl-3');
     li.classList.add('pt', 'lvl-' + level);
   }
@@ -167,12 +202,21 @@
 
   function renderSection(section) {
     var sub = el('input', { value: section.subheading || '', 'aria-label': 'Section title', placeholder: 'Section title', 'data-sub': '', maxlength: '200' });
-    var del = el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Delete section', text: 'Delete' });
+    var del = el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Delete section', text: 'Delete section' });
     var points = (section.points && section.points.length) ? section.points : [{ text: '', level: 1 }];
     var list = el('ul', { class: 'pts', 'data-points': '' }, points.map(renderPoint));
-    var node = el('div', { class: 'sec', 'data-sec': '' }, [el('div', { class: 'sec__head' }, [sub, del]), list]);
+    var addPt = el('button', { type: 'button', class: 'icon-btn sec__add', text: '+ Add point' });
+    var node = el('div', { class: 'sec', 'data-sec': '' }, [el('div', { class: 'sec__head' }, [sub, del]), list, addPt]);
+    addPt.addEventListener('click', function () {
+      var last = list.lastElementChild;
+      var p = renderPoint({ text: '', level: last ? Math.max(2, parseInt(last.dataset.level, 10)) : 1 });
+      if (last && !last.querySelector('textarea').value.trim()) p = last;
+      else list.appendChild(p);
+      focusAt(p.querySelector('textarea'), 0);
+    });
     if (section.id) node.dataset.id = section.id;
     del.addEventListener('click', function () {
+      if (readPoints(node).length && !window.confirm('Delete the section "' + (sub.value || 'Untitled') + '" and its points?')) return;
       var topic = node.closest('[data-topic]');
       node.remove();
       if (!topic.querySelector('[data-sec]')) topic.remove();
@@ -201,7 +245,7 @@
     var improve = el('button', { type: 'button', class: 'icon-btn', 'data-ai': 'improve', title: 'Tidy up and fill gaps in this topic', text: '✦ Improve' });
     var del = el('button', { type: 'button', class: 'icon-btn', text: 'Delete topic' });
     var body = el('div', { 'data-secs': '' }, sections.map(renderSection));
-    var add = el('button', { type: 'button', class: 'icon-btn', text: '+ Add section' });
+    var add = el('button', { type: 'button', class: 'btn btn--ghost btn--sm', text: '+ Add section' });
     var topic = el('section', { class: 'topic', 'data-topic': '' }, [
       el('div', { class: 'topic__head' }, [input, el('div', { class: 'topic__actions' }, [simplify, improve, del])]),
       body,
