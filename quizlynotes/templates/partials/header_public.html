@@ -7,6 +7,7 @@
       <a href="{{ url_for('public.notes_to_quiz') }}">Notes to quiz</a>
       <a href="{{ url_for('public.pdf_to_quiz') }}">PDF to quiz</a>
       <a href="{{ url_for('public.notes_to_flashcards') }}">Flashcards</a>
+      <a href="{{ url_for('billing.pricing') }}">Pricing</a>
     </nav>
     <div class="site-header__actions">
       {% if current_user.is_authenticated %}

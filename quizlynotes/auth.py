@@ -72,13 +72,25 @@ def register_google(app) -> None:
 
 
 def _complete_login(email: str, name: str | None, picture: str | None):
+    from . import billing
+
     user = User.query.filter_by(email=email).first()
-    if user is None:
+    is_new = user is None
+    if is_new:
         user = User(email=email)
         db.session.add(user)
+        ref = session.pop("ref", None)
+        referrer = User.query.filter_by(referral_code=ref).first() if ref else None
+        if referrer is not None:
+            user.referred_by_id = referrer.id
     user.name = clean_text(name, 255) or user.name
     user.picture = clean_text(picture, 500) or user.picture
     user.last_login_at = utcnow()
+    db.session.flush()
+    billing.ensure_referral_code(user)
+    # Reverse trial: every account starts with a week of Pro (existing users
+    # get it once too, as a launch gift).
+    billing.start_trial(user, referred=bool(user.referred_by_id) and is_new)
     db.session.commit()
     login_user(user, remember=True)
 
@@ -129,4 +141,7 @@ def dev_login():
 def logout():
     logout_user()
     session.clear()
+    # Keep Flask-Login's instruction to delete the remember-me cookie,
+    # otherwise the user is silently logged back in on the next request.
+    session["_remember"] = "clear"
     return redirect(url_for("public.home"))

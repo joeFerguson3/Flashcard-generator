@@ -106,6 +106,30 @@
       </div>
     </section>
 
+    {% if s.has_quiz %}
+    <section class="block share-box" id="share">
+      <div>
+        <h2 class="block__title">Share this quiz</h2>
+        <p class="muted small">Anyone with the link can take the quiz, no account needed. Friends who sign up from it earn you free Pro weeks.</p>
+      </div>
+      {% if s.share_token %}
+      <div class="share-box__row">
+        <input class="share-box__url" readonly value="{{ site.url }}{{ url_for('public.shared_quiz', token=s.share_token) }}" data-copy-source>
+        <button type="button" class="btn btn--primary btn--sm" data-copy>Copy link</button>
+        <form method="post" action="{{ url_for('study.share_set', set_id=s.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="stop">
+          <button class="btn btn--ghost btn--sm" type="submit">Stop sharing</button>
+        </form>
+      </div>
+      {% else %}
+      <form method="post" action="{{ url_for('study.share_set', set_id=s.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn--ghost" type="submit">Create share link</button>
+      </form>
+      {% endif %}
+    </section>
+    {% endif %}
+
     <section class="block block--quiet">
       <details class="manage">
         <summary>Rename, move or delete</summary>

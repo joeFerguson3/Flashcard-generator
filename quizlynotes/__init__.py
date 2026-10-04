@@ -54,6 +54,7 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
 
     from .auth import auth_bp, register_google
     from .views.api import api_bp
+    from .views.billing import billing_bp
     from .views.public import public_bp
     from .views.study import study_bp
 
@@ -62,6 +63,7 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(study_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(billing_bp)
 
     _register_template_helpers(app)
     _register_error_handlers(app)
@@ -93,6 +95,16 @@ def _register_template_helpers(app: Flask) -> None:
 
     def absolute_url(endpoint: str, **values) -> str:
         return app.config["SITE_URL"] + url_for(endpoint, **values)
+
+    @app.context_processor
+    def inject_plan():
+        from flask_login import current_user
+
+        from . import billing
+
+        if current_user and current_user.is_authenticated:
+            return {"plan": billing.plan_status(current_user)}
+        return {"plan": None}
 
     @app.context_processor
     def inject_globals():
@@ -199,6 +211,22 @@ def _register_security_headers(app: Flask) -> None:
 
 
 def _register_cli(app: Flask) -> None:
+    import click
+
+    @app.cli.command("promo")
+    @click.argument("label")
+    @click.option("--days", type=int, default=None, help="Days of Pro (omit for lifetime).")
+    @click.option("--uses", type=int, default=None, help="Max redemptions (omit for unlimited).")
+    @click.option("--code", default=None, help="Use this exact code instead of a random one.")
+    def promo(label, days, uses, code):
+        """Create a promo code, e.g. flask promo "Launch week" --days 30 --uses 100"""
+        from . import billing
+
+        _, plain = billing.create_promo(label, days=days, max_redemptions=uses, code=code)
+        db.session.commit()
+        print(f"Created code: {plain}  ({'lifetime' if days is None else f'{days} days'}, "
+              f"{'unlimited' if uses is None else uses} uses)")
+
     @app.cli.command("create-db")
     def create_db():
         """Create all tables (first deploy without migrations)."""

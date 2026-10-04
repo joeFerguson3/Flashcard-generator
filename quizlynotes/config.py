@@ -55,6 +55,23 @@ class Config:
     # Tried automatically when the main model is overloaded.
     GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash")
 
+    # --- Billing -----------------------------------------------------------
+    # Pro is unlocked by Stripe subscriptions, the signup trial, referral
+    # bonuses, promo codes, or being listed in ADMIN_EMAILS.
+    ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+    STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    STRIPE_PRICE_MONTHLY = os.getenv("STRIPE_PRICE_MONTHLY", "")
+    STRIPE_PRICE_YEARLY = os.getenv("STRIPE_PRICE_YEARLY", "")
+    # Shown on the pricing page; keep in sync with the Stripe prices.
+    PRICE_MONTHLY_DISPLAY = os.getenv("PRICE_MONTHLY_DISPLAY", "£4.99")
+    PRICE_YEARLY_DISPLAY = os.getenv("PRICE_YEARLY_DISPLAY", "£29.99")
+    PRICE_YEARLY_PER_MONTH_DISPLAY = os.getenv("PRICE_YEARLY_PER_MONTH_DISPLAY", "£2.50")
+    TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "7"))
+    REFERRED_TRIAL_DAYS = int(os.getenv("REFERRED_TRIAL_DAYS", "14"))
+    REFERRAL_REWARD_DAYS = int(os.getenv("REFERRAL_REWARD_DAYS", "7"))
+    REFERRAL_MAX_REWARD_DAYS = int(os.getenv("REFERRAL_MAX_REWARD_DAYS", "90"))
+
     # Google sign-in
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")

@@ -15,7 +15,9 @@
     {"@type": "WebApplication", "name": "QuizlyNotes", "url": site.url ~ "/",
      "applicationCategory": "EducationalApplication", "operatingSystem": "Any (web browser)",
      "description": seo_description, "publisher": {"@id": site.url ~ "/#org"},
-     "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
+     "offers": [{"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "GBP"},
+                {"@type": "Offer", "name": "Pro (monthly)", "price": config.PRICE_MONTHLY_DISPLAY.lstrip("£"), "priceCurrency": "GBP"},
+                {"@type": "Offer", "name": "Pro (yearly)", "price": config.PRICE_YEARLY_DISPLAY.lstrip("£"), "priceCurrency": "GBP"}],
      "featureList": ["Turn notes into quiz questions", "PDF and lecture slides to quiz",
                      "AI flashcard maker", "Spaced repetition", "Multiple choice, true/false, fill-in-the-blank, short answer and ordering questions"]}
   ]
@@ -34,7 +36,7 @@
       <ul class="ticks">
         <li>Reads slides, diagrams and scanned pages</li>
         <li>Ten question types plus flashcards, every answer explained</li>
-        <li>Free, with sign-in through Google</li>
+        <li>Free forever, with a 7-day Pro trial. No card needed</li>
       </ul>
     </div>
     <div class="hero__try">
@@ -122,7 +124,7 @@
 <section class="wrap section">
   <div class="cta">
     <h2>Your next exam, sorted one quiz at a time</h2>
-    <p>Sign in with Google and turn your first set of notes into a quiz.</p>
+    <p>Sign in with Google and turn your first set of notes into a quiz. Your first week of Pro is on us.</p>
     <a href="{{ url_for('auth.login') }}" class="btn btn--hl btn--lg">Start for free</a>
   </div>
 </section>

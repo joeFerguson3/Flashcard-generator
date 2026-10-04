@@ -13,6 +13,23 @@
     <a class="btn btn--primary" href="{{ url_for('study.new_set') }}">New set</a>
   </header>
 
+  {% if plan %}
+  {% if plan.on_trial %}
+  <div class="plan-banner plan-banner--trial">
+    <p><strong>You're on a free Pro trial: {{ plan.days_left }} day{{ 's' if plan.days_left != 1 }} left.</strong> Unlimited AI sets, mock exams and weak spots are all unlocked.</p>
+    <a class="btn btn--sm btn--hl" href="{{ url_for('billing.pricing') }}">Keep Pro</a>
+  </div>
+  {% elif not plan.pro %}
+  <div class="plan-banner">
+    <div class="meter" title="Free AI study sets used this month">
+      <span class="meter__label"><strong>{{ plan.sets_left }}</strong> of {{ plan.limits.sets_per_month }} free AI sets left this month</span>
+      <span class="meter__track"><span class="meter__fill" style="--w: {{ (plan.sets_used / plan.limits.sets_per_month * 100)|round|int }}%"></span></span>
+    </div>
+    <a class="btn btn--sm btn--ghost" href="{{ url_for('billing.pricing') }}">Go unlimited</a>
+  </div>
+  {% endif %}
+  {% endif %}
+
   {% if not sets %}
   <div class="empty">
     <div class="empty__art" aria-hidden="true">
@@ -31,6 +48,8 @@
       {% endfor %}
     </div>
     <div class="toolbar__right">
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('study.mock_exam', subject=active_subject) if active_subject else url_for('study.mock_exam') }}">Mock exam{% if not plan.pro %} <span class="pro-badge pro-badge--sm">Pro</span>{% endif %}</a>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('study.weak_spots') }}">Weak spots{% if not plan.pro %} <span class="pro-badge pro-badge--sm">Pro</span>{% endif %}</a>
       <label class="field field--inline">
         <span class="sr-only">Search sets</span>
         <input type="search" placeholder="Search" data-search>

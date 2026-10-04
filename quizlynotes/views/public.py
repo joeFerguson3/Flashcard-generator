@@ -75,6 +75,11 @@ def robots():
         "Disallow: /sets/",
         "Disallow: /settings",
         "Disallow: /try/",
+        "Disallow: /s/",
+        "Disallow: /r/",
+        "Disallow: /billing/",
+        "Disallow: /mock-exam",
+        "Disallow: /weak-spots",
         "Disallow: /login",
         "",
         f"Sitemap: {site}/sitemap.xml",
@@ -87,7 +92,7 @@ def robots():
 def sitemap():
     site = current_app.config["SITE_URL"]
     urls = [("/", "1.0"), ("/notes-to-quiz", "0.9"), ("/pdf-to-quiz", "0.9"),
-            ("/notes-to-flashcards", "0.9"), ("/privacy", "0.2"), ("/terms", "0.2")]
+            ("/notes-to-flashcards", "0.9"), ("/pricing", "0.7"), ("/privacy", "0.2"), ("/terms", "0.2")]
     items = "".join(
         f"<url><loc>{site}{path}</loc><lastmod>{CONTENT_UPDATED.isoformat()}</lastmod>"
         f"<priority>{priority}</priority></url>"
@@ -160,6 +165,32 @@ def try_result(draft_id: str):
     flashcards = [c for c in draft.payload.get("cards", []) if c["kind"] == "flashcard"]
     response = current_app.make_response(render_template(
         "public/try.html", payload=payload, data=draft.payload, flashcards=flashcards,
+    ))
+    response.headers["X-Robots-Tag"] = "noindex"
+    return response
+
+
+# --- Shared quizzes --------------------------------------------------------------
+
+@public_bp.route("/s/<token>")
+def shared_quiz(token: str):
+    from ..models import StudySet
+    from .study import build_quiz_payload
+
+    study_set = StudySet.query.filter_by(share_token=token).first()
+    if study_set is None or not study_set.has_quiz:
+        abort(404)
+    payload = build_quiz_payload(study_set.to_dict())
+    payload["submit_url"] = None
+    payload["guest"] = True
+    payload["shared"] = True
+    owner = study_set.owner
+    # Friends who sign up from a shared quiz count as the owner's referrals.
+    if owner and owner.referral_code and "ref" not in session:
+        session["ref"] = owner.referral_code
+    response = current_app.make_response(render_template(
+        "public/shared.html", s=study_set, payload=payload,
+        owner_name=(owner.display_name.split(" ")[0] if owner else "A student"),
     ))
     response.headers["X-Robots-Tag"] = "noindex"
     return response

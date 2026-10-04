@@ -7,6 +7,7 @@
       <a class="back" href="{{ url_for('study.library') }}">← Library</a>
       <h1 class="page-title">New study set</h1>
       <p class="muted">Add one topic or lecture at a time for the best questions.</p>
+      {% if plan and not plan.pro %}<p class="small plan-note"><strong>{{ plan.sets_left }} of {{ plan.limits.sets_per_month }}</strong> free AI sets left this month · PDFs up to {{ plan.limits.max_pages }} pages · <a href="{{ url_for('billing.pricing') }}">Go unlimited</a></p>{% endif %}
     </div>
   </header>
 
@@ -21,7 +22,7 @@
         <input type="file" name="file" accept=".pdf,.docx,.pptx,.txt,.md,application/pdf" data-file>
         <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0l-4 4m4-4l4 4M5 16v3a1 1 0 001 1h12a1 1 0 001-1v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="dropzone__title" data-file-label>Drop a file here or <u>browse</u></span>
-        <span class="muted small">PDF, lecture slides, Word or PowerPoint · up to 30MB</span>
+        <span class="muted small">PDF, lecture slides, Word or PowerPoint · up to {{ plan.limits.max_upload_mb if plan else 30 }}MB</span>
       </label>
     </div>
     <div data-panel="paste" hidden>

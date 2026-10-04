@@ -19,6 +19,10 @@
             var msg = data.error || (res.status === 413 ? 'That file is too large.' : 'Something went wrong. Please try again.');
             var err = new Error(msg);
             err.status = res.status;
+            if (res.status === 402 && data.upgrade) {
+              err.upgrade = true;
+              showUpgrade(msg, data.upgrade_url);
+            }
             throw err;
           }
           return data;
@@ -26,6 +30,17 @@
       }, function () {
         throw new Error('Connection problem. Check your internet and try again.');
       });
+  }
+
+  function showUpgrade(message, url) {
+    var dlg = document.querySelector('[data-upgrade-modal]');
+    if (!dlg || typeof dlg.showModal !== 'function') {
+      if (url) window.location.href = url;
+      return;
+    }
+    dlg.querySelector('[data-upgrade-message]').textContent = message;
+    if (url) dlg.querySelector('[data-upgrade-link]').setAttribute('href', url);
+    if (!dlg.open) dlg.showModal();
   }
 
   function toast(message, kind) {
@@ -112,6 +127,21 @@
       document.querySelectorAll('.toast:not(.toast--error)').forEach(function (t) { t.remove(); });
     }, 6000);
 
+    // Copy-to-clipboard buttons (share and invite links).
+    document.querySelectorAll('[data-copy]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = btn.parentElement.querySelector('[data-copy-source]');
+        if (!input) return;
+        var done = function () {
+          var label = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(function () { btn.textContent = label; }, 1800);
+        };
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(input.value).then(done, function () { input.select(); });
+        else { input.select(); try { document.execCommand('copy'); done(); } catch (e) {} }
+      });
+    });
+
     document.querySelectorAll('form[data-confirm]').forEach(function (form) {
       form.addEventListener('submit', function (e) {
         if (!window.confirm(form.getAttribute('data-confirm'))) e.preventDefault();
@@ -133,5 +163,5 @@
     }
   });
 
-  window.QN = { request: request, toast: toast, startLoader: startLoader, tabs: tabs };
+  window.QN = { request: request, toast: toast, startLoader: startLoader, tabs: tabs, showUpgrade: showUpgrade };
 })();

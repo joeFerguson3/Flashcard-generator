@@ -57,7 +57,7 @@
       .catch(function (err) {
         stop();
         overlay.hidden = true;
-        fail(err.message);
+        if (!err.upgrade) fail(err.message);
       });
   });
 })();

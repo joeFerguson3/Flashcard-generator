@@ -6,8 +6,13 @@ import json
 from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
+import random
+import secrets
+
+from .. import billing
 from ..extensions import db
-from ..models import QUIZ_KINDS, StudySet, get_owned_set, subjects_for, utcnow
+from ..models import (QUIZ_KINDS, Card, PromoRedemption, StudySet, UsageEvent, User, get_owned_set,
+                      subjects_for, utcnow)
 from ..sanitize import clean_text
 from ..services.study import update_card_from_form
 
@@ -192,7 +197,101 @@ def delete_set(set_id: int):
 
 @study_bp.route("/settings")
 def settings():
-    return render_template("app/settings.html", set_count=current_user.sets.count())
+    code = billing.ensure_referral_code(current_user)
+    db.session.commit()
+    return render_template(
+        "app/settings.html", set_count=current_user.sets.count(),
+        invite_url=absolute("billing.referral", code=code),
+        invites=billing.referral_count(current_user), stripe_on=billing.stripe_enabled(),
+    )
+
+
+def absolute(endpoint: str, **values) -> str:
+    from flask import current_app
+
+    return current_app.config["SITE_URL"] + url_for(endpoint, **values)
+
+
+# --- Sharing ---------------------------------------------------------------------
+
+@study_bp.route("/sets/<int:set_id>/share", methods=["POST"])
+def share_set(set_id: int):
+    s = get_owned_set(set_id, current_user)
+    if request.form.get("action") == "stop":
+        s.share_token = None
+        flash("Sharing turned off. The old link no longer works.", "success")
+    elif not s.share_token:
+        s.share_token = secrets.token_urlsafe(9)
+        flash("Share link created. Anyone with the link can take this quiz.", "success")
+    db.session.commit()
+    return redirect(url_for("study.study_set", set_id=s.id) + "#share")
+
+
+# --- Pro: mock exam and weak spots -----------------------------------------
+
+def _pro_gate(feature: str):
+    try:
+        billing.check_feature(current_user, feature)
+        return None
+    except billing.LimitReached:
+        return render_template("app/pro_feature.html", feature=feature), 402
+
+
+def _cards_payload(title: str, cards: list[Card]) -> dict:
+    by_set: dict[int, StudySet] = {}
+    groups: dict[str, dict] = {}
+    for c in cards:
+        st = by_set.setdefault(c.set_id, c.study_set)
+        key = st.title
+        groups.setdefault(key, {"heading": st.title, "notes": [], "cards": []})["cards"].append(c.to_dict())
+    return {"title": title, "groups": list(groups.values()),
+            "submit_url": url_for("api.card_results"), "set_url": url_for("study.library"),
+            "retry_url": request.path}
+
+
+@study_bp.route("/mock-exam")
+def mock_exam():
+    gate = _pro_gate("mock_exam")
+    if gate:
+        return gate
+    subjects = subjects_for(current_user)
+    subject = request.args.get("subject")
+    if subject not in subjects:
+        return render_template("app/mock_pick.html", subjects=subjects)
+    size = min(max(int(request.args.get("n", 20) or 20), 5), 60)
+    cards = (Card.query.join(StudySet)
+             .filter(StudySet.user_id == current_user.id, StudySet.subject == subject,
+                     Card.kind != "flashcard").all())
+    if not cards:
+        flash("Generate quizzes for this subject first.", "info")
+        return redirect(url_for("study.library", subject=subject))
+    picked = random.sample(cards, min(size, len(cards)))
+    payload = _cards_payload(f"Mock exam: {subject}", picked)
+    payload["groups"] = [{"heading": f"Mock exam: {subject}", "notes": [],
+                          "cards": [c for g in payload["groups"] for c in g["cards"]]}]
+    random.shuffle(payload["groups"][0]["cards"])
+    payload["timed"] = True
+    n_sets = len({c.set_id for c in picked})
+    return render_template("app/quiz_multi.html", payload=payload, title=f"Mock exam: {subject}",
+                           subtitle=f"{len(picked)} questions from {n_sets} set{'s' if n_sets != 1 else ''}")
+
+
+@study_bp.route("/weak-spots")
+def weak_spots():
+    gate = _pro_gate("weak_spots")
+    if gate:
+        return gate
+    cards = (Card.query.join(StudySet)
+             .filter(StudySet.user_id == current_user.id, Card.kind != "flashcard", Card.times_seen > 0)
+             .all())
+    weak = sorted(
+        (c for c in cards if c.times_correct / c.times_seen < 0.75),
+        key=lambda c: (c.times_correct / c.times_seen, -c.times_seen),
+    )[:25]
+    if not weak:
+        return render_template("app/weak_empty.html")
+    return render_template("app/quiz_multi.html", payload=_cards_payload("Weak spots", weak),
+                           title="Weak spots", subtitle=f"{len(weak)} questions you've found hardest")
 
 
 @study_bp.route("/settings/export")
@@ -217,6 +316,9 @@ def delete_account():
         return redirect(url_for("study.settings"))
     user = current_user._get_current_object()
     logout_user()
+    UsageEvent.query.filter_by(user_id=user.id).delete()
+    PromoRedemption.query.filter_by(user_id=user.id).delete()
+    User.query.filter_by(referred_by_id=user.id).update({"referred_by_id": None})
     db.session.delete(user)
     db.session.commit()
     flash("Your account and all your data have been deleted.", "success")

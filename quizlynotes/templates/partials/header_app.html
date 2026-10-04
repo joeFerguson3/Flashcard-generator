@@ -5,6 +5,13 @@
     </a>
     <nav class="app-nav" aria-label="App">
       <a href="{{ url_for('study.library') }}" {% if request.endpoint == 'study.library' %}aria-current="page"{% endif %}>Library</a>
+      {% if plan and plan.pro and not plan.on_trial %}
+        <span class="pro-badge" title="QuizlyNotes Pro">Pro</span>
+      {% elif plan and plan.on_trial %}
+        <a href="{{ url_for('billing.pricing') }}" class="trial-chip" title="Your free Pro trial">Pro trial · {{ plan.days_left }}d left</a>
+      {% else %}
+        <a href="{{ url_for('billing.pricing') }}" class="upgrade-link">Upgrade</a>
+      {% endif %}
       <a href="{{ url_for('study.new_set') }}" class="btn btn--primary btn--sm">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         New set
@@ -17,6 +24,8 @@
       <div class="menu__panel">
         <p class="menu__who"><strong>{{ current_user.display_name }}</strong><span>{{ current_user.email }}</span></p>
         <a href="{{ url_for('study.settings') }}">Settings</a>
+        <a href="{{ url_for('study.settings') }}#plan">{{ 'Plan & billing' if plan and plan.pro else 'Upgrade to Pro' }}</a>
+        <a href="{{ url_for('study.settings') }}#invite">Invite friends, get Pro</a>
         <button type="button" data-theme-cycle>Theme: <span data-theme-label>System</span></button>
         <form method="post" action="{{ url_for('auth.logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

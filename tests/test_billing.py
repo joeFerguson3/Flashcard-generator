@@ -1,0 +1,227 @@
+import hashlib
+import hmac
+import json
+import time
+from datetime import timedelta
+
+import pytest
+
+from quizlynotes import billing, create_app
+from quizlynotes.config import TestConfig
+from quizlynotes.extensions import db
+from quizlynotes.models import StudySet, User, utcnow
+
+
+class BillingConfig(TestConfig):
+    STRIPE_WEBHOOK_SECRET = "whsec_test"
+    ADMIN_EMAILS = {"boss@example.com"}
+
+    @classmethod
+    def with_db(cls):
+        # In-memory SQLite is per-connection; a shared file keeps data across contexts.
+        import os
+        import tempfile
+
+        path = os.path.join(tempfile.mkdtemp(), "t.db")
+        return type("Cfg", (cls,), {"SQLALCHEMY_DATABASE_URI": "sqlite:///" + path})
+
+
+@pytest.fixture
+def app():
+    # No app context is held open during requests, so each request loads
+    # fresh user state (like production).
+    app = create_app(BillingConfig.with_db())
+    with app.app_context():
+        db.create_all()
+    yield app
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+def login(client, email="a@example.com"):
+    client.get(f"/dev-login?email={email}")
+
+
+def make_free(app, email="a@example.com"):
+    with app.app_context():
+        u = User.query.filter_by(email=email).one()
+        u.pro_until = None
+        db.session.commit()
+
+
+def new_set(client):
+    return client.post("/api/sets", data={"text": "Cell respiration notes. " * 20})
+
+
+def test_signup_starts_trial(client, app):
+    login(client)
+    with app.app_context():
+        u = User.query.one()
+        assert billing.is_pro(u)
+        assert 6 <= (u.pro_until - utcnow()).days <= 7
+        assert u.referral_code
+    assert b"Pro trial" in client.get("/library").data
+
+
+def test_free_set_limit_and_upgrade_prompt(client, app):
+    login(client)
+    make_free(app)
+    for _ in range(billing.FREE.sets_per_month):
+        assert new_set(client).status_code == 200
+    res = new_set(client)
+    assert res.status_code == 402
+    assert res.json["upgrade"] and "/pricing" in res.json["upgrade_url"]
+    page = client.get("/library").data
+    assert b"0</strong> of 5 free AI sets left" in page
+
+
+def test_regenerate_and_ai_edit_limits(client, app):
+    login(client)
+    make_free(app)
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    for _ in range(1 + billing.FREE.regenerations_per_set):
+        assert client.post(f"/api/sets/{set_id}/generate", json={}).status_code == 200
+    assert client.post(f"/api/sets/{set_id}/generate", json={}).status_code == 402
+    section = {"heading": "H", "subheading": "S", "points": [{"text": "x", "level": 1}]}
+    for _ in range(billing.FREE.ai_edits_per_month):
+        assert client.post(f"/api/sets/{set_id}/enhance", json={"heading": "H", "sections": [section]}).status_code == 200
+    assert client.post(f"/api/sets/{set_id}/enhance", json={"heading": "H", "sections": [section]}).status_code == 402
+
+
+def test_pro_features_gated(client, app):
+    login(client)
+    make_free(app)
+    assert client.get("/mock-exam").status_code == 402
+    assert client.get("/weak-spots").status_code == 402
+    with app.app_context():
+        u = User.query.one()
+        billing.extend_pro(u, 3)
+        db.session.commit()
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    assert client.get("/mock-exam").status_code == 200
+    page = client.get("/mock-exam?subject=Biology&n=10")
+    assert page.status_code == 200 and b'"timed": true' in page.data
+    assert b"No weak spots yet" in client.get("/weak-spots").data
+    with app.app_context():
+        card = StudySet.query.one().quiz_cards[0]
+        card_id = card.id
+    res = client.post("/api/cards/results", json={"results": [{"card_id": card_id, "correct": False}]})
+    assert res.json["score"] == 0
+    assert b"quiz-data" in client.get("/weak-spots").data
+
+
+def test_admin_email_is_pro(client, app):
+    login(client, "boss@example.com")
+    with app.app_context():
+        u = User.query.one()
+        u.pro_until = None
+        db.session.commit()
+        assert billing.is_pro(u) and billing.plan_status(u)["lifetime"]
+
+
+def test_promo_codes(client, app):
+    with app.app_context():
+        _, week = billing.create_promo("Week", days=7, max_redemptions=1)
+        _, life = billing.create_promo("Life", code="qn-life-1234")
+        db.session.commit()
+    login(client)
+    make_free(app)
+    res = client.post("/redeem", data={"code": week}, follow_redirects=True)
+    assert b"7 days of Pro added" in res.data
+    login(client, "b@example.com")
+    res = client.post("/redeem", data={"code": week}, follow_redirects=True)
+    assert b"fully used" in res.data
+    res = client.post("/redeem", data={"code": "QN-LIFE-1234"}, follow_redirects=True)
+    assert b"Pro for life" in res.data
+    res = client.post("/redeem", data={"code": "nope"}, follow_redirects=True)
+    assert b"isn&#39;t valid" in res.data or b"isn't valid" in res.data
+
+
+def test_referrals(client, app):
+    login(client, "inviter@example.com")
+    with app.app_context():
+        inviter = User.query.filter_by(email="inviter@example.com").one()
+        code, before = inviter.referral_code, inviter.pro_until
+    client.post("/logout")
+    client.get(f"/r/{code}")
+    login(client, "friend@example.com")
+    with app.app_context():
+        friend = User.query.filter_by(email="friend@example.com").one()
+        assert friend.referred_by_id == inviter.id
+        assert (friend.pro_until - utcnow()).days >= 13
+    new_set(client)
+    with app.app_context():
+        inviter = User.query.filter_by(email="inviter@example.com").one()
+        assert inviter.pro_until >= before + timedelta(days=6, hours=23)
+        assert billing.referral_count(inviter) == 1
+
+
+def _signed(payload: dict, secret="whsec_test"):
+    body = json.dumps(payload)
+    ts = int(time.time())
+    sig = hmac.new(secret.encode(), f"{ts}.{body}".encode(), hashlib.sha256).hexdigest()
+    return body, {"Stripe-Signature": f"t={ts},v1={sig}", "Content-Type": "application/json"}
+
+
+def test_stripe_webhook_updates_subscription(client, app):
+    login(client)
+    make_free(app)
+    with app.app_context():
+        user_id = User.query.one().id
+    period_end = int(time.time()) + 30 * 86400
+    event = {"id": "evt_1", "object": "event", "type": "customer.subscription.updated", "data": {"object": {
+        "id": "sub_1", "object": "subscription", "customer": "cus_1", "status": "active",
+        "cancel_at_period_end": False, "metadata": {"user_id": str(user_id)},
+        "items": {"data": [{"current_period_end": period_end, "price": {"recurring": {"interval": "year"}}}]},
+    }}}
+    body, headers = _signed(event)
+    assert client.post("/billing/webhook", data=body, headers=headers).status_code == 200
+    with app.app_context():
+        u = db.session.get(User, user_id)
+        assert u.subscription_status == "active" and u.subscription_interval == "year"
+        assert u.stripe_customer_id == "cus_1" and billing.is_pro(u)
+        assert billing.plan_status(u)["paid"]
+    bad_body, bad_headers = _signed(event, secret="wrong")
+    assert client.post("/billing/webhook", data=bad_body, headers=bad_headers).status_code == 400
+
+
+def test_pricing_page_and_checkout_without_stripe(client, app):
+    res = client.get("/pricing")
+    assert res.status_code == 200 and b"Try Pro free for 7 days" in res.data
+    assert b'rel="canonical" href="https://quizlynotes.com/pricing"' in res.data
+    login(client)
+    make_free(app)
+    assert b"Payments open soon" in client.get("/pricing").data
+    res = client.post("/billing/checkout", data={"interval": "year"})
+    assert res.status_code == 302
+
+
+def test_sharing(client, app):
+    login(client)
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    client.post(f"/sets/{set_id}/share")
+    with app.app_context():
+        token = db.session.get(StudySet, set_id).share_token
+    client.post("/logout")
+    anon = app.test_client()
+    page = anon.get(f"/s/{token}")
+    assert page.status_code == 200 and b"shared this quiz" in page.data
+    assert page.headers["X-Robots-Tag"] == "noindex"
+    login(client)
+    client.post(f"/sets/{set_id}/share", data={"action": "stop"})
+    assert anon.get(f"/s/{token}").status_code == 404
+
+
+def test_logout_really_logs_out(client, app):
+    login(client)
+    assert client.get("/library").status_code == 200
+    client.post("/logout")
+    assert client.get("/library").status_code == 302

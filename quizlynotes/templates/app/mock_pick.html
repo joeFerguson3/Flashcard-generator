@@ -1,0 +1,20 @@
+{% extends "app/base_app.html" %}
+{% block title %}Mock exam | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page page--narrow">
+  <a class="back" href="{{ url_for('study.library') }}">← Library</a>
+  <header class="page-head"><div><p class="eyebrow">Pro</p><h1 class="page-title">Mock exam</h1>
+  <p class="muted">Questions are drawn at random from every set in the subject and shuffled, with a timer running.</p></div></header>
+  {% if subjects %}
+  <form method="get" class="panel">
+    <label class="field"><span class="field__label">Subject</span>
+      <select name="subject">{% for x in subjects %}<option value="{{ x }}">{{ x }}</option>{% endfor %}</select></label>
+    <label class="field field--short"><span class="field__label">Questions</span>
+      <select name="n">{% for n in [10, 20, 30, 40] %}<option value="{{ n }}" {% if n == 20 %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></label>
+    <button class="btn btn--primary" type="submit">Start mock exam</button>
+  </form>
+  {% else %}
+  <div class="empty"><p class="muted">Make a study set first, then come back for a mock exam.</p><a class="btn btn--primary" href="{{ url_for('study.new_set') }}">New set</a></div>
+  {% endif %}
+</section>
+{% endblock %}

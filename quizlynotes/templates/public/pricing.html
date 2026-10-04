@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% set seo_title = "Pricing: Free AI Quizzes & Flashcards, Pro from " ~ config.PRICE_YEARLY_PER_MONTH_DISPLAY ~ "/mo | QuizlyNotes" %}
+{% set seo_description = "QuizlyNotes is free to use with unlimited studying and 5 AI study sets a month. Pro unlocks unlimited AI quizzes, 150-page PDFs, mock exams and weak-spot review." %}
+{% set seo_path = "/pricing" %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta %}{% include "partials/seo_meta.html" %}{% endblock %}
+{% block header %}{% if current_user.is_authenticated %}{% include "partials/header_app.html" %}{% else %}{% include "partials/header_public.html" %}{% endif %}{% endblock %}
+{% block body_class %}page-pricing{% endblock %}
+{% block content %}
+{% set feature_msgs = {
+  'sets': "You've used this month's free study sets.",
+  'regenerate': "You've used the free regenerations for this set.",
+  'ai_edit': "You've used this month's free AI note edits.",
+  'file_size': "That file is bigger than the free plan allows.",
+  'mock_exam': "Mock exams are part of Pro.",
+  'weak_spots': "Weak spots review is part of Pro."} %}
+<section class="wrap section pricing">
+  <header class="center pricing__head">
+    {% if feature and feature in feature_msgs %}<p class="pill pill--due pricing__reason">{{ feature_msgs[feature] }}</p>{% endif %}
+    <h1 class="display display--sm">Study free. Go Pro when exams get serious.</h1>
+    <p class="lede center-block">Revising is always unlimited and free. Pro removes the limits on AI generation and adds tools for exam season.</p>
+    <div class="segmented billing-toggle" role="radiogroup" aria-label="Billing period" data-billing-toggle>
+      <label><input type="radio" name="period" value="year" checked><span>Yearly <em class="save-tag">Save 50%</em></span></label>
+      <label><input type="radio" name="period" value="month"><span>Monthly</span></label>
+    </div>
+  </header>
+
+  <div class="plans">
+    <article class="plan">
+      <h2 class="plan__name">Free</h2>
+      <p class="plan__price"><strong>£0</strong> <span>forever</span></p>
+      <p class="muted">Everything you need to revise, with a monthly AI allowance.</p>
+      {% if not current_user.is_authenticated %}
+      <a class="btn btn--ghost btn--block" href="{{ url_for('auth.login') }}">Start free</a>
+      {% elif plan and not plan.pro %}
+      <span class="btn btn--ghost btn--block is-current" aria-disabled="true">Your current plan</span>
+      {% else %}
+      <span class="btn btn--ghost btn--block is-current" aria-disabled="true">Included</span>
+      {% endif %}
+      <ul class="plan__list">
+        <li><b>Unlimited</b> studying: quizzes, flashcards, games</li>
+        <li>Spaced repetition and score history</li>
+        <li><b>{{ free.sets_per_month }}</b> new AI study sets a month</li>
+        <li>PDFs up to {{ free.max_pages }} pages ({{ free.max_upload_mb }}MB)</li>
+        <li>Up to {{ free.max_questions }} questions per quiz</li>
+        <li>All 10 question types</li>
+        <li>{{ free.ai_edits_per_month }} AI note edits (Simplify / Improve) a month</li>
+        <li>Share quizzes with friends</li>
+      </ul>
+    </article>
+
+    <article class="plan plan--pro">
+      <p class="plan__badge">Most popular for exams</p>
+      <h2 class="plan__name">Pro</h2>
+      <p class="plan__price" data-price-year><strong>{{ config.PRICE_YEARLY_PER_MONTH_DISPLAY }}</strong> <span>/ month, billed {{ config.PRICE_YEARLY_DISPLAY }} yearly</span></p>
+      <p class="plan__price" data-price-month hidden><strong>{{ config.PRICE_MONTHLY_DISPLAY }}</strong> <span>/ month, cancel any time</span></p>
+      <p class="muted">For heavy revision weeks and whole courses.</p>
+      {% if plan and plan.paid %}
+        <form method="post" action="{{ url_for('billing.portal') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn--primary btn--block" type="submit">Manage subscription</button></form>
+      {% elif plan and plan.lifetime %}
+        <span class="btn btn--primary btn--block is-current" aria-disabled="true">You have Pro for life</span>
+      {% elif current_user.is_authenticated and stripe_on %}
+        <form method="post" action="{{ url_for('billing.checkout') }}" data-checkout>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="interval" value="year" data-interval>
+          <button class="btn btn--hl btn--block" type="submit">{{ 'Keep Pro' if plan and plan.on_trial else 'Upgrade to Pro' }}</button>
+        </form>
+        {% if plan and plan.on_trial %}<p class="small muted center">Your free trial ends in {{ plan.days_left }} day{{ 's' if plan.days_left != 1 }}.</p>{% endif %}
+      {% elif current_user.is_authenticated %}
+        <span class="btn btn--hl btn--block is-current" aria-disabled="true">Payments open soon</span>
+        {% if plan and plan.on_trial %}<p class="small muted center">You're on a free Pro trial: {{ plan.days_left }} day{{ 's' if plan.days_left != 1 }} left.</p>{% endif %}
+      {% else %}
+        <a class="btn btn--hl btn--block" href="{{ url_for('auth.login', next=url_for('billing.pricing')) }}">Try Pro free for 7 days</a>
+        <p class="small muted center">No card needed. Every new account starts with a week of Pro.</p>
+      {% endif %}
+      <ul class="plan__list">
+        <li><b>Everything in Free</b>, plus:</li>
+        <li><b>Unlimited</b> AI study sets*</li>
+        <li><b>Unlimited</b> quiz regenerations</li>
+        <li>PDFs up to {{ pro.max_pages }} pages ({{ pro.max_upload_mb }}MB)</li>
+        <li>Up to {{ pro.max_questions }} questions per quiz</li>
+        <li><b>Mock exams</b> that mix every set in a subject</li>
+        <li><b>Weak spots</b>: drill the questions you keep missing</li>
+        <li>Unlimited Simplify and Improve for your notes</li>
+      </ul>
+    </article>
+  </div>
+  <p class="small muted center">*Fair use: up to {{ pro.sets_per_month }} new sets a month. Prices in GBP.</p>
+
+  {% if current_user.is_authenticated %}
+  <form method="post" action="{{ url_for('billing.redeem') }}" class="redeem">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ url_for('billing.pricing') }}">
+    <label class="field field--inline"><span class="sr-only">Promo code</span><input name="code" placeholder="Have a code?" autocomplete="off" required></label>
+    <button class="btn btn--ghost" type="submit">Redeem</button>
+  </form>
+  {% endif %}
+
+  <div class="invite-strip">
+    <div>
+      <h2 class="block__title">Give a week, get a week</h2>
+      <p class="muted">Invite a friend: they get 14 days of Pro, and you get a free week of Pro when they make their first set.</p>
+    </div>
+    <a class="btn btn--ghost" href="{{ url_for('study.settings') + '#invite' if current_user.is_authenticated else url_for('auth.login') }}">Get your invite link</a>
+  </div>
+
+  <section class="section--narrow wrap" style="padding:0">
+    <h2 class="section-title">Pricing questions</h2>
+    {% include "partials/faq.html" %}
+  </section>
+</section>
+{% endblock %}
+{% block scripts %}<script>
+(function () {
+  var toggle = document.querySelector('[data-billing-toggle]');
+  if (!toggle) return;
+  toggle.addEventListener('change', function (e) {
+    var yearly = e.target.value === 'year';
+    document.querySelector('[data-price-year]').hidden = !yearly;
+    document.querySelector('[data-price-month]').hidden = yearly;
+    var field = document.querySelector('[data-interval]');
+    if (field) field.value = yearly ? 'year' : 'month';
+  });
+})();
+</script>{% endblock %}

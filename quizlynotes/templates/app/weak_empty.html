@@ -1,0 +1,12 @@
+{% extends "app/base_app.html" %}
+{% block title %}Weak spots | QuizlyNotes{% endblock %}
+{% block content %}
+<section class="wrap page page--narrow">
+  <a class="back" href="{{ url_for('study.library') }}">← Library</a>
+  <div class="empty">
+    <h1 class="page-title">No weak spots yet</h1>
+    <p class="muted">Take a few quizzes first. Questions you get wrong will collect here so you can drill them.</p>
+    <a class="btn btn--primary" href="{{ url_for('study.library') }}">Go to library</a>
+  </div>
+</section>
+{% endblock %}

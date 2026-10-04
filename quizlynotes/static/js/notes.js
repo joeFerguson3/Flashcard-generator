@@ -187,8 +187,8 @@
       topic.remove();
       changed();
     });
-    simplify.addEventListener('click', function () { aiTopic(topic, 'simplify'); });
-    improve.addEventListener('click', function () { aiTopic(topic, 'improve'); });
+    simplify.addEventListener('click', function () { aiTopic(topic, 'simplify').catch(function () {}); });
+    improve.addEventListener('click', function () { aiTopic(topic, 'improve').catch(function () {}); });
     return topic;
   }
 
@@ -297,7 +297,8 @@
       .catch(function (err) {
         topic.classList.remove('is-busy');
         btn.textContent = label;
-        QN.toast(err.message, 'error');
+        if (!err.upgrade) QN.toast(err.message, 'error');
+        throw err;
       });
   }
 
@@ -312,9 +313,10 @@
       topics.reduce(function (chain, t) {
         return chain.then(function () { return aiTopic(t, 'simplify'); });
       }, Promise.resolve()).then(function () {
+        QN.toast('Notes simplified. Use Undo on any topic to restore it.');
+      }, function () { /* stopped early (limit or error) */ }).then(function () {
         simplifyAll.disabled = false;
         simplifyAll.textContent = 'Simplify all';
-        QN.toast('Notes simplified. Use Undo on any topic to restore it.');
       });
     });
   }
@@ -353,6 +355,7 @@
     }).catch(function (err) {
       stop();
       overlay.hidden = true;
+      if (err.upgrade) return;
       errorEl.textContent = err.message;
       errorEl.hidden = false;
     });

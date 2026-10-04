@@ -1,0 +1,16 @@
+<dialog class="upgrade" data-upgrade-modal aria-labelledby="upgrade-title">
+  <form method="dialog" class="upgrade__close"><button aria-label="Close">&times;</button></form>
+  <span class="pro-badge">Pro</span>
+  <h2 id="upgrade-title" class="block__title">You've hit a free limit</h2>
+  <p class="muted" data-upgrade-message></p>
+  <ul class="upgrade__perks">
+    <li>Unlimited AI study sets and regenerations</li>
+    <li>150-page PDFs and 60-question quizzes</li>
+    <li>Mock exams and Weak spots review</li>
+  </ul>
+  <div class="btn-row">
+    <a class="btn btn--hl" href="{{ url_for('billing.pricing') }}" data-upgrade-link>See Pro: from {{ config.PRICE_YEARLY_PER_MONTH_DISPLAY }}/mo</a>
+    <a class="btn btn--ghost" href="{{ url_for('study.settings') }}#invite">Earn free Pro weeks</a>
+  </div>
+  <p class="small muted">Studying your existing sets is always free and unlimited.</p>
+</dialog>

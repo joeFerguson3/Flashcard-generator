@@ -95,6 +95,12 @@
   var index = 0;
   var progressFill, progressLabel;
 
+  var startedAt = Date.now();
+  function formatTime(ms) {
+    var sec = Math.floor(ms / 1000);
+    return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2);
+  }
+
   function renderProgress() {
     var done = questions.filter(function (q) { return q.result !== null; }).length;
     progressFill.style.width = (done / questions.length * 100) + '%';
@@ -652,11 +658,15 @@
 
     var ring = h('div', { class: 'results__ring' }, [h('div', null, [h('p', { class: 'results__score', text: score + '%' })])]);
     ring.style.setProperty('--p', score);
-    var meta = h('p', { class: 'muted', text: correctCount + ' of ' + questions.length + ' correct. ' + verdict });
+    var timeText = data.timed ? ' Time: ' + formatTime(Date.now() - startedAt) + '.' : '';
+    var meta = h('p', { class: 'muted', text: correctCount + ' of ' + questions.length + ' correct.' + timeText + ' ' + verdict });
     var extra = h('p', { class: 'muted small' });
     var buttons = h('div', { class: 'results__actions' });
 
-    if (data.guest) {
+    if (data.shared) {
+      buttons.appendChild(h('a', { class: 'btn btn--primary btn--lg', href: '/login', text: 'Make quizzes from my own notes' }));
+      extra.textContent = 'Free account. Upload slides or PDFs and get quizzes like this in seconds, plus a week of Pro free.';
+    } else if (data.guest) {
       buttons.appendChild(h('a', { class: 'btn btn--primary btn--lg', href: '/login', text: 'Save this quiz with Google' }));
       extra.textContent = 'Free account. Your quiz, flashcards and score are saved to your library.';
     } else {
@@ -730,6 +740,11 @@
   progressFill = h('div', { class: 'progress__fill' });
   progressLabel = h('span', { class: 'progress__label' });
   root.appendChild(h('div', { class: 'progress', 'aria-hidden': 'true' }, [h('div', { class: 'progress__track' }, [progressFill]), progressLabel]));
+  if (data.timed) {
+    var clock = h('p', { class: 'quiz-clock', 'aria-label': 'Time elapsed', text: '0:00' });
+    root.appendChild(clock);
+    setInterval(function () { if (index < steps.length) clock.textContent = formatTime(Date.now() - startedAt); }, 1000);
+  }
   root.appendChild(h('div', { 'data-stage': '' }));
   show(0);
 })();

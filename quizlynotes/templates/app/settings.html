@@ -14,6 +14,42 @@
     </div>
   </section>
 
+  <section class="panel" id="plan">
+    <div class="block__head">
+      <h2 class="block__title">Plan</h2>
+      {% if plan.pro %}<span class="pro-badge">Pro</span>{% else %}<span class="pill">Free</span>{% endif %}
+    </div>
+    {% if plan.lifetime %}
+      <p>You have <strong>Pro for life</strong>. Thanks for being part of QuizlyNotes.</p>
+    {% elif plan.paid %}
+      <p>You're on <strong>Pro ({{ 'yearly' if plan.interval == 'year' else 'monthly' }})</strong>.
+        {% if plan.cancel_pending %}It's set to end on {{ plan.pro_until.strftime('%d %B %Y') }}.{% else %}It renews automatically.{% endif %}</p>
+      <form method="post" action="{{ url_for('billing.portal') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn--ghost" type="submit">Manage subscription, invoices and payment method</button></form>
+    {% elif plan.pro %}
+      <p>You have Pro until <strong>{{ plan.pro_until.strftime('%d %B %Y') }}</strong> ({{ plan.days_left }} day{{ 's' if plan.days_left != 1 }} left){% if plan.on_trial %} on your free trial{% endif %}.</p>
+      <a class="btn btn--hl" href="{{ url_for('billing.pricing') }}">{{ 'Keep Pro' if stripe_on else 'See Pro plans' }}</a>
+    {% else %}
+      <p>You're on the <strong>Free</strong> plan: {{ plan.sets_left }} of {{ plan.limits.sets_per_month }} AI study sets left this month (resets {{ plan.resets_on.strftime('%d %B') }}).</p>
+      <a class="btn btn--hl" href="{{ url_for('billing.pricing') }}">Upgrade to Pro</a>
+    {% endif %}
+    <form method="post" action="{{ url_for('billing.redeem') }}" class="inline-form redeem-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="field field--inline"><span class="sr-only">Promo code</span><input name="code" placeholder="Promo code" autocomplete="off" required></label>
+      <button class="btn btn--ghost btn--sm" type="submit">Redeem</button>
+    </form>
+  </section>
+
+  <section class="panel" id="invite">
+    <h2 class="block__title">Invite friends, get Pro free</h2>
+    <p class="muted">Friends who join with your link get <strong>14 days of Pro</strong>. When they make their first study set, you get <strong>a free week of Pro</strong>. You can earn up to {{ config.REFERRAL_MAX_REWARD_DAYS }} days ahead.</p>
+    <div class="share-box__row">
+      <input class="share-box__url" readonly value="{{ invite_url }}" data-copy-source>
+      <button type="button" class="btn btn--primary btn--sm" data-copy>Copy link</button>
+    </div>
+    <p class="small muted">{{ invites }} friend{{ 's' if invites != 1 }} joined with your link so far.</p>
+  </section>
+
   <section class="panel">
     <h2 class="block__title">Appearance</h2>
     <div class="segmented" role="radiogroup" aria-label="Theme" data-theme-choice>

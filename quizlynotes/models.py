@@ -44,6 +44,20 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     last_login_at = db.Column(db.DateTime, default=utcnow)
 
+    # Billing / entitlements. Pro access = lifetime_pro, or pro_until in the future
+    # (covers the signup trial, referral bonuses, promo codes and paid periods).
+    pro_until = db.Column(db.DateTime)
+    lifetime_pro = db.Column(db.Boolean, nullable=False, default=False)
+    stripe_customer_id = db.Column(db.String(64), index=True)
+    stripe_subscription_id = db.Column(db.String(64))
+    subscription_status = db.Column(db.String(32))
+    subscription_interval = db.Column(db.String(16))
+    trial_started_at = db.Column(db.DateTime)
+    # Referrals
+    referral_code = db.Column(db.String(16), unique=True, index=True)
+    referred_by_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"))
+    referral_rewarded = db.Column(db.Boolean, nullable=False, default=False)
+
     sets = db.relationship(
         "StudySet", back_populates="owner", cascade="all, delete-orphan", lazy="dynamic"
     )
@@ -70,6 +84,8 @@ class StudySet(db.Model):
     last_studied_at = db.Column(db.DateTime)
     last_score = db.Column(db.Float)
     best_score = db.Column(db.Float)
+    generations = db.Column(db.Integer, nullable=False, default=0)
+    share_token = db.Column(db.String(32), unique=True, index=True)
 
     owner = db.relationship("User", back_populates="sets")
     sections = db.relationship(
@@ -198,6 +214,40 @@ class GuestDraft(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     payload = db.Column(db.JSON, nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+
+class UsageEvent(db.Model):
+    """One AI action (new set, quiz generation, note edit) for monthly limits."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    kind = db.Column(db.String(32), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (db.Index("ix_usage_user_kind_time", "user_id", "kind", "created_at"),)
+
+
+class PromoCode(db.Model):
+    """Redeemable code granting Pro. Only a hash of the code is stored."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    code_hash = db.Column(db.String(64), unique=True, nullable=False)
+    label = db.Column(db.String(120), nullable=False, default="")
+    days = db.Column(db.Integer)  # None = lifetime
+    max_redemptions = db.Column(db.Integer)  # None = unlimited
+    redemptions = db.Column(db.Integer, nullable=False, default=0)
+    expires_at = db.Column(db.DateTime)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+
+class PromoRedemption(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code_id = db.Column(db.Integer, db.ForeignKey("promo_code.id", ondelete="CASCADE"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint("code_id", "user_id", name="uq_promo_user"),)
 
 
 def get_owned_set(set_id: int, user) -> StudySet:

@@ -34,17 +34,23 @@ def _ext(filename: str) -> str:
     return filename[filename.rfind("."):] if "." in filename else ""
 
 
-def from_text(text: str, name: str = "Pasted notes") -> Source:
+def from_text(text: str, name: str = "Pasted notes", max_chars: int | None = None) -> Source:
     text = (text or "").strip()
     if len(text) < 80:
         raise SourceError("Add a bit more text. At least a paragraph of notes works best.")
-    limit = current_app.config["MAX_TEXT_CHARS"]
+    limit = min(max_chars or current_app.config["MAX_TEXT_CHARS"], current_app.config["MAX_TEXT_CHARS"])
     if len(text) > limit:
-        raise SourceError(f"That's a lot of text. Please keep it under {limit:,} characters.")
+        raise SourceError(f"That's a lot of text. Please keep it under {limit:,} characters, "
+                          "or split it into a few sets by topic.")
     return Source(name=name, text=text)
 
 
-def from_upload(file_storage) -> Source:
+class PlanLimitError(SourceError):
+    """A file is over the free plan's size limits (shown with an upgrade prompt)."""
+
+
+def from_upload(file_storage, max_pages: int | None = None, max_mb: int | None = None,
+                max_chars: int | None = None, pro: bool = True) -> Source:
     if file_storage is None or not file_storage.filename:
         raise SourceError("Choose a file to upload.")
     name = file_storage.filename
@@ -54,14 +60,22 @@ def from_upload(file_storage) -> Source:
     data = file_storage.read()
     if not data:
         raise SourceError("That file is empty.")
+    if max_mb and len(data) > max_mb * 1024 * 1024:
+        msg = f"That file is over {max_mb}MB."
+        if not pro:
+            raise PlanLimitError(msg + " Pro accepts files up to 30MB, or split it into smaller PDFs.")
+        raise SourceError(msg)
 
     if ext == ".pdf":
         if not data.startswith(b"%PDF"):
             raise SourceError("That doesn't look like a valid PDF.")
         pages = _pdf_page_count(data)
-        max_pages = current_app.config["MAX_PDF_PAGES"]
+        max_pages = min(max_pages or current_app.config["MAX_PDF_PAGES"], current_app.config["MAX_PDF_PAGES"])
         if pages and pages > max_pages:
-            raise SourceError(f"That PDF has {pages} pages. The limit is {max_pages}; try splitting it by topic.")
+            msg = f"That PDF has {pages} pages. The limit is {max_pages}"
+            if not pro:
+                raise PlanLimitError(msg + " on the free plan. Pro handles up to 150 pages, or split it by topic.")
+            raise SourceError(msg + "; try splitting it by topic.")
         return Source(name=name, pdf_bytes=data, pages=pages)
 
     if ext == ".docx":
@@ -70,7 +84,7 @@ def from_upload(file_storage) -> Source:
         text = _pptx_text(data)
     else:
         text = data.decode("utf-8", errors="replace")
-    return from_text(text, name=name)
+    return from_text(text, name=name, max_chars=max_chars)
 
 
 def _pdf_page_count(data: bytes) -> int | None:

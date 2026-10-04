@@ -1,0 +1,19 @@
+{% extends "app/base_app.html" %}
+{% set info = {
+  'mock_exam': ('Mock exams', 'Get exam-ready with a timed mock exam that mixes questions from every set in a subject, just like the real thing.'),
+  'weak_spots': ('Weak spots', 'Drill the questions you keep getting wrong across all your sets, so revision time goes where it matters.')}[feature] %}
+{% block title %}{{ info[0] }} | QuizlyNotes Pro{% endblock %}
+{% block content %}
+<section class="wrap page page--narrow">
+  <div class="empty pro-gate">
+    <span class="pro-badge">Pro</span>
+    <h1 class="page-title">{{ info[0] }}</h1>
+    <p class="muted">{{ info[1] }}</p>
+    <div class="btn-row" style="justify-content:center;margin-top:.75rem">
+      <a class="btn btn--hl" href="{{ url_for('billing.pricing', feature=feature) }}">See Pro plans</a>
+      <a class="btn btn--ghost" href="{{ url_for('study.library') }}">Back to library</a>
+    </div>
+    <p class="small muted">Pro is {{ config.PRICE_YEARLY_PER_MONTH_DISPLAY }}/month on the yearly plan. Or earn free Pro weeks by <a href="{{ url_for('study.settings') }}#invite">inviting friends</a>.</p>
+  </div>
+</section>
+{% endblock %}

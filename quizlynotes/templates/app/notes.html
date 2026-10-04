@@ -36,7 +36,9 @@
             <span class="field__label">Number of questions</span>
             <select data-count>
               <option value="">Auto (based on your notes)</option>
-              {% for n in [5, 10, 15, 20, 30, 40, 60] %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+              {% for n in [5, 10, 15, 20, 30, 40, 60] %}
+              {% if plan and n > plan.limits.max_questions %}<option value="{{ n }}" disabled>{{ n }} (Pro)</option>{% else %}<option value="{{ n }}">{{ n }}</option>{% endif %}
+              {% endfor %}
             </select>
           </label>
           <fieldset class="field">

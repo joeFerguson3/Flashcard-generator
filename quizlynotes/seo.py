@@ -26,11 +26,12 @@ HOME_FAQ = [
      "slides, a PDF, a Word document or paste your notes, and it writes revision notes, practice questions "
      "and flashcards for you to study."),
     ("Is QuizlyNotes free?",
-     "Yes. You can create and study quiz notes for free with a Google account. There are fair-use limits on "
-     "how many quizzes you can generate per hour, to keep the service running for everyone."),
+     "Yes. Studying is free and unlimited: quizzes, flashcards, spaced repetition and games. The free plan "
+     "includes 5 new AI study sets a month, and every new account starts with a 7-day Pro trial. Pro removes "
+     "the AI limits and adds mock exams and weak-spot review."),
     ("What files can I upload?",
      "PDFs (including lecture slides and scanned pages), Word documents (.docx), PowerPoint files (.pptx) and "
-     "plain text. You can also paste notes directly. Files can be up to 30MB."),
+     "plain text. You can also paste notes directly. Free accounts can upload PDFs up to 30 pages; Pro handles up to 150 pages and 30MB."),
     ("How accurate are the questions?",
      "Questions are written only from your material, and every answer comes with a short explanation. You can "
      "review and edit the notes before the quiz is made, and edit or delete any question afterwards."),
