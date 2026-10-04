@@ -527,13 +527,22 @@ mark, .hl {
 .step__kind { display: inline-flex; gap: .4rem; align-items: center; font-size: .75rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: .75rem; }
 .step__topic { font-size: .8rem; color: var(--muted); }
 .step__q { font: 500 clamp(1.25rem, 2.6vw, 1.5rem)/1.4 var(--serif); margin: 0 0 1.25rem; }
-.step--notes { background:
-  linear-gradient(90deg, transparent 2.4rem, var(--margin-line) 2.4rem, var(--margin-line) calc(2.4rem + 1px), transparent calc(2.4rem + 1px)),
-  repeating-linear-gradient(to bottom, var(--surface) 0 calc(1.75rem - 1px), var(--rule) calc(1.75rem - 1px) 1.75rem);
-  padding-left: 3.25rem; }
-.step--notes h2 { font: 600 1.6rem var(--serif); }
-.step--notes h3 { font-size: 1.02rem; margin: 1.1rem 0 .3rem; }
-.step--notes .points li { line-height: 1.75rem; margin: 0; }
+.step--notes { padding: 2rem 2.25rem 1.75rem; }
+.notes-title { font: 600 1.6rem/1.2 var(--serif); margin-bottom: .35rem; }
+.notes-sub { font: 600 1.05rem/1.35 var(--sans); color: var(--ink-2); margin: 0 0 1.1rem; }
+.notes-sub--cont { color: var(--muted); }
+.chunks { display: grid; gap: 1.35rem; max-width: 64ch; }
+.chunk__lead { font-size: 1.08rem; line-height: 1.55; font-weight: 500; margin: 0 0 .6rem; padding-left: .85rem; border-left: 3px solid var(--hl); }
+.chunk__lead:last-child { margin-bottom: 0; }
+.chunk__items { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.chunk__item { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); padding: .6rem .85rem; }
+.chunk__item > p { margin: 0; line-height: 1.55; color: var(--ink); }
+.chunk__subs { margin: .4rem 0 0; padding-left: 1rem; color: var(--muted); font-size: .93rem; line-height: 1.5; }
+.chunk__subs li { margin: .2rem 0; }
+.chunks strong { font-weight: 650; color: var(--ink); }
+.page-dots { display: flex; gap: 6px; }
+.page-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); transition: background .2s, width .2s; }
+.page-dots span.is-on { width: 22px; border-radius: 4px; background: var(--ink); }
 .options { display: grid; gap: .6rem; }
 .opt {
   display: flex; align-items: center; gap: .85rem; width: 100%; text-align: left; padding: .85rem 1rem;
@@ -744,9 +753,8 @@ mark, .hl {
   .match-grid { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
   .match-tile { min-height: 96px; font-size: .85rem; padding: .6rem; }
   .step { padding: 1.25rem; }
-  .step--notes { padding-left: 2.25rem; background-size: auto; background:
-    linear-gradient(90deg, transparent 1.5rem, var(--margin-line) 1.5rem, var(--margin-line) calc(1.5rem + 1px), transparent calc(1.5rem + 1px)),
-    repeating-linear-gradient(to bottom, var(--surface) 0 calc(1.75rem - 1px), var(--rule) calc(1.75rem - 1px) 1.75rem); }
+  .step--notes { padding: 1.4rem 1.15rem 1.25rem; }
+  .chunk__item { padding: .55rem .7rem; }
   .grades { grid-template-columns: 1fr 1fr; }
   .match-row { grid-template-columns: 1fr; gap: .4rem; }
   .match-row__fix { grid-column: 1; }

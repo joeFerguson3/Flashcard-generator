@@ -117,20 +117,110 @@
   function next() { show(index + 1); }
 
   // ---- notes step --------------------------------------------------------
-  function renderNotes(step) {
-    var body = [h('p', { class: 'step__kind', text: 'Read first' }), h('h2', { text: step.group.heading })];
-    step.group.notes.forEach(function (n) {
-      if (n.subheading && n.subheading !== step.group.heading) body.push(h('h3', { text: n.subheading }));
-      body.push(h('ul', { class: 'points' }, (n.points || []).map(function (p) {
-        return h('li', { class: 'lvl-' + (p.level || 1), text: p.text });
-      })));
+  /* Notes are shown in bite-sized pages. Each level-1 point leads a "chunk";
+     its details sit underneath as separate, spaced items. Long topics are
+     split into several short pages the student steps through. */
+  var POINTS_PER_PAGE = 6;
+
+  function chunksOf(points) {
+    var chunks = [];
+    (points || []).forEach(function (p) {
+      var level = p.level || 1;
+      if (level === 1 || !chunks.length) chunks.push({ lead: level === 1 ? p : null, items: [] });
+      var chunk = chunks[chunks.length - 1];
+      if (level === 1) return;
+      if (level === 2 || !chunk.items.length) chunk.items.push({ point: p, subs: [] });
+      else chunk.items[chunk.items.length - 1].subs.push(p);
     });
+    return chunks;
+  }
+  function chunkSize(c) {
+    return (c.lead ? 1 : 0) + c.items.reduce(function (n, it) { return n + 1 + it.subs.length; }, 0);
+  }
+  function notePages(group) {
+    var pages = [];
+    group.notes.forEach(function (n) {
+      var title = n.subheading && n.subheading !== group.heading ? n.subheading : '';
+      var current = null;
+      chunksOf(n.points).forEach(function (chunk) {
+        // Split very long chunks so no page is a wall of text.
+        var parts = [];
+        if (chunkSize(chunk) > POINTS_PER_PAGE) {
+          for (var i = 0; i < chunk.items.length; i += POINTS_PER_PAGE - 1) {
+            parts.push({ lead: chunk.lead, items: chunk.items.slice(i, i + POINTS_PER_PAGE - 1), cont: i > 0 });
+          }
+        } else parts.push(chunk);
+        parts.forEach(function (part) {
+          if (!current || current.size + chunkSize(part) > POINTS_PER_PAGE) {
+            current = { title: title, chunks: [], size: 0 };
+            pages.push(current);
+          }
+          current.chunks.push(part);
+          current.size += chunkSize(part);
+        });
+      });
+    });
+    return pages.length ? pages : [{ title: '', chunks: [], size: 0 }];
+  }
+  // "Term: explanation" -> bold term, so key words stand out when skimming.
+  function pointText(text) {
+    var i = text.indexOf(': ');
+    if (i > 0 && i < 48) return [h('strong', { text: text.slice(0, i) }), document.createTextNode(text.slice(i))];
+    return [document.createTextNode(text)];
+  }
+
+  function renderNotes(step) {
+    var pages = notePages(step.group);
+    var page = 0;
+    var article = h('article', { class: 'step step--notes' });
     var count = step.group.cards.length;
-    body.push(h('div', { class: 'step__actions' }, [
-      h('span', { class: 'step__hint', text: count + ' question' + (count === 1 ? '' : 's') + ' on this topic' }),
-      h('button', { class: 'btn btn--primary', type: 'button', 'data-autofocus': true, onclick: next, text: 'I’m ready →' })
-    ]));
-    return h('article', { class: 'step step--notes' }, body);
+
+    function draw() {
+      article.innerHTML = '';
+      var pg = pages[page];
+      article.appendChild(h('p', { class: 'step__kind' }, [
+        'Read first',
+        pages.length > 1 ? h('span', { class: 'step__topic', text: ' · Part ' + (page + 1) + ' of ' + pages.length }) : null
+      ]));
+      article.appendChild(h('h2', { class: 'notes-title', text: step.group.heading }));
+      if (pg.title && (page === 0 || pages[page - 1].title !== pg.title)) article.appendChild(h('h3', { class: 'notes-sub', text: pg.title }));
+      else if (pg.title) article.appendChild(h('h3', { class: 'notes-sub notes-sub--cont', text: pg.title + ' (continued)' }));
+
+      var body = h('div', { class: 'chunks' });
+      pg.chunks.forEach(function (c) {
+        var chunk = h('section', { class: 'chunk' });
+        if (c.lead) chunk.appendChild(h('p', { class: 'chunk__lead' }, pointText(c.lead.text).concat(c.cont ? [h('span', { class: 'muted', text: ' (cont.)' })] : [])));
+        if (c.items.length) {
+          chunk.appendChild(h('ul', { class: 'chunk__items' }, c.items.map(function (it) {
+            return h('li', { class: 'chunk__item' }, [
+              h('p', null, pointText(it.point.text)),
+              it.subs.length ? h('ul', { class: 'chunk__subs' }, it.subs.map(function (sp) { return h('li', null, pointText(sp.text)); })) : null
+            ]);
+          })));
+        }
+        body.appendChild(chunk);
+      });
+      article.appendChild(body);
+
+      var last = page === pages.length - 1;
+      var dots = pages.length > 1 ? h('div', { class: 'page-dots', 'aria-hidden': 'true' }, pages.map(function (_, i) {
+        return h('span', { class: i === page ? 'is-on' : '' });
+      })) : h('span', { class: 'step__hint', text: count + ' question' + (count === 1 ? '' : 's') + ' on this topic' });
+      var back = page > 0 ? h('button', { class: 'btn btn--ghost', type: 'button', text: '← Back', onclick: function () { page--; draw(); } }) : null;
+      var fwd = h('button', {
+        class: 'btn btn--primary', type: 'button', 'data-autofocus': true,
+        text: last ? 'I’m ready →' : 'Next →',
+        onclick: function () { if (last) next(); else { page++; draw(); } }
+      });
+      article.appendChild(h('div', { class: 'step__actions' }, [dots, h('div', { class: 'btn-row' }, [back, fwd])]));
+      fwd.focus({ preventScroll: true });
+    }
+    article._keyHandler = function (key) {
+      if (key === 'ArrowRight' && page < pages.length - 1) { page++; draw(); }
+      else if (key === 'ArrowLeft' && page > 0) { page--; draw(); }
+    };
+    draw();
+    return article;
   }
 
   // ---- question steps ----------------------------------------------------
@@ -633,7 +723,7 @@
       if (primary) { e.preventDefault(); primary.click(); }
       return;
     }
-    if (tag !== 'input' && tag !== 'textarea' && article._keyHandler && e.key.length === 1) article._keyHandler(e.key);
+    if (tag !== 'input' && tag !== 'textarea' && tag !== 'select' && article._keyHandler && (e.key.length === 1 || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) article._keyHandler(e.key);
   });
 
   // ---- mount ---------------------------------------------------------------

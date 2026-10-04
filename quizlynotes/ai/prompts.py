@@ -18,6 +18,9 @@ Rules:
   Use level 1 for key ideas, level 2 for supporting detail, level 3 for examples.
 - Keep definitions precise, and include key numbers, names, formulas and examples
   that are likely to be examined.
+- Make notes easy to skim: one idea per point, ideally under 20 words. When a
+  point defines or names something, write it as "Term: explanation". Use a
+  short level-1 point to introduce each idea, with details as level-2 points.
 - Read diagrams, charts and tables, and turn the information they show into points.
 - IGNORE course admin and noise: module codes, reading-list prices, image credits,
   licences, URLs, "this week" agendas, page numbers, repeated title slides.
