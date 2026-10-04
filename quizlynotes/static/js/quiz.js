@@ -429,74 +429,96 @@
     function draw() {
       list.innerHTML = '';
       order.forEach(function (text, i) {
-        var up = h('button', { type: 'button', 'aria-label': 'Move up', disabled: locked || i === 0 }, [arrow('up')]);
-        var down = h('button', { type: 'button', 'aria-label': 'Move down', disabled: locked || i === order.length - 1 }, [arrow('down')]);
-        up.addEventListener('click', function () { move(i, i - 1, true); });
-        down.addEventListener('click', function () { move(i, i + 1, true); });
-        var li = h('li', { class: 'order-item', 'data-i': i }, [
+        var li = h('li', { class: 'order-item', 'data-i': i, tabindex: locked ? null : '0',
+          'aria-label': (i + 1) + '. ' + text + (locked ? '' : '. Drag, or use the up and down arrow keys, to move it.') }, [
           h('span', { class: 'order-item__n', text: String(i + 1) }),
           h('span', { class: 'order-item__text', text: text }),
-          h('span', { class: 'order-item__btns' }, [up, down])
+          locked ? null : h('span', { class: 'order-item__grip', 'aria-hidden': 'true' }, [grip()])
         ]);
-        if (!locked) enableDrag(li, i);
+        if (!locked) {
+          enableDrag(li, i);
+          li.addEventListener('keydown', function (e) {
+            if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+            e.preventDefault();
+            e.stopPropagation();
+            move(i, e.key === 'ArrowUp' ? i - 1 : i + 1);
+          });
+        }
         list.appendChild(li);
       });
     }
-    function move(from, to, refocus) {
+    function move(from, to) {
       if (to < 0 || to >= order.length) return;
       var item = order.splice(from, 1)[0];
       order.splice(to, 0, item);
       draw();
-      if (refocus) {
-        var btns = list.children[to].querySelectorAll('button');
-        (to < from ? btns[0] : btns[1]).focus();
-        if (document.activeElement && document.activeElement.disabled) btns[to < from ? 1 : 0].focus();
-      }
+      list.children[to].focus({ preventScroll: true });
     }
-    // Pointer-based dragging: works with mouse, touch and pen.
+    /* Drag and drop (mouse, touch or pen): the item follows your finger and the
+       others slide out of the way; it's placed where you let go. */
     function enableDrag(li, i) {
       li.addEventListener('pointerdown', function (e) {
-        if (e.target.closest('button')) return;
+        if (locked || (e.pointerType === 'mouse' && e.button !== 0)) return;
         e.preventDefault();
         li.setPointerCapture(e.pointerId);
+        var items = Array.prototype.slice.call(list.children);
+        var rects = items.map(function (el) { return el.getBoundingClientRect(); });
+        var gap = items.length > 1 ? rects[1].top - rects[0].bottom : 8;
+        var shift = rects[i].height + gap;
+        var startY = e.clientY;
+        var target = i;
         li.classList.add('is-dragging');
-        var from = i;
+        items.forEach(function (el) { if (el !== li) el.classList.add('is-shifting'); });
         function onMove(ev) {
-          var items = Array.prototype.slice.call(list.children);
-          var target = items.findIndex(function (other) {
-            var r = other.getBoundingClientRect();
-            return ev.clientY >= r.top && ev.clientY <= r.bottom;
-          });
-          if (target >= 0 && target !== from) {
-            var item = order.splice(from, 1)[0];
-            order.splice(target, 0, item);
-            var moving = items[from];
-            if (target > from) list.insertBefore(moving, items[target].nextSibling); else list.insertBefore(moving, items[target]);
-            from = target;
+          var minDy = rects[0].top - rects[i].top;
+          var maxDy = rects[items.length - 1].bottom - rects[i].bottom;
+          var dy = Math.max(minDy, Math.min(maxDy, ev.clientY - startY));
+          li.style.transform = 'translateY(' + dy + 'px)';
+          var centre = rects[i].top + rects[i].height / 2 + dy;
+          target = i;
+          for (var k = 0; k < i; k++) {
+            if (centre < rects[k].bottom - rects[k].height / 4) { target = k; break; }
           }
+          if (target === i) {
+            for (var j = items.length - 1; j > i; j--) {
+              if (centre > rects[j].top + rects[j].height / 4) { target = j; break; }
+            }
+          }
+          items.forEach(function (el, k) {
+            if (el === li) return;
+            var t = (k > i && k <= target) ? -shift : (k < i && k >= target) ? shift : 0;
+            el.style.transform = t ? 'translateY(' + t + 'px)' : '';
+          });
         }
         function onUp() {
           li.removeEventListener('pointermove', onMove);
           li.removeEventListener('pointerup', onUp);
           li.removeEventListener('pointercancel', onUp);
+          if (target !== i) {
+            var item = order.splice(i, 1)[0];
+            order.splice(target, 0, item);
+          }
           draw();
+          if (list.children[target]) list.children[target].focus({ preventScroll: true });
         }
         li.addEventListener('pointermove', onMove);
         li.addEventListener('pointerup', onUp);
         li.addEventListener('pointercancel', onUp);
       });
     }
-    function arrow(dir) {
+    function grip() {
       var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('width', '14'); svg.setAttribute('height', '14'); svg.setAttribute('viewBox', '0 0 14 14');
-      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      p.setAttribute('d', dir === 'up' ? 'M3 9l4-4 4 4' : 'M3 5l4 4 4-4');
-      p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'currentColor'); p.setAttribute('stroke-width', '1.8');
-      svg.appendChild(p);
+      svg.setAttribute('width', '14'); svg.setAttribute('height', '18'); svg.setAttribute('viewBox', '0 0 14 18');
+      [[4, 4], [10, 4], [4, 9], [10, 9], [4, 14], [10, 14]].forEach(function (c) {
+        var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', c[0]); dot.setAttribute('cy', c[1]); dot.setAttribute('r', '1.6');
+        dot.setAttribute('fill', 'currentColor');
+        svg.appendChild(dot);
+      });
       return svg;
     }
     draw();
-    article.appendChild(h('p', { class: 'step__hint', text: 'Drag items, or use the arrows.' }));
+    article.appendChild(h('p', { class: 'step__hint', text: 'Drag the items into the right order.' }));
     article.appendChild(list);
     var check = h('button', { type: 'button', class: 'btn btn--primary', text: 'Check order', 'data-autofocus': true });
     check.addEventListener('click', function () {
@@ -507,8 +529,7 @@
         var ok = order[i] === correct[i];
         allOk = allOk && ok;
         li.classList.add(ok ? 'is-correct' : 'is-wrong');
-        if (!ok) li.querySelector('.order-item__btns').replaceWith(h('span', { class: 'order-item__fix', text: 'should be ' + (correct.indexOf(order[i]) + 1) }));
-        else li.querySelector('.order-item__btns').remove();
+        if (!ok) li.appendChild(h('span', { class: 'order-item__fix', text: 'should be ' + (correct.indexOf(order[i]) + 1) }));
       });
       finish(allOk, allOk ? null : correct.join(' → '));
     });
