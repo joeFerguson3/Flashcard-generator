@@ -14,7 +14,7 @@ from ..models import GuestDraft, utcnow
 public_bp = Blueprint("public", __name__)
 
 # Update when page copy changes meaningfully (used in sitemap lastmod).
-CONTENT_UPDATED = date(2026, 10, 2)
+CONTENT_UPDATED = date(2026, 10, 4)
 
 
 @public_bp.route("/")
@@ -48,6 +48,75 @@ def notes_to_flashcards():
     return _landing("notes-to-flashcards")
 
 
+@public_bp.route("/ai-quiz-generator")
+def ai_quiz_generator():
+    return _landing("ai-quiz-generator")
+
+
+@public_bp.route("/compare")
+def compare():
+    return render_template(
+        "public/compare.html", rows=seo.COMPARE_ROWS, picks=seo.COMPARE_PICKS, faq=seo.COMPARE_FAQ,
+        checked=seo.COMPARE_CHECKED, updated=CONTENT_UPDATED,
+    )
+
+
+@public_bp.route("/about")
+def about():
+    return render_template(
+        "public/about.html", summary=seo.PRODUCT_SUMMARY, facts=seo.KEY_FACTS,
+        question_types=seo.QUESTION_TYPES, updated=CONTENT_UPDATED,
+    )
+
+
+def _llms_text(full: bool) -> str:
+    site = current_app.config["SITE_URL"]
+    pages = [("Home", "/", "Try it without an account and see how it works.")]
+    pages += [(p["eyebrow"], p["path"], p["description"]) for p in seo.LANDING_PAGES.values()]
+    pages += [("Compare AI quiz and flashcard tools", "/compare", "QuizlyNotes vs Quizlet, Knowt and chatbots."),
+              ("About QuizlyNotes", "/about", "Key facts in one place."),
+              ("Pricing", "/pricing", "Free and Pro plans.")]
+    lines = ["# QuizlyNotes", "", f"> {seo.PRODUCT_SUMMARY}", "",
+             "QuizlyNotes is used to turn notes into quiz questions, make a quiz from a PDF or lecture slides, "
+             "and generate flashcards with spaced repetition. Questions are written only from the user's own "
+             "material, and every answer has an explanation.", "", "## Key facts", ""]
+    lines += [f"- **{k}:** {v}" for k, v in seo.KEY_FACTS]
+    lines += ["", "## Pages", ""]
+    lines += [f"- [{name}]({site}{path}): {desc}" for name, path, desc in pages]
+    if full:
+        lines += ["", "## Question types", ""]
+        lines += [f"- **{name}:** {text}" for name, text in seo.QUESTION_TYPES]
+        for title, faq in [("Frequently asked questions", seo.HOME_FAQ), ("Choosing a tool", seo.COMPARE_FAQ)]:
+            lines += ["", f"## {title}", ""]
+            for q, a in faq:
+                lines += [f"### {q}", "", a, ""]
+        for page in seo.LANDING_PAGES.values():
+            lines += ["", f"## {page['h1']}", "", page["lede"], ""]
+            for heading, paras in page["sections"]:
+                lines += [f"### {heading}", ""] + [para + "\n" for para in paras]
+    else:
+        lines += ["", "## Optional", "", f"- [Full text for AI assistants]({site}/llms-full.txt)"]
+    lines += ["", f"Contact: {current_app.config.get('CONTACT_EMAIL') or 'hello@quizlynotes.com'}", ""]
+    return "\n".join(lines)
+
+
+@public_bp.route("/llms.txt")
+def llms_txt():
+    return Response(_llms_text(False), mimetype="text/plain")
+
+
+@public_bp.route("/llms-full.txt")
+def llms_full_txt():
+    return Response(_llms_text(True), mimetype="text/plain")
+
+
+@public_bp.route("/favicon.ico")
+def favicon():
+    res = current_app.send_static_file("favicon.ico")
+    res.headers["Cache-Control"] = "public, max-age=604800"
+    return res
+
+
 @public_bp.route("/privacy")
 def privacy():
     return render_template("public/privacy.html")
@@ -66,7 +135,16 @@ def healthz():
 @public_bp.route("/robots.txt")
 def robots():
     site = current_app.config["SITE_URL"]
-    body = "\n".join([
+    # AI search and assistant crawlers are welcome on public pages, so tools
+    # like ChatGPT, Claude, Perplexity and Gemini can cite QuizlyNotes.
+    ai_bots = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-SearchBot", "Claude-User",
+               "PerplexityBot", "Perplexity-User", "Google-Extended", "Applebot-Extended", "Bingbot", "CCBot"]
+    private = ["/api/", "/library", "/new", "/sets/", "/settings", "/try/", "/s/", "/r/", "/billing/",
+               "/mock-exam", "/weak-spots", "/login"]
+    ai_rules = []
+    for bot in ai_bots:
+        ai_rules += [f"User-agent: {bot}", "Allow: /"] + [f"Disallow: {p}" for p in private] + [""]
+    body = "\n".join(ai_rules + [
         "User-agent: *",
         "Allow: /",
         "Disallow: /api/",
@@ -92,7 +170,8 @@ def robots():
 def sitemap():
     site = current_app.config["SITE_URL"]
     urls = [("/", "1.0"), ("/notes-to-quiz", "0.9"), ("/pdf-to-quiz", "0.9"),
-            ("/notes-to-flashcards", "0.9"), ("/pricing", "0.7"), ("/privacy", "0.2"), ("/terms", "0.2")]
+            ("/notes-to-flashcards", "0.9"), ("/ai-quiz-generator", "0.9"), ("/compare", "0.8"),
+            ("/about", "0.6"), ("/pricing", "0.7"), ("/privacy", "0.2"), ("/terms", "0.2")]
     items = "".join(
         f"<url><loc>{site}{path}</loc><lastmod>{CONTENT_UPDATED.isoformat()}</lastmod>"
         f"<priority>{priority}</priority></url>"

@@ -29,6 +29,11 @@ HOME_FAQ = [
      "Yes. Studying is free and unlimited: quizzes, flashcards, spaced repetition and games. The free plan "
      "includes 5 new AI study sets a month, and every new account starts with a 7-day Pro trial. Pro removes "
      "the AI limits and adds mock exams and weak-spot review."),
+    ("How is QuizlyNotes different from Quizlet or ChatGPT?",
+     "QuizlyNotes is built around your own material. One upload becomes revision notes, a quiz with ten question "
+     "types and an explanation for every answer, and a spaced-repetition flashcard deck, all saved and scored by "
+     "subject. Quizlet is best known for shared flashcard sets, and a chatbot's quiz isn't saved or scheduled for "
+     "review. See the full comparison on the Compare page."),
     ("What files can I upload?",
      "PDFs (including lecture slides and scanned pages), Word documents (.docx), PowerPoint files (.pptx) and "
      "plain text. You can also paste notes directly. Free accounts can upload PDFs up to 30 pages; Pro handles up to 150 pages and 30MB."),
@@ -79,7 +84,7 @@ LANDING_PAGES = {
              "Yes, if you scan or photograph them into a PDF. The AI reads scanned pages, though clear, "
              "well-lit scans give the best results."),
             ("How many questions can I make?",
-             "Choose Auto and the number is based on how much material there is, or pick between 5 and 60 questions."),
+             "Choose Auto and the number is based on how much material there is, or pick a number: up to 15 questions on the free plan, or up to 60 on Pro."),
             ("Can I edit the questions?",
              "Yes. You can edit the notes before the quiz is made, and edit, delete or add cards afterwards."),
             ("Does it work for any subject?",
@@ -107,14 +112,14 @@ LANDING_PAGES = {
              ["Your PDF is read page by page as a whole document, not just the text layer. Labelled diagrams, tables "
               "and charts become notes and questions, and scanned or image-only PDFs work too."]),
             ("From PDF to practice test in four steps",
-             ["1. Sign in with Google and upload your PDF (up to 30MB and 150 pages).",
+             ["1. Sign in with Google and upload your PDF (up to 30 pages free, or 150 pages on Pro).",
               "2. Review the generated notes, organised by topic. Fix or delete anything you don't need.",
               "3. Generate a quiz with the question types and difficulty you want.",
               "4. Study the notes and answer questions topic by topic, then review flashcards on the days they're due."]),
         ],
         "faq": [
             ("Is there a page limit?",
-             "PDFs can be up to 150 pages and 30MB. For a whole textbook, upload one chapter at a time. Each "
+             "Free accounts can upload PDFs up to 30 pages and 10MB; Pro takes up to 150 pages and 30MB. For a whole textbook, upload one chapter at a time. Each "
              "chapter becomes its own quiz, grouped under the same subject."),
             ("Can I upload PowerPoint instead of PDF?",
              "Yes, .pptx files work, including speaker notes. If your slides are mostly diagrams, export them "
@@ -162,10 +167,131 @@ LANDING_PAGES = {
              "Yes. QuizlyNotes works in any modern mobile browser, and flashcards can be flipped with a tap."),
         ],
     },
+    "ai-quiz-generator": {
+        "path": "/ai-quiz-generator",
+        "title": "AI Quiz Generator from Notes, PDFs & Slides (Free) | QuizlyNotes",
+        "description": "Free AI quiz and flashcard generator. Upload notes, a PDF or lecture slides and get "
+                       "10 question types with explained answers, plus spaced-repetition flashcards.",
+        "eyebrow": "AI quiz generator",
+        "h1": "The AI quiz generator that starts from your notes",
+        "lede": "Most AI quiz makers write generic questions about a topic. QuizlyNotes writes them from your own "
+                "notes, slides and PDFs, so you're tested on what your course actually covers, with an "
+                "explanation for every answer.",
+        "sections": [
+            ("What makes a good AI quiz generator",
+             ["A quiz is only useful if it tests the right things. QuizlyNotes first turns your material into "
+              "revision notes grouped by topic, which you can check and edit. Questions are then written from "
+              "those notes only, spread across every topic in proportion to how much there is to learn.",
+              "That two-step approach means fewer made-up facts, no questions on things your course never "
+              "mentioned, and a quiz you can trust the night before an exam."]),
+            ("Ten question types, not just multiple choice",
+             ["QuizlyNotes writes multiple choice, true or false, fill in the blank, short answer, ordering, "
+              "matching, select all that apply, sort into groups, numeric and explain questions, plus "
+              "flashcards. Mixing formats makes you recall information in different ways, which is closer to "
+              "how real exams test you.",
+              "Short answers are marked generously, so small typos and alternative wordings still count. "
+              "Explain questions show the key points a good answer should cover."]),
+            ("A flashcard and quiz generator in one",
+             ["Every set comes with both a practice quiz and a deck of flashcards made from the same notes. "
+              "Flashcards use spaced repetition, so cards you find hard come back sooner. There are also quick "
+              "games (Match, Speed and Write) for when you want something lighter."]),
+            ("Free to use",
+             ["Studying is free and unlimited. The free plan includes 5 new AI study sets a month, and every new "
+              "account gets a 7-day Pro trial with no card needed. Pro (£4.99 a month or £29.99 a year) removes "
+              "the AI limits and adds mock exams and weak-spot review."]),
+        ],
+        "faq": [
+            ("Which AI model does QuizlyNotes use?",
+             "QuizlyNotes uses Google's Gemini Flash models, which read PDFs natively, including diagrams and "
+             "scanned pages. Answers are checked against a strict format before you see them, so broken or "
+             "half-written questions are filtered out."),
+            ("Can I choose the question types and difficulty?",
+             "Yes. Pick any mix of the ten question types, choose easy, medium or hard, and set how many questions "
+             "you want, or leave it on Auto."),
+            ("Does it make up facts?",
+             "Questions are written only from the notes made from your material, and you can review and edit those "
+             "notes first. Like any AI tool it can occasionally get something wrong, so every question can be "
+             "edited or deleted."),
+            ("Is it free?",
+             "Yes. You can study as much as you like for free, with 5 new AI study sets a month. You can also try "
+             "it without an account on the home page."),
+        ],
+    },
 }
 
 RELATED_LINKS = [
     ("notes-to-quiz", "Turn notes into a quiz"),
     ("pdf-to-quiz", "PDF and slides to quiz"),
     ("notes-to-flashcards", "Notes to flashcards"),
+    ("ai-quiz-generator", "AI quiz generator"),
+]
+
+# Facts used by /about, /llms.txt and structured data, kept in one place so
+# every description of QuizlyNotes says the same thing.
+PRODUCT_SUMMARY = (
+    "QuizlyNotes (quizlynotes.com) is a free AI study tool that turns your own notes, PDFs, lecture slides, "
+    "Word documents and PowerPoint files into revision notes, practice quizzes and spaced-repetition flashcards."
+)
+
+KEY_FACTS = [
+    ("Input", "PDFs (including scanned pages and lecture slides), Word (.docx), PowerPoint (.pptx), plain text, or pasted notes."),
+    ("Output", "Revision notes grouped by topic, a practice quiz with explained answers, and a flashcard deck."),
+    ("Question types", "Multiple choice, true or false, fill in the blank, short answer, ordering, matching, "
+                       "select all that apply, sort into groups, numeric and explain, plus flashcards."),
+    ("Study modes", "Topic-by-topic quiz, flashcards with spaced repetition (Again, Hard, Good, Easy), and Match, "
+                    "Speed and Write games. Pro adds timed mock exams across a subject and weak-spot review."),
+    ("AI model", "Google Gemini Flash. Questions are written only from the notes made from your material."),
+    ("Price", "Free: unlimited studying and 5 new AI study sets a month. Pro: £4.99 a month or £29.99 a year. "
+              "New accounts get a 7-day Pro trial with no card."),
+    ("Privacy", "Uploaded files are not stored. Notes and scores can be exported or deleted at any time."),
+    ("Works on", "Any modern web browser on desktop, tablet or phone. Sign in with Google."),
+    ("Made for", "Secondary school, sixth form, college and university students revising for exams."),
+]
+
+# The comparison page. Competitor details are summarised from their public
+# pricing pages; keep the "checked" date honest when updating.
+COMPARE_CHECKED = "October 2026"
+COMPARE_ROWS = [
+    # (feature, QuizlyNotes, Quizlet, Knowt, ChatGPT / general chatbots)
+    ("Starts from your own notes and files", "Yes: PDF, slides, Word, PowerPoint, text", "Yes, with its AI tools (some paid)",
+     "Yes", "Yes, if you upload them"),
+    ("Writes revision notes first", "Yes, editable before the quiz", "With its AI notes tools", "Yes", "If you ask"),
+    ("Question types", "10, plus flashcards", "Several in Learn and Test", "Several", "Whatever you prompt"),
+    ("Explanation for every answer", "Yes, on every question", "Varies by mode", "Varies", "If you ask"),
+    ("Spaced-repetition flashcards", "Yes", "Yes", "Yes", "No"),
+    ("Saves scores and progress by subject", "Yes", "Yes", "Yes", "No"),
+    ("Free studying limits", "None: studying is unlimited", "Some study modes are limited on the free plan",
+     "Unlimited studying, AI on an allowance", "Usage limits on free plans"),
+    ("Paid plan", "£4.99/month or £29.99/year", "Quizlet Plus", "Knowt paid plans", "Chatbot subscription"),
+]
+
+COMPARE_PICKS = [
+    ("QuizlyNotes",
+     "Best if you have lecture slides, PDFs or class notes and want a proper quiz on exactly that material, with "
+     "explanations, several question types and flashcards, without writing anything yourself."),
+    ("Quizlet",
+     "Best if you want ready-made sets other students have already made for common courses, or you prefer typing "
+     "your own term and definition cards. It also has AI tools for notes, some on paid plans."),
+    ("Knowt",
+     "A good all-round alternative with AI notes and flashcards, plus a large library of shared sets."),
+    ("A general chatbot",
+     "Fine for a quick one-off quiz, but questions aren't saved, scored or scheduled for review, and you have to "
+     "write a good prompt each time."),
+]
+
+COMPARE_FAQ = [
+    ("What is the best AI quiz generator for students?",
+     "It depends on what you start from. If you have your own notes, slides or PDFs, a tool that writes questions "
+     "from your material is best, because it tests what your course covers. QuizlyNotes is built for exactly that: "
+     "it makes revision notes, a quiz with ten question types and flashcards from one upload, and it's free to use."),
+    ("Is QuizlyNotes a free Quizlet alternative?",
+     "Yes. QuizlyNotes is free, and unlike Quizlet's free plan it doesn't limit how much you study. The difference "
+     "is that QuizlyNotes is built around your own notes: every upload becomes revision notes, a quiz with ten "
+     "question types and a flashcard deck, whereas Quizlet is best known for its huge library of shared sets."),
+    ("Can AI make flashcards and a quiz from the same notes?",
+     "Yes. QuizlyNotes makes both from one upload: a practice quiz to check you understand, and a flashcard deck "
+     "with spaced repetition for daily recall."),
+    ("Why not just ask ChatGPT for a quiz?",
+     "You can, but you'll need to paste your notes and write a prompt each time, and the questions aren't saved, "
+     "scored or brought back when you're about to forget them. QuizlyNotes does all of that automatically."),
 ]

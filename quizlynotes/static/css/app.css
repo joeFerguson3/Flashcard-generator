@@ -837,3 +837,28 @@ mark, .hl {
   .trial-chip { display: none; }
   .upgrade-link { display: none; }
 }
+
+/* Product screenshots, comparison table, key facts */
+.small { font-size: .875rem; }
+.shots__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+.shot { margin: 0; }
+.shot img { display: block; width: 100%; height: auto; border-radius: calc(var(--r) * 1.2); border: 1px solid var(--line); background: var(--paper-2); box-shadow: 0 10px 30px -18px rgba(0,0,0,.35); }
+.shot figcaption { margin-top: .75rem; color: var(--muted); font-size: .95rem; }
+.shot figcaption strong { color: var(--ink); }
+.shot--inline { margin: 2rem 0 0; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); }
+.compare { width: 100%; border-collapse: collapse; min-width: 760px; font-size: .95rem; }
+.compare th, .compare td { text-align: left; vertical-align: top; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
+.compare thead th { font-weight: 600; background: var(--paper-2); }
+.compare tbody th { font-weight: 600; width: 22%; }
+.compare tr:last-child th, .compare tr:last-child td { border-bottom: 0; }
+.compare__us { background: var(--hl-fill); }
+.facts { display: grid; gap: 0; border: 1px solid var(--line); border-radius: var(--r); margin: 0 0 1rem; }
+.facts > div { display: grid; grid-template-columns: 9rem 1fr; gap: 1rem; padding: .75rem 1rem; border-bottom: 1px solid var(--line); }
+.facts > div:last-child { border-bottom: 0; }
+.facts dt { font-weight: 600; }
+.facts dd { margin: 0; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .shots__grid { grid-template-columns: 1fr; }
+  .facts > div { grid-template-columns: 1fr; gap: .25rem; }
+}

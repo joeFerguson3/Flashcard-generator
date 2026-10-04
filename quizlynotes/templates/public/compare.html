@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% set seo_title = "Best AI Quiz & Flashcard Generators Compared (2026) | QuizlyNotes" %}
+{% set seo_description = "QuizlyNotes vs Quizlet, Knowt and ChatGPT for turning notes into quizzes and flashcards. An honest comparison of features, question types, free limits and price." %}
+{% set seo_path = "/compare" %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta %}{% include "partials/seo_meta.html" %}
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type": "Article", "headline": "Best AI quiz and flashcard generators for students, compared",
+     "description": seo_description, "url": site.url ~ seo_path, "inLanguage": "en-GB",
+     "datePublished": "2026-10-04", "dateModified": updated.isoformat(),
+     "image": site.url ~ url_for('static', filename='img/screenshot-quiz.png'),
+     "author": {"@id": site.url ~ "/#org"}, "publisher": {"@id": site.url ~ "/#org"},
+     "about": {"@id": site.url ~ "/#app"}},
+    {"@type": "BreadcrumbList", "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "QuizlyNotes", "item": site.url ~ "/"},
+      {"@type": "ListItem", "position": 2, "name": "Compare", "item": site.url ~ seo_path}]}
+  ]
+}|tojson }}
+</script>
+{% endblock %}
+{% block body_class %}page-landing{% endblock %}
+
+{% block content %}
+<section class="hero hero--landing">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ url_for('public.home') }}">QuizlyNotes</a><span aria-hidden="true">/</span><span>Compare</span></nav>
+    <h1 class="display">The best AI quiz and flashcard generators, compared</h1>
+    <p class="lede">If you want to turn your own notes, slides or PDFs into a quiz and flashcards, here's how QuizlyNotes compares with Quizlet, Knowt and general chatbots like ChatGPT, and when each one is the better pick.</p>
+    <p class="muted small">Written by the QuizlyNotes team, so we're biased. Competitor details are from their public pages, checked {{ checked }}. Their plans change, so check before you buy.</p>
+  </div>
+</section>
+
+<section class="wrap section">
+  <h2 class="section-title">Side by side</h2>
+  <div class="table-scroll">
+    <table class="compare">
+      <thead><tr><th scope="col">Feature</th><th scope="col" class="compare__us">QuizlyNotes</th><th scope="col">Quizlet</th><th scope="col">Knowt</th><th scope="col">ChatGPT and other chatbots</th></tr></thead>
+      <tbody>
+        {% for feature, us, quizlet, knowt, chat in rows %}
+        <tr><th scope="row">{{ feature }}</th><td class="compare__us">{{ us }}</td><td>{{ quizlet }}</td><td>{{ knowt }}</td><td>{{ chat }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap section--narrow prose">
+    <h2>Which one should you use?</h2>
+    {% for name, text in picks %}
+    <p><strong>{{ name }}.</strong> {{ text }}</p>
+    {% endfor %}
+    <h2>Why QuizlyNotes works well for exam revision</h2>
+    <p>Re-reading notes feels productive but mostly builds familiarity. Answering questions forces you to recall information, and that retrieval is what makes it stick (the testing effect). Spacing reviews out over days, rather than cramming, strengthens it further.</p>
+    <p>QuizlyNotes is built around both ideas. Your material becomes topic-by-topic revision notes, then a quiz that mixes ten question types with an explanation for every answer, then flashcards scheduled with spaced repetition. You can <a href="{{ url_for('public.home') }}#try">try it on your own notes</a> without an account.</p>
+    <figure class="shot shot--inline">
+      <picture>
+        <source srcset="{{ url_for('static', filename='img/screenshot-quiz.webp') }}" type="image/webp">
+        <img src="{{ url_for('static', filename='img/screenshot-quiz.png') }}" width="1000" height="771" loading="lazy" alt="A QuizlyNotes multiple choice question about cellular respiration, answered correctly with an explanation">
+      </picture>
+      <figcaption>A QuizlyNotes question, with the explanation shown after you answer.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap section section--narrow">
+  <h2 class="section-title">Questions about choosing a tool</h2>
+  {% include "partials/faq.html" %}
+</section>
+
+<section class="wrap section">
+  <div class="cta">
+    <h2>See for yourself</h2>
+    <p>Free to use, with a 7-day Pro trial. No card needed.</p>
+    <a href="{{ url_for('auth.login') }}" class="btn btn--hl btn--lg">Start for free</a>
+  </div>
+</section>
+{% endblock %}

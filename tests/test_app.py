@@ -37,7 +37,8 @@ def make_set(client):
 
 # --- public pages / SEO -------------------------------------------------------
 
-@pytest.mark.parametrize("path", ["/", "/notes-to-quiz", "/pdf-to-quiz", "/notes-to-flashcards", "/privacy", "/terms"])
+@pytest.mark.parametrize("path", ["/", "/notes-to-quiz", "/pdf-to-quiz", "/notes-to-flashcards",
+                                  "/ai-quiz-generator", "/compare", "/about", "/privacy", "/terms"])
 def test_public_pages_are_indexable(client, path):
     res = client.get(path)
     assert res.status_code == 200
@@ -61,6 +62,24 @@ def test_robots_and_sitemap(client):
     assert "Disallow: /library" in robots
     sitemap = client.get("/sitemap.xml").get_data(as_text=True)
     assert "<loc>https://quizlynotes.com/notes-to-quiz</loc>" in sitemap
+
+
+def test_search_icon_images_and_ai_files(client):
+    home = client.get("/").get_data(as_text=True)
+    assert '<link rel="icon" href="/favicon.ico" sizes="48x48">' in home
+    assert "screenshot-quiz.png" in home and '"screenshot"' in home
+    fav = client.get("/favicon.ico")
+    assert fav.status_code == 200 and fav.data[:4] == b"\x00\x00\x01\x00"
+    robots = client.get("/robots.txt").get_data(as_text=True)
+    assert "User-agent: GPTBot" in robots and "User-agent: ClaudeBot" in robots
+    assert robots.count("Disallow: /library") >= 2
+    llms = client.get("/llms.txt")
+    assert llms.status_code == 200 and llms.get_data(as_text=True).startswith("# QuizlyNotes")
+    full = client.get("/llms-full.txt").get_data(as_text=True)
+    assert "Sort into groups" in full and "/compare" in full
+    sitemap = client.get("/sitemap.xml").get_data(as_text=True)
+    for path in ["/ai-quiz-generator", "/compare", "/about"]:
+        assert f"<loc>https://quizlynotes.com{path}</loc>" in sitemap
 
 
 def test_legacy_urls_redirect(client):

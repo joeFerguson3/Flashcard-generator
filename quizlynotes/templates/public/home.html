@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set seo_title = "QuizlyNotes: Turn Notes into Quizzes & Flashcards (Free)" %}
-{% set seo_description = "Turn your notes, PDFs and lecture slides into practice quizzes and flashcards in seconds. QuizlyNotes is a free AI quiz notes maker with spaced repetition." %}
+{% set seo_description = "Turn your notes, PDFs and lecture slides into practice quizzes and flashcards in seconds. QuizlyNotes is a free AI quiz and flashcard generator with 10 question types and spaced repetition." %}
 {% set seo_path = "/" %}
 {% block title %}{{ seo_title }}{% endblock %}
 {% block meta %}{% include "partials/seo_meta.html" %}
@@ -11,15 +11,25 @@
     {"@type": "WebSite", "@id": site.url ~ "/#website", "url": site.url ~ "/", "name": "QuizlyNotes",
      "alternateName": ["Quizly Notes", "Quiz Notes", "QuizNotes"], "inLanguage": "en-GB"},
     {"@type": "Organization", "@id": site.url ~ "/#org", "name": "QuizlyNotes", "url": site.url ~ "/",
-     "logo": site.url ~ url_for('static', filename='img/icon-512.png'), "email": site.email},
-    {"@type": "WebApplication", "name": "QuizlyNotes", "url": site.url ~ "/",
-     "applicationCategory": "EducationalApplication", "operatingSystem": "Any (web browser)",
+     "logo": {"@type": "ImageObject", "url": site.url ~ url_for('static', filename='img/icon-512.png'), "width": 512, "height": 512},
+     "image": site.url ~ url_for('static', filename='img/og-image.png'), "email": site.email,
+     "description": "QuizlyNotes makes AI study tools that turn students' own notes into quizzes and flashcards."},
+    {"@type": ["WebApplication", "SoftwareApplication"], "@id": site.url ~ "/#app", "name": "QuizlyNotes",
+     "alternateName": ["Quizly Notes", "QuizNotes"], "url": site.url ~ "/",
+     "applicationCategory": "EducationalApplication", "applicationSubCategory": "AI quiz and flashcard generator",
+     "operatingSystem": "Any (web browser)", "browserRequirements": "Requires a modern web browser",
      "description": seo_description, "publisher": {"@id": site.url ~ "/#org"},
+     "image": site.url ~ url_for('static', filename='img/og-image.png'),
+     "screenshot": [site.url ~ url_for('static', filename='img/screenshot-quiz.png'),
+                    site.url ~ url_for('static', filename='img/screenshot-notes.png')],
+     "audience": {"@type": "EducationalAudience", "educationalRole": "student"},
+     "inLanguage": "en-GB", "isAccessibleForFree": true,
      "offers": [{"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "GBP"},
                 {"@type": "Offer", "name": "Pro (monthly)", "price": config.PRICE_MONTHLY_DISPLAY.lstrip("£"), "priceCurrency": "GBP"},
                 {"@type": "Offer", "name": "Pro (yearly)", "price": config.PRICE_YEARLY_DISPLAY.lstrip("£"), "priceCurrency": "GBP"}],
      "featureList": ["Turn notes into quiz questions", "PDF and lecture slides to quiz",
-                     "AI flashcard maker", "Spaced repetition", "Multiple choice, true/false, fill-in-the-blank, short answer and ordering questions"]}
+                     "AI flashcard maker", "Spaced repetition", "Multiple choice, true/false, fill in the blank, short answer, ordering, matching, select all that apply, sort into groups, numeric and explain questions",
+                     "Mock exams and weak-spot review (Pro)", "Share quizzes with a link"]}
   ]
 }|tojson }}
 </script>
@@ -39,11 +49,31 @@
         <li>Free forever, with a 7-day Pro trial. No card needed</li>
       </ul>
     </div>
-    <div class="hero__try">
+    <div class="hero__try" id="try">
       {% if site.guest_demo %}{% include "partials/tryit.html" %}{% else %}
       <div class="card-paper tryit"><a class="btn btn--primary btn--lg" href="{{ url_for('auth.login') }}">Start for free</a></div>
       {% endif %}
     </div>
+  </div>
+</section>
+
+<section class="wrap section shots" aria-labelledby="shots-title">
+  <h2 class="section-title" id="shots-title">See what you get</h2>
+  <div class="shots__grid">
+    <figure class="shot">
+      <picture>
+        <source srcset="{{ url_for('static', filename='img/screenshot-notes.webp') }}" type="image/webp">
+        <img src="{{ url_for('static', filename='img/screenshot-notes.png') }}" width="1000" height="541" alt="QuizlyNotes revision notes on cell respiration, shown as short key points before the quiz">
+      </picture>
+      <figcaption><strong>Notes first.</strong> Your material becomes short, topic-by-topic revision notes.</figcaption>
+    </figure>
+    <figure class="shot">
+      <picture>
+        <source srcset="{{ url_for('static', filename='img/screenshot-quiz.webp') }}" type="image/webp">
+        <img src="{{ url_for('static', filename='img/screenshot-quiz.png') }}" width="1000" height="771" alt="A QuizlyNotes multiple choice quiz question answered correctly, with an explanation">
+      </picture>
+      <figcaption><strong>Then a quiz.</strong> Ten question types, each answer explained.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -113,6 +143,12 @@
       <span class="link-card__arrow" aria-hidden="true">→</span>
     </a>
     {% endfor %}
+    <a class="link-card" href="{{ url_for('public.compare') }}">
+      <span class="eyebrow">Compare</span>
+      <strong>QuizlyNotes vs Quizlet, Knowt and ChatGPT</strong>
+      <span class="muted">An honest look at which AI quiz and flashcard tool fits how you study.</span>
+      <span class="link-card__arrow" aria-hidden="true">→</span>
+    </a>
   </div>
 </section>
 

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set seo_title = "About QuizlyNotes: the AI Quiz & Flashcard Maker for Your Notes" %}
+{% set seo_description = summary %}
+{% set seo_path = "/about" %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block meta %}{% include "partials/seo_meta.html" %}
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type": "AboutPage", "name": seo_title, "description": summary, "url": site.url ~ seo_path,
+     "dateModified": updated.isoformat(), "mainEntity": {"@id": site.url ~ "/#app"},
+     "isPartOf": {"@id": site.url ~ "/#website"}},
+    {"@type": "BreadcrumbList", "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "QuizlyNotes", "item": site.url ~ "/"},
+      {"@type": "ListItem", "position": 2, "name": "About", "item": site.url ~ seo_path}]}
+  ]
+}|tojson }}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="wrap section section--narrow prose">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ url_for('public.home') }}">QuizlyNotes</a><span aria-hidden="true">/</span><span>About</span></nav>
+  <h1 class="display display--sm">About QuizlyNotes</h1>
+  <p class="lede">{{ summary }}</p>
+  <p>It was built for students who have plenty of material (lecture slides, handouts, textbook chapters, their own notes) but not the time to turn it into practice questions. QuizlyNotes does that part, so revision time goes on answering questions and reviewing flashcards, which is what actually helps you remember.</p>
+
+  <h2>Key facts</h2>
+  <dl class="facts">
+    {% for k, v in facts %}<div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>{% endfor %}
+  </dl>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>Upload a PDF, lecture slides, a Word or PowerPoint file, or paste your notes.</li>
+    <li>QuizlyNotes writes revision notes grouped by topic. You can edit them, or use Simplify to keep only the key points.</li>
+    <li>It writes a quiz from those notes, with the question types and difficulty you choose, and a deck of flashcards.</li>
+    <li>You study topic by topic, see an explanation for every answer, and review flashcards when they're due.</li>
+  </ol>
+
+  <h2>Question types</h2>
+  <ul>
+    {% for name, text in question_types %}<li><strong>{{ name }}:</strong> {{ text }}</li>{% endfor %}
+  </ul>
+
+  <h2>Contact</h2>
+  <p>Questions, feedback or partnership ideas (for example for a school or student society): <a href="mailto:{{ site.email }}">{{ site.email }}</a>.</p>
+  <p>See also: <a href="{{ url_for('public.compare') }}">how QuizlyNotes compares with other tools</a>, <a href="{{ url_for('billing.pricing') }}">pricing</a> and <a href="{{ url_for('public.privacy') }}">privacy</a>.</p>
+</article>
+{% endblock %}
