@@ -118,8 +118,36 @@ def _register_template_helpers(app: Flask) -> None:
                 "year": datetime.now().year,
                 "guest_demo": app.config["ENABLE_GUEST_DEMO"],
                 "dev_login": app.config["ENABLE_DEV_LOGIN"],
+                "monetisation": app.config.get("MONETISATION_ENABLED", True),
             },
         }
+
+    @app.template_filter("note_chunks")
+    def note_chunks(points):
+        """Group points like the quiz notes: a level-1 lead, level-2 items, level-3 details."""
+        chunks = []
+        for p in points or []:
+            level = int(p.get("level") or 1)
+            if level == 1 or not chunks:
+                chunks.append({"lead": p if level == 1 else None, "items": []})
+                if level == 1:
+                    continue
+            chunk = chunks[-1]
+            if level == 2 or not chunk["items"]:
+                chunk["items"].append({"point": p, "subs": []})
+            else:
+                chunk["items"][-1]["subs"].append(p)
+        return chunks
+
+    @app.template_filter("term")
+    def term(text):
+        """'Term: explanation' -> bold term, matching the quiz notes."""
+        from markupsafe import Markup, escape
+        text = text or ""
+        i = text.find(": ")
+        if 0 < i < 48:
+            return Markup("<strong>%s</strong>%s") % (escape(text[:i]), escape(text[i:]))
+        return escape(text)
 
     @app.template_filter("pct")
     def pct(value):

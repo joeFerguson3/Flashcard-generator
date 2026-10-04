@@ -295,3 +295,64 @@ COMPARE_FAQ = [
      "You can, but you'll need to paste your notes and write a prompt each time, and the questions aren't saved, "
      "scored or brought back when you're about to forget them. QuizlyNotes does all of that automatically."),
 ]
+
+
+# --- Copy while monetisation is switched off ---------------------------------
+# The constants above describe the Free/Pro plans. While MONETISATION_ENABLED
+# is off, everything is free, so these replacements remove plan talk.
+
+_FREE_MODE_FAQ = {
+    "Is QuizlyNotes free?":
+        "Yes, QuizlyNotes is completely free: notes, quizzes, flashcards, spaced repetition, games, mock exams "
+        "and weak-spot review. Sign in with Google so your sets are saved to your library.",
+    "What files can I upload?":
+        "PDFs (including lecture slides and scanned pages), Word documents (.docx), PowerPoint files (.pptx) and "
+        "plain text, up to 150 pages and 30MB. You can also paste notes directly.",
+    "How many questions can I make?":
+        "Choose Auto and the number is based on how much material there is, or pick between 5 and 60 questions.",
+    "Is there a page limit?":
+        "PDFs can be up to 150 pages and 30MB. For a whole textbook, upload one chapter at a time. Each chapter "
+        "becomes its own quiz, grouped under the same subject.",
+    "Is it free?":
+        "Yes, it's free to use. You can also try it without an account on the home page.",
+}
+_FREE_MODE_TEXT = {
+    "1. Sign in with Google and upload your PDF (up to 30 pages free, or 150 pages on Pro).":
+        "1. Sign in with Google and upload your PDF (up to 150 pages and 30MB).",
+    "Speed and Write games. Pro adds timed mock exams across a subject and weak-spot review.":
+        "Speed and Write games, timed mock exams across a subject, and weak-spot review.",
+}
+_FREE_MODE_SECTION = ("Free to use",
+                      ["QuizlyNotes is free. Make study sets, quizzes and flashcards from your own notes, and use "
+                       "mock exams and weak-spot review across a whole subject. Sign in with Google to save "
+                       "everything to your library."])
+_FREE_MODE_FACTS = {"Price": "Free. Sign in with Google to save your sets."}
+
+
+def _faq(items):
+    return [(q, _FREE_MODE_FAQ.get(q, a)) for q, a in items]
+
+
+def _text(t):
+    if t in _FREE_MODE_TEXT:
+        return _FREE_MODE_TEXT[t]
+    return t.replace("Studying is free and unlimited.", "QuizlyNotes is free to use.")
+
+
+def content(monetised: bool) -> dict:
+    """Public-page copy for the current mode."""
+    if monetised:
+        return {"home_faq": HOME_FAQ, "landing_pages": LANDING_PAGES, "key_facts": KEY_FACTS,
+                "compare_rows": COMPARE_ROWS, "compare_faq": COMPARE_FAQ}
+    pages = {}
+    for slug, page in LANDING_PAGES.items():
+        sections = [(_FREE_MODE_SECTION if h == "Free to use" else (h, [_text(p) for p in ps]))
+                    for h, ps in page["sections"]]
+        pages[slug] = {**page, "sections": sections, "faq": _faq(page["faq"])}
+    facts = [(k, _FREE_MODE_FACTS.get(k, _text(v))) for k, v in KEY_FACTS]
+    rows = [r if r[0] != "Paid plan" else ("Price", "Free", "Free plan, plus Quizlet Plus",
+                                           "Free plan, plus paid plans", "Free plan, plus subscriptions")
+            for r in COMPARE_ROWS]
+    rows = [r if r[0] != "Free studying limits" else (r[0], "None: free to use", *r[2:]) for r in rows]
+    return {"home_faq": _faq(HOME_FAQ), "landing_pages": pages, "key_facts": facts,
+            "compare_rows": rows, "compare_faq": _faq(COMPARE_FAQ)}

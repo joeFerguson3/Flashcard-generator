@@ -225,3 +225,27 @@ def test_logout_really_logs_out(client, app):
     assert client.get("/library").status_code == 200
     client.post("/logout")
     assert client.get("/library").status_code == 302
+
+
+def test_monetisation_switched_off():
+    cfg = type("Off", (BillingConfig.with_db(),), {"MONETISATION_ENABLED": False})
+    app = create_app(cfg)
+    with app.app_context():
+        db.create_all()
+    client = app.test_client()
+    home = client.get("/").get_data(as_text=True)
+    assert "/pricing" not in home and "Pro trial" not in home and "Pro (monthly)" not in home
+    assert client.get("/pricing").status_code == 302
+    assert "/pricing" not in client.get("/sitemap.xml").get_data(as_text=True)
+    assert "£" not in client.get("/llms-full.txt").get_data(as_text=True)
+    assert "£" not in client.get("/ai-quiz-generator").get_data(as_text=True)
+    login(client)
+    with app.app_context():
+        u = User.query.one()
+        assert u.trial_started_at is None and billing.is_pro(u)
+    lib = client.get("/library").get_data(as_text=True)
+    assert "Upgrade" not in lib and "Pro trial" not in lib and "free AI sets left" not in lib
+    for _ in range(billing.FREE.sets_per_month + 1):
+        assert new_set(client).status_code == 200
+    assert client.get("/mock-exam").status_code == 200
+    assert "Plan & billing" not in client.get("/settings").get_data(as_text=True)

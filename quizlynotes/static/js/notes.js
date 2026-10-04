@@ -32,12 +32,40 @@
 
   /* One bullet point = one auto-growing textarea.
      Enter: new point, Backspace on empty: remove, Tab / Shift+Tab: indent. */
+  /* Each point shows as formatted text (key point, card or detail, with a
+     bold "Term:"), and turns into a textarea when you click it. */
+  function paintView(view, text) {
+    view.textContent = '';
+    if (!text.trim()) { view.appendChild(el('span', { class: 'pt__placeholder', text: 'Add a point…' })); return; }
+    var i = text.indexOf(': ');
+    if (i > 0 && i < 48) {
+      view.appendChild(el('strong', { text: text.slice(0, i) }));
+      view.appendChild(document.createTextNode(text.slice(i)));
+    } else view.appendChild(document.createTextNode(text));
+  }
+  function startEdit(li) {
+    if (li.classList.contains('is-editing')) return;
+    li.classList.add('is-editing');
+    autosize(li.querySelector('textarea'));
+  }
   function renderPoint(point) {
     var ta = el('textarea', { rows: '1', class: 'pt__text', 'aria-label': 'Point', placeholder: 'Add a point…', spellcheck: 'true' });
     ta.value = point.text || '';
-    var li = el('li', { class: 'pt', 'data-pt': '' }, [ta]);
+    var view = el('div', { class: 'pt__view', tabindex: '0', role: 'button', 'aria-label': 'Edit point' });
+    paintView(view, ta.value);
+    var li = el('li', { class: 'pt', 'data-pt': '' }, [view, ta]);
     setLevel(li, point.level || 1);
+    if (!ta.value) li.classList.add('is-editing');
+    view.addEventListener('click', function () { focusAt(ta, 'end'); });
+    view.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusAt(ta, 'end'); }
+    });
     ta.addEventListener('input', function () { autosize(ta); });
+    ta.addEventListener('focus', function () { startEdit(li); });
+    ta.addEventListener('blur', function () {
+      paintView(view, ta.value);
+      if (ta.value.trim()) li.classList.remove('is-editing');
+    });
     ta.addEventListener('keydown', onPointKey);
     ta.addEventListener('paste', onPointPaste);
     requestAnimationFrame(function () { autosize(ta); });
@@ -46,9 +74,11 @@
   function setLevel(li, level) {
     level = Math.max(1, Math.min(3, level));
     li.dataset.level = level;
-    li.className = 'pt lvl-' + level;
+    li.classList.remove('lvl-1', 'lvl-2', 'lvl-3');
+    li.classList.add('pt', 'lvl-' + level);
   }
   function focusAt(ta, pos) {
+    startEdit(ta.closest('[data-pt]'));
     ta.focus();
     pos = pos === 'end' ? ta.value.length : pos;
     ta.setSelectionRange(pos, pos);

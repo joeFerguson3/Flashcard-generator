@@ -74,7 +74,7 @@
 <section class="wrap section">
   <div class="cta">
     <h2>See for yourself</h2>
-    <p>Free to use, with a 7-day Pro trial. No card needed.</p>
+    <p>{% if site.monetisation %}Free to use, with a 7-day Pro trial. No card needed.{% else %}Free to use. Sign in with Google and your sets are saved.{% endif %}</p>
     <a href="{{ url_for('auth.login') }}" class="btn btn--hl btn--lg">Start for free</a>
   </div>
 </section>

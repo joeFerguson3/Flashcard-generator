@@ -3,6 +3,6 @@
 {% block footer %}
 <footer class="app-footer wrap">
   <span>&copy; {{ site.year }} QuizlyNotes</span>
-  <nav><a href="{{ url_for('billing.pricing') }}">Pricing</a><a href="{{ url_for('public.privacy') }}">Privacy</a><a href="{{ url_for('public.terms') }}">Terms</a><a href="mailto:{{ site.email }}">Help</a></nav>
+  <nav>{% if site.monetisation %}<a href="{{ url_for('billing.pricing') }}">Pricing</a>{% endif %}<a href="{{ url_for('public.privacy') }}">Privacy</a><a href="{{ url_for('public.terms') }}">Terms</a><a href="mailto:{{ site.email }}">Help</a></nav>
 </footer>
 {% endblock %}

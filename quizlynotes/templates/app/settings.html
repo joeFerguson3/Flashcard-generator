@@ -14,6 +14,7 @@
     </div>
   </section>
 
+  {% if site.monetisation %}
   <section class="panel" id="plan">
     <div class="block__head">
       <h2 class="block__title">Plan</h2>
@@ -49,6 +50,7 @@
     </div>
     <p class="small muted">{{ invites }} friend{{ 's' if invites != 1 }} joined with your link so far.</p>
   </section>
+  {% endif %}
 
   <section class="panel">
     <h2 class="block__title">Appearance</h2>

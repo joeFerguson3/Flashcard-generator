@@ -35,7 +35,7 @@ def handle_ai_error(exc):
 @api_bp.errorhandler(SourceError)
 def handle_source_error(exc):
     if isinstance(exc, PlanLimitError):
-        return jsonify(error=str(exc), upgrade=True, feature="file_size",
+        return jsonify(error=str(exc), upgrade=billing.enabled(), feature="file_size",
                        upgrade_url=url_for("billing.pricing", feature="file_size")), 402
     return error(str(exc), 400)
 
@@ -43,7 +43,7 @@ def handle_source_error(exc):
 @api_bp.errorhandler(billing.LimitReached)
 def handle_limit(exc):
     db.session.rollback()
-    return jsonify(error=exc.message, upgrade=True, feature=exc.feature,
+    return jsonify(error=exc.message, upgrade=billing.enabled(), feature=exc.feature,
                    upgrade_url=url_for("billing.pricing", feature=exc.feature)), 402
 
 

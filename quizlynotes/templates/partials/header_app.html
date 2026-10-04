@@ -5,7 +5,8 @@
     </a>
     <nav class="app-nav" aria-label="App">
       <a href="{{ url_for('study.library') }}" {% if request.endpoint == 'study.library' %}aria-current="page"{% endif %}>Library</a>
-      {% if plan and plan.pro and not plan.on_trial %}
+      {% if not site.monetisation %}
+      {% elif plan and plan.pro and not plan.on_trial %}
         <span class="pro-badge" title="QuizlyNotes Pro">Pro</span>
       {% elif plan and plan.on_trial %}
         <a href="{{ url_for('billing.pricing') }}" class="trial-chip" title="Your free Pro trial">Pro trial · {{ plan.days_left }}d left</a>
@@ -24,8 +25,10 @@
       <div class="menu__panel">
         <p class="menu__who"><strong>{{ current_user.display_name }}</strong><span>{{ current_user.email }}</span></p>
         <a href="{{ url_for('study.settings') }}">Settings</a>
+        {% if site.monetisation %}
         <a href="{{ url_for('study.settings') }}#plan">{{ 'Plan & billing' if plan and plan.pro else 'Upgrade to Pro' }}</a>
         <a href="{{ url_for('study.settings') }}#invite">Invite friends, get Pro</a>
+        {% endif %}
         <button type="button" data-theme-cycle>Theme: <span data-theme-label>System</span></button>
         <form method="post" action="{{ url_for('auth.logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

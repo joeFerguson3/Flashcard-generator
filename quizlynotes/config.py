@@ -58,6 +58,9 @@ class Config:
     # --- Billing -----------------------------------------------------------
     # Pro is unlocked by Stripe subscriptions, the signup trial, referral
     # bonuses, promo codes, or being listed in ADMIN_EMAILS.
+    # Plans, limits, trials, referrals and payments. While off, everyone gets
+    # the full product (with Pro's fair-use caps) and nothing mentions Pro.
+    MONETISATION_ENABLED = _bool("MONETISATION_ENABLED", False)
     ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
     STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
@@ -108,6 +111,7 @@ class TestConfig(Config):
     SQLALCHEMY_ENGINE_OPTIONS = {}
     AI_PROVIDER = "fake"
     ENABLE_DEV_LOGIN = True
+    MONETISATION_ENABLED = True
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     SESSION_COOKIE_SECURE = False

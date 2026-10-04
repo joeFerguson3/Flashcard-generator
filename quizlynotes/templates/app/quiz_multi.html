@@ -5,7 +5,7 @@
 <section class="wrap player-wrap">
   <header class="player-head">
     <a class="back" href="{{ url_for('study.library') }}">← Library</a>
-    <p class="eyebrow" style="margin-top:.75rem">Pro · {{ subtitle }}</p>
+    <p class="eyebrow" style="margin-top:.75rem">{% if site.monetisation %}Pro · {% endif %}{{ subtitle }}</p>
     <h1 class="player-title">{{ title }}</h1>
   </header>
   <div id="player" class="player"></div>

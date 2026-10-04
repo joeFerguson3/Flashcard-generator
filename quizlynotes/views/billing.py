@@ -16,6 +16,14 @@ log = logging.getLogger(__name__)
 
 billing_bp = Blueprint("billing", __name__)
 
+
+@billing_bp.before_request
+def _only_when_enabled():
+    # With monetisation switched off, pricing, checkout, codes and invite links
+    # all lead home. The webhook stays up so Stripe never sees errors.
+    if not billing.enabled() and request.endpoint != "billing.webhook":
+        return redirect(url_for("public.home"))
+
 PRICING_FAQ = [
     ("Is QuizlyNotes really free?",
      "Yes. Studying is unlimited on the free plan: quizzes, flashcards, spaced repetition and games, with "

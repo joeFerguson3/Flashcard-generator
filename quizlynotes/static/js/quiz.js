@@ -665,7 +665,7 @@
 
     if (data.shared) {
       buttons.appendChild(h('a', { class: 'btn btn--primary btn--lg', href: '/login', text: 'Make quizzes from my own notes' }));
-      extra.textContent = 'Free account. Upload slides or PDFs and get quizzes like this in seconds, plus a week of Pro free.';
+      extra.textContent = 'Free account. Upload slides or PDFs and get quizzes like this in seconds' + (data.monetisation ? ', plus a week of Pro free.' : '.');
     } else if (data.guest) {
       buttons.appendChild(h('a', { class: 'btn btn--primary btn--lg', href: '/login', text: 'Save this quiz with Google' }));
       extra.textContent = 'Free account. Your quiz, flashcards and score are saved to your library.';

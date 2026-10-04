@@ -61,6 +61,20 @@ flask --app wsgi promo "Uni society" --days 30 --uses 100     # 30 days Pro, 100
 flask --app wsgi promo "Friend" --uses 1                       # lifetime Pro, 1 use
 ```
 
+## On/off switch
+
+Monetisation is **off by default** (`MONETISATION_ENABLED` unset). While it's off,
+everyone gets the full product with Pro's fair-use caps, there are no trials,
+and the pricing page, plan badges, upgrade prompts, invite rewards and Pro wording
+are hidden (`/pricing`, `/redeem` and `/r/...` redirect home). Turn it on once
+Stripe is set up:
+
+```bash
+gcloud run services update flask-app --region europe-west1 --update-env-vars MONETISATION_ENABLED=true
+```
+
+Existing users then get their 7-day trial on their next login.
+
 ## Turning on payments (about 20 minutes, you need to do this)
 
 Until Stripe keys are set, everything works except the checkout buttons, which

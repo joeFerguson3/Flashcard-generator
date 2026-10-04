@@ -17,19 +17,27 @@ public_bp = Blueprint("public", __name__)
 CONTENT_UPDATED = date(2026, 10, 4)
 
 
+def _monetised() -> bool:
+    return bool(current_app.config.get("MONETISATION_ENABLED", True))
+
+
+def _c() -> dict:
+    return seo.content(_monetised())
+
+
 @public_bp.route("/")
 def home():
     return render_template(
-        "public/home.html", faq=seo.HOME_FAQ, question_types=seo.QUESTION_TYPES,
-        related=seo.RELATED_LINKS, pages=seo.LANDING_PAGES,
+        "public/home.html", faq=_c()["home_faq"], question_types=seo.QUESTION_TYPES,
+        related=seo.RELATED_LINKS, pages=_c()["landing_pages"],
     )
 
 
 def _landing(slug: str):
-    page = seo.LANDING_PAGES[slug]
+    page = _c()["landing_pages"][slug]
     return render_template(
         "public/landing.html", page=page, slug=slug, question_types=seo.QUESTION_TYPES,
-        related=[r for r in seo.RELATED_LINKS if r[0] != slug], pages=seo.LANDING_PAGES,
+        related=[r for r in seo.RELATED_LINKS if r[0] != slug], pages=_c()["landing_pages"],
     )
 
 
@@ -56,7 +64,7 @@ def ai_quiz_generator():
 @public_bp.route("/compare")
 def compare():
     return render_template(
-        "public/compare.html", rows=seo.COMPARE_ROWS, picks=seo.COMPARE_PICKS, faq=seo.COMPARE_FAQ,
+        "public/compare.html", rows=_c()["compare_rows"], picks=seo.COMPARE_PICKS, faq=_c()["compare_faq"],
         checked=seo.COMPARE_CHECKED, updated=CONTENT_UPDATED,
     )
 
@@ -64,33 +72,34 @@ def compare():
 @public_bp.route("/about")
 def about():
     return render_template(
-        "public/about.html", summary=seo.PRODUCT_SUMMARY, facts=seo.KEY_FACTS,
+        "public/about.html", summary=seo.PRODUCT_SUMMARY, facts=_c()["key_facts"],
         question_types=seo.QUESTION_TYPES, updated=CONTENT_UPDATED,
     )
 
 
 def _llms_text(full: bool) -> str:
     site = current_app.config["SITE_URL"]
+    c = _c()
     pages = [("Home", "/", "Try it without an account and see how it works.")]
-    pages += [(p["eyebrow"], p["path"], p["description"]) for p in seo.LANDING_PAGES.values()]
+    pages += [(p["eyebrow"], p["path"], p["description"]) for p in c["landing_pages"].values()]
     pages += [("Compare AI quiz and flashcard tools", "/compare", "QuizlyNotes vs Quizlet, Knowt and chatbots."),
               ("About QuizlyNotes", "/about", "Key facts in one place."),
-              ("Pricing", "/pricing", "Free and Pro plans.")]
+              ] + ([("Pricing", "/pricing", "Free and Pro plans.")] if _monetised() else [])
     lines = ["# QuizlyNotes", "", f"> {seo.PRODUCT_SUMMARY}", "",
              "QuizlyNotes is used to turn notes into quiz questions, make a quiz from a PDF or lecture slides, "
              "and generate flashcards with spaced repetition. Questions are written only from the user's own "
              "material, and every answer has an explanation.", "", "## Key facts", ""]
-    lines += [f"- **{k}:** {v}" for k, v in seo.KEY_FACTS]
+    lines += [f"- **{k}:** {v}" for k, v in c["key_facts"]]
     lines += ["", "## Pages", ""]
     lines += [f"- [{name}]({site}{path}): {desc}" for name, path, desc in pages]
     if full:
         lines += ["", "## Question types", ""]
         lines += [f"- **{name}:** {text}" for name, text in seo.QUESTION_TYPES]
-        for title, faq in [("Frequently asked questions", seo.HOME_FAQ), ("Choosing a tool", seo.COMPARE_FAQ)]:
+        for title, faq in [("Frequently asked questions", c["home_faq"]), ("Choosing a tool", c["compare_faq"])]:
             lines += ["", f"## {title}", ""]
             for q, a in faq:
                 lines += [f"### {q}", "", a, ""]
-        for page in seo.LANDING_PAGES.values():
+        for page in c["landing_pages"].values():
             lines += ["", f"## {page['h1']}", "", page["lede"], ""]
             for heading, paras in page["sections"]:
                 lines += [f"### {heading}", ""] + [para + "\n" for para in paras]
@@ -172,6 +181,8 @@ def sitemap():
     urls = [("/", "1.0"), ("/notes-to-quiz", "0.9"), ("/pdf-to-quiz", "0.9"),
             ("/notes-to-flashcards", "0.9"), ("/ai-quiz-generator", "0.9"), ("/compare", "0.8"),
             ("/about", "0.6"), ("/pricing", "0.7"), ("/privacy", "0.2"), ("/terms", "0.2")]
+    if not _monetised():
+        urls = [u for u in urls if u[0] != "/pricing"]
     items = "".join(
         f"<url><loc>{site}{path}</loc><lastmod>{CONTENT_UPDATED.isoformat()}</lastmod>"
         f"<priority>{priority}</priority></url>"
@@ -263,6 +274,7 @@ def shared_quiz(token: str):
     payload["submit_url"] = None
     payload["guest"] = True
     payload["shared"] = True
+    payload["monetisation"] = current_app.config.get("MONETISATION_ENABLED", True)
     owner = study_set.owner
     # Friends who sign up from a shared quiz count as the owner's referrals.
     if owner and owner.referral_code and "ref" not in session:

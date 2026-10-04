@@ -96,9 +96,22 @@
           {% for sec in group.sections %}
           <div class="notes-read__sec">
             <h4>{{ sec.subheading }}</h4>
-            <ul class="points">
-              {% for p in sec.points %}<li class="lvl-{{ p.level }}">{{ p.text }}</li>{% endfor %}
-            </ul>
+            <div class="chunks">
+              {% for c in sec.points|note_chunks %}
+              <section class="chunk">
+                {% if c.lead %}<p class="chunk__lead">{{ c.lead.text|term }}</p>{% endif %}
+                {% if c["items"] %}
+                <ul class="chunk__items">
+                  {% for it in c["items"] %}
+                  <li class="chunk__item"><p>{{ it.point.text|term }}</p>
+                    {% if it.subs %}<ul class="chunk__subs">{% for sp in it.subs %}<li>{{ sp.text|term }}</li>{% endfor %}</ul>{% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+              </section>
+              {% endfor %}
+            </div>
           </div>
           {% endfor %}
         </details>
@@ -110,7 +123,7 @@
     <section class="block share-box" id="share">
       <div>
         <h2 class="block__title">Share this quiz</h2>
-        <p class="muted small">Anyone with the link can take the quiz, no account needed. Friends who sign up from it earn you free Pro weeks.</p>
+        <p class="muted small">Anyone with the link can take the quiz, no account needed.{% if site.monetisation %} Friends who sign up from it earn you free Pro weeks.{% endif %}</p>
       </div>
       {% if s.share_token %}
       <div class="share-box__row">

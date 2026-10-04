@@ -58,6 +58,11 @@ class LimitReached(Exception):
 
 # --- Entitlements -----------------------------------------------------------
 
+def enabled() -> bool:
+    """Whether plans and payments are switched on (MONETISATION_ENABLED)."""
+    return bool(current_app.config.get("MONETISATION_ENABLED", True))
+
+
 def is_admin(user: User) -> bool:
     return bool(user and user.email and user.email.lower() in current_app.config["ADMIN_EMAILS"])
 
@@ -65,6 +70,8 @@ def is_admin(user: User) -> bool:
 def is_pro(user: User | None) -> bool:
     if user is None or not getattr(user, "is_authenticated", True):
         return False
+    if not enabled():
+        return True
     if user.lifetime_pro or is_admin(user):
         return True
     return bool(user.pro_until and user.pro_until > utcnow())
@@ -78,6 +85,12 @@ def plan_status(user: User) -> dict:
     """Everything templates need to show plan state."""
     now = utcnow()
     pro = is_pro(user)
+    if not enabled():
+        lim = PRO
+        return {"enabled": False, "pro": True, "paid": False, "lifetime": False, "on_trial": False,
+                "days_left": None, "pro_until": None, "interval": None, "cancel_pending": False,
+                "limits": lim, "sets_used": 0, "sets_left": lim.sets_per_month, "edits_used": 0,
+                "resets_on": next_month_start(now)}
     paid = user.subscription_status in ("active", "trialing", "past_due", "canceling")
     on_trial = pro and not paid and not user.lifetime_pro and not is_admin(user) and bool(
         user.trial_started_at and user.pro_until and user.pro_until > now
@@ -88,6 +101,7 @@ def plan_status(user: User) -> dict:
     lim = limits_for(user)
     used = sets_this_month(user)
     return {
+        "enabled": True,
         "pro": pro,
         "paid": paid,
         "lifetime": user.lifetime_pro or is_admin(user),
@@ -110,7 +124,7 @@ def extend_pro(user: User, days: int) -> None:
 
 
 def start_trial(user: User, referred: bool = False) -> None:
-    if user.trial_started_at is not None:
+    if user.trial_started_at is not None or not enabled():
         return
     cfg = current_app.config
     user.trial_started_at = utcnow()
@@ -170,6 +184,8 @@ def check_regenerate(user: User, study_set) -> None:
 def check_ai_edit(user: User) -> None:
     lim = limits_for(user)
     if usage_this_month(user, "ai_edit") >= lim.ai_edits_per_month:
+        if is_pro(user):
+            raise LimitReached("You've reached this month's fair-use limit for AI edits. It resets on the 1st.", "ai_edit")
         raise LimitReached(
             f"You've used your {lim.ai_edits_per_month} free AI note edits this month. "
             "Upgrade to Pro for unlimited Simplify and Improve.", "ai_edit")
@@ -234,7 +250,7 @@ def ensure_referral_code(user: User) -> str:
 
 def reward_referrer(user: User) -> None:
     """Called when a referred user creates their first set (anti-abuse)."""
-    if not user.referred_by_id or user.referral_rewarded:
+    if not enabled() or not user.referred_by_id or user.referral_rewarded:
         return
     referrer = db.session.get(User, user.referred_by_id)
     user.referral_rewarded = True

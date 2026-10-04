@@ -463,21 +463,31 @@ mark, .hl {
 .sec__head { display: flex; gap: .5rem; align-items: center; margin-bottom: .35rem; }
 .sec__head input { flex: 1; font-weight: 600; border: 1px solid transparent; background: transparent; border-radius: 6px; padding: .25rem .4rem; min-width: 0; }
 .sec__head input:focus { outline: none; border-color: var(--ink); background: var(--surface); }
-.pts { list-style: none; margin: .25rem 0 0; padding: 0; display: grid; gap: .3rem; cursor: text; }
-.pt { position: relative; padding-left: 1.4rem; border-radius: 6px; }
-.pt::before { content: ""; position: absolute; left: .45rem; top: .95em; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
-.pt.lvl-2 { margin-left: 1.6rem; }
-.pt.lvl-2::before { background: transparent; border: 1.5px solid var(--muted); width: 6px; height: 6px; }
-.pt.lvl-3 { margin-left: 3.2rem; }
-.pt.lvl-3::before { width: 7px; height: 1.5px; border-radius: 0; background: var(--muted); top: 1.05em; }
+.pts { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: .45rem; cursor: text; max-width: 68ch; }
+/* Points mirror the quiz notes: level 1 = key point with a highlight bar,
+   level 2 = a card, level 3 = a smaller detail under its card. */
+.pt { position: relative; border-radius: var(--r-sm); }
+.pt.lvl-1 { padding-left: .85rem; border-left: 3px solid var(--hl); margin-top: .55rem; }
+.pt.lvl-1:first-child { margin-top: 0; }
+.pt.lvl-2 { background: var(--paper); border: 1px solid var(--line); padding: .15rem .3rem; }
+.pt.lvl-3 { margin-left: 1.4rem; padding-left: .7rem; border-left: 1.5px solid var(--line-2); }
+.pt__view, .pt__text { line-height: 1.55; color: var(--ink); }
+.pt__view { padding: .3rem .5rem; border-radius: 6px; cursor: text; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pt__view:hover { background: var(--hl-fill); }
+.pt__view:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pt__view strong { font-weight: 650; color: var(--ink); }
+.pt__placeholder { color: var(--muted); }
+.pt.lvl-1 .pt__view, .pt.lvl-1 .pt__text { font-size: 1.04rem; font-weight: 500; }
+.pt.lvl-2 .pt__view, .pt.lvl-2 .pt__text { font-size: .97rem; }
+.pt.lvl-3 .pt__view, .pt.lvl-3 .pt__text { font-size: .92rem; color: var(--muted); }
 .pt__text {
   display: block; width: 100%; border: 1px solid transparent; border-radius: 6px; background: transparent;
-  padding: .3rem .5rem; resize: none; overflow: hidden; line-height: 1.55; font-size: .97rem; color: var(--ink);
+  padding: .3rem .5rem; resize: none; overflow: hidden; font: inherit;
 }
-.pt.lvl-2 .pt__text, .pt.lvl-3 .pt__text { color: var(--ink-2); font-size: .94rem; }
-.pt__text:hover { background: var(--paper); }
-.pt__text:focus { outline: none; border-color: var(--line-2); background: var(--paper); }
+.pt__text:focus { outline: none; border-color: var(--line-2); background: var(--surface); }
 .pt__text::placeholder { color: var(--muted); }
+.pt:not(.is-editing) .pt__text { display: none; }
+.pt.is-editing .pt__view { display: none; }
 .topic__actions { display: flex; gap: .25rem; flex-wrap: wrap; }
 .topic__note { display: flex; gap: .5rem; align-items: center; padding: .5rem 1rem; font-size: .88rem; background: var(--hl-fill); border-bottom: 1px solid var(--line); }
 .editor-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
