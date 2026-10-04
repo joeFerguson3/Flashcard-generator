@@ -15,8 +15,12 @@
     multiple_choice: 'Multiple choice', true_false: 'True or false', fill_blank: 'Fill in the blank',
     short_answer: 'Short answer', ordering: 'Put in order', matching: 'Match up',
     multi_select: 'Select all that apply', categorize: 'Sort into groups', numeric: 'Numeric answer',
-    explain: 'Explain'
+    odd_one_out: 'Odd one out', explain: 'Explain'
   };
+
+  // Viewer preference: show each topic's notes before its questions.
+  var showNotes = true;
+  try { showNotes = localStorage.getItem('qn-quiz-notes') !== 'off'; } catch (e) {}
 
   // ---- helpers -----------------------------------------------------------
   function h(tag, attrs, children) {
@@ -108,6 +112,7 @@
   }
 
   function show(i) {
+    while (!showNotes && steps[i] && steps[i].type === 'notes') i++;
     index = i;
     var stage = root.querySelector('[data-stage]');
     stage.innerHTML = '';
@@ -213,12 +218,13 @@
         return h('span', { class: i === page ? 'is-on' : '' });
       })) : h('span', { class: 'step__hint', text: count + ' question' + (count === 1 ? '' : 's') + ' on this topic' });
       var back = page > 0 ? h('button', { class: 'btn btn--ghost', type: 'button', text: '← Back', onclick: function () { page--; draw(); } }) : null;
+      var skipNotes = !last ? h('button', { class: 'btn btn--ghost', type: 'button', text: 'Skip notes', title: 'Go straight to the questions on this topic', onclick: next }) : null;
       var fwd = h('button', {
         class: 'btn btn--primary', type: 'button', 'data-autofocus': true,
         text: last ? 'I’m ready →' : 'Next →',
         onclick: function () { if (last) next(); else { page++; draw(); } }
       });
-      article.appendChild(h('div', { class: 'step__actions' }, [dots, h('div', { class: 'btn-row' }, [back, fwd])]));
+      article.appendChild(h('div', { class: 'step__actions' }, [dots, h('div', { class: 'btn-row' }, [skipNotes, back, fwd])]));
       fwd.focus({ preventScroll: true });
     }
     article._keyHandler = function (key) {
@@ -267,9 +273,14 @@
 
     var renderers = {
       multiple_choice: mcq, true_false: tf, fill_blank: blanks, short_answer: shortAnswer, ordering: ordering,
-      matching: matchUp, multi_select: multiSelect, categorize: categorize, numeric: numeric, explain: explain
+      matching: matchUp, multi_select: multiSelect, categorize: categorize, numeric: numeric, explain: explain,
+      odd_one_out: mcq
     };
     (renderers[card.kind] || shortAnswer)(card, article, actions, finish);
+    // Skip: count it as wrong and move straight on (the answer is in the review).
+    var skip = h('button', { class: 'btn btn--ghost btn--sm step__skip', type: 'button', text: 'Skip', title: 'Count as wrong and go to the next question',
+      onclick: function () { step.result = false; step.skipped = true; next(); } });
+    actions.insertBefore(skip, actions.firstChild);
     article.appendChild(actions);
     return article;
   }
@@ -696,7 +707,7 @@
           : c.kind === 'fill_blank' ? c.prompt.split('{blank}').reduce(function (acc, part, i) { return acc + part + (c.answers[i] !== undefined && i < c.answers.length ? '[' + c.answers[i] + ']' : ''); }, '')
           : c.answers[0];
         review.appendChild(h('div', { class: 'review__item' }, [
-          h('p', null, [h('strong', { text: c.kind === 'fill_blank' ? 'Fill in the blank' : c.prompt })]),
+          h('p', null, [h('strong', { text: c.kind === 'fill_blank' ? 'Fill in the blank' : c.prompt }), q.skipped ? h('span', { class: 'muted small', text: ' (skipped)' }) : null]),
           h('p', { class: 'review__a', text: answer }),
           c.explanation ? h('p', { class: 'muted small', text: c.explanation }) : null
         ]));
@@ -735,6 +746,41 @@
     }
     if (tag !== 'input' && tag !== 'textarea' && tag !== 'select' && article._keyHandler && (e.key.length === 1 || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) article._keyHandler(e.key);
   });
+
+  // ---- options dialog ------------------------------------------------------
+  var dlg = document.querySelector('[data-options-dialog]');
+  var openBtn = document.querySelector('[data-open-options]');
+  if (dlg && openBtn) {
+    var notesToggle = dlg.querySelector('[data-opt-notes]');
+    notesToggle.checked = showNotes;
+    openBtn.addEventListener('click', function () { if (dlg.showModal) dlg.showModal(); });
+    notesToggle.addEventListener('change', function () {
+      showNotes = notesToggle.checked;
+      try { localStorage.setItem('qn-quiz-notes', showNotes ? 'on' : 'off'); } catch (e) {}
+      if (!showNotes && steps[index] && steps[index].type === 'notes') show(index);
+    });
+    var newBtn = dlg.querySelector('[data-new-quiz]');
+    var errEl = dlg.querySelector('[data-options-error]');
+    var overlay = document.querySelector('[data-overlay]');
+    newBtn.addEventListener('click', function () {
+      var kinds = Array.prototype.map.call(dlg.querySelectorAll('[data-kind]:checked'), function (c) { return c.value; });
+      if (!kinds.length) { errEl.textContent = 'Pick at least one question type.'; errEl.hidden = false; return; }
+      errEl.hidden = true;
+      var difficulty = (dlg.querySelector('input[name="difficulty"]:checked') || {}).value || 'medium';
+      dlg.close();
+      overlay.hidden = false;
+      var stop = QN.startLoader(overlay, ['Choosing what to test…', 'Writing questions…', 'Writing flashcards…', 'Checking answers…', 'Almost there…']);
+      QN.request(data.generate_url, { body: { count: dlg.querySelector('[data-count]').value || null, difficulty: difficulty, kinds: kinds } })
+        .then(function () { window.location.href = data.retry_url; })
+        .catch(function (err) {
+          stop(); overlay.hidden = true;
+          if (err && err.upgrade) return;
+          errEl.textContent = (err && err.message) || 'Something went wrong. Please try again.';
+          errEl.hidden = false;
+          dlg.showModal();
+        });
+    });
+  }
 
   // ---- mount ---------------------------------------------------------------
   progressFill = h('div', { class: 'progress__fill' });

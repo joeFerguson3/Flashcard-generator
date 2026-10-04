@@ -89,7 +89,8 @@ def quiz(set_id: int):
     payload["submit_url"] = url_for("api.submit_attempt", set_id=s.id)
     payload["set_url"] = url_for("study.study_set", set_id=s.id)
     payload["retry_url"] = url_for("study.quiz", set_id=s.id)
-    return render_template("app/quiz.html", s=s, payload=payload)
+    payload["generate_url"] = url_for("api.generate_quiz", set_id=s.id)
+    return render_template("app/quiz.html", s=s, payload=payload, kinds=QUIZ_KINDS)
 
 
 @study_bp.route("/sets/<int:set_id>/flashcards")
@@ -261,7 +262,7 @@ def mock_exam():
     size = min(max(int(request.args.get("n", 20) or 20), 5), 60)
     cards = (Card.query.join(StudySet)
              .filter(StudySet.user_id == current_user.id, StudySet.subject == subject,
-                     Card.kind != "flashcard").all())
+                     Card.kind.notin_(("flashcard", "explain"))).all())
     if not cards:
         flash("Generate quizzes for this subject first.", "info")
         return redirect(url_for("study.library", subject=subject))
@@ -282,7 +283,7 @@ def weak_spots():
     if gate:
         return gate
     cards = (Card.query.join(StudySet)
-             .filter(StudySet.user_id == current_user.id, Card.kind != "flashcard", Card.times_seen > 0)
+             .filter(StudySet.user_id == current_user.id, Card.kind.notin_(("flashcard", "explain")), Card.times_seen > 0)
              .all())
     weak = sorted(
         (c for c in cards if c.times_correct / c.times_seen < 0.75),
@@ -351,7 +352,7 @@ def build_quiz_payload(data: dict, only_ids: set[int] | None = None) -> dict:
         group_of_section[i] = len(groups) - 1
 
     for n, card in enumerate(data.get("cards", [])):
-        if card["kind"] == "flashcard":
+        if card["kind"] in ("flashcard", "explain"):  # explain was self-marked; no longer used
             continue
         if only_ids is not None and card.get("id") not in only_ids:
             continue

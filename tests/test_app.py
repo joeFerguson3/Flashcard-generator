@@ -276,7 +276,9 @@ def test_new_question_kinds_validation():
     num = clean_card({"kind": "numeric", "prompt": "How many?", "answers": ["1,200", "cells"]}, 1)
     assert num["answers"] == ["1200", "cells"]
     assert clean_card({"kind": "numeric", "prompt": "How many?", "answers": ["lots"]}, 1) is None
-    assert clean_card({"kind": "explain", "prompt": "Why?", "answers": ["only one"]}, 1) is None
+    odd = clean_card({"kind": "odd_one_out", "prompt": "Odd one out?", "options": ["Cat", "Dog", "Cow", "Car"], "answers": ["car"]}, 1)
+    assert odd["answers"] == ["Car"]
+    assert clean_card({"kind": "odd_one_out", "prompt": "Odd?", "options": ["A", "B"], "answers": ["A"]}, 1) is None
 
 
 def test_quiz_includes_new_kinds_and_editing(client, app):
@@ -286,7 +288,8 @@ def test_quiz_includes_new_kinds_and_editing(client, app):
     with app.app_context():
         s = db.session.get(StudySet, set_id)
         kinds = {c.kind for c in s.quiz_cards}
-        assert {"matching", "multi_select", "categorize", "numeric", "explain"} <= kinds
+        assert {"matching", "multi_select", "categorize", "numeric", "odd_one_out"} <= kinds
+        assert "explain" not in kinds
         ids = {c.kind: c.id for c in s.quiz_cards}
     assert client.get(f"/sets/{set_id}/cards").status_code == 200
     res = client.post(f"/sets/{set_id}/cards", data={
@@ -299,3 +302,21 @@ def test_quiz_includes_new_kinds_and_editing(client, app):
         assert db.session.get(Card, ids["matching"]).answers == ["1", "2", "3"]
         assert db.session.get(Card, ids["multi_select"]).answers == ["W", "Y"]
         assert db.session.get(Card, ids["numeric"]).answers == ["42", "kg"]
+
+
+def test_quiz_page_has_options_and_skips_legacy_explain(client, app):
+    login(client)
+    set_id = make_set(client)
+    client.post(f"/api/sets/{set_id}/generate", json={"count": 20})
+    with app.app_context():
+        s = db.session.get(StudySet, set_id)
+        db.session.add(Card(set_id=s.id, kind="explain", prompt="Explain why?", options=[], answers=["a", "b"]))
+        db.session.commit()
+    page = client.get(f"/sets/{set_id}/quiz").get_data(as_text=True)
+    assert "data-options-dialog" in page and "data-new-quiz" in page and "Odd one out" in page
+    assert "Explain why?" not in page and '"generate_url"' in page
+    res = client.post(f"/api/sets/{set_id}/generate", json={"count": 5, "kinds": ["odd_one_out", "multiple_choice"]})
+    assert res.status_code == 200
+    with app.app_context():
+        kinds = {c.kind for c in db.session.get(StudySet, set_id).quiz_cards}
+        assert kinds <= {"odd_one_out", "multiple_choice"}

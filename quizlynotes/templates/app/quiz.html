@@ -3,11 +3,38 @@
 {% block body_class %}page-player{% endblock %}
 {% block content %}
 <section class="wrap player-wrap">
-  <header class="player-head">
+  <header class="player-head player-head--row">
     <a class="back" href="{{ url_for('study.study_set', set_id=s.id) }}">← {{ s.title }}</a>
+    <button type="button" class="btn btn--ghost btn--sm" data-open-options>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h7M12 4h2M2 12h3M8 12h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10.5" cy="4" r="1.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6.5" cy="12" r="1.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      Options
+    </button>
   </header>
   <div id="player" class="player"></div>
 </section>
+
+<dialog class="upgrade quiz-options" data-options-dialog aria-labelledby="options-title">
+  <form method="dialog" class="upgrade__close"><button aria-label="Close">&times;</button></form>
+  <h2 id="options-title" class="block__title">Quiz options</h2>
+
+  <section class="quiz-options__group">
+    <h3 class="quiz-options__h">While you study</h3>
+    <label class="switch"><input type="checkbox" data-opt-notes checked> <span>Show the notes before each topic</span></label>
+    <p class="muted small">Turn this off to go straight to the questions. You can also press <strong>Skip</strong> on any question to count it as wrong and move on.</p>
+  </section>
+
+  <section class="quiz-options__group">
+    <h3 class="quiz-options__h">Make a new quiz</h3>
+    <p class="muted small">Change how many questions you get and which types. This replaces the questions and flashcards in this set.</p>
+    {% include "partials/quiz_fields.html" %}
+    <p class="form-error" data-options-error hidden></p>
+    <div class="btn-row">
+      <button type="button" class="btn btn--primary" data-new-quiz>Make new quiz</button>
+      <form method="dialog"><button class="btn btn--ghost">Cancel</button></form>
+    </div>
+  </section>
+</dialog>
+<div class="overlay" data-overlay hidden>{% include "partials/loader.html" %}</div>
 <script type="application/json" id="quiz-data">{{ payload|tojson }}</script>
 {% endblock %}
 {% block scripts %}<script src="{{ asset('js/quiz.js') }}" defer></script>{% endblock %}

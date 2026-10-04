@@ -74,7 +74,7 @@ def clean_card(raw: dict, section_count: int) -> dict | None:
             return None
         options, answers = [], [answers[0]]
 
-    elif kind == "multiple_choice":
+    elif kind in ("multiple_choice", "odd_one_out"):
         # De-duplicate options, keep order.
         seen, unique = set(), []
         for o in options:
@@ -82,7 +82,7 @@ def clean_card(raw: dict, section_count: int) -> dict | None:
                 seen.add(_norm(o))
                 unique.append(o)
         options = unique
-        if not answers or not 2 <= len(options) <= 6:
+        if not answers or not (2 if kind == "multiple_choice" else 3) <= len(options) <= 6:
             return None
         match = next((o for o in options if _norm(o) == _norm(answers[0])), None)
         if match is None:

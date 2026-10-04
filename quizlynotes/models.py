@@ -31,9 +31,10 @@ CARD_KINDS = (
     "multi_select",
     "categorize",
     "numeric",
-    "explain",
+    "odd_one_out",
+    "explain",  # legacy, self-marked: no longer generated or shown in quizzes
 )
-QUIZ_KINDS = tuple(k for k in CARD_KINDS if k != "flashcard")
+QUIZ_KINDS = tuple(k for k in CARD_KINDS if k not in ("flashcard", "explain"))
 
 
 class User(UserMixin, db.Model):
@@ -103,7 +104,7 @@ class StudySet(db.Model):
 
     @property
     def quiz_cards(self):
-        return [c for c in self.cards if c.kind != "flashcard"]
+        return [c for c in self.cards if c.kind not in ("flashcard", "explain")]
 
     @property
     def flashcards(self):
@@ -111,7 +112,7 @@ class StudySet(db.Model):
 
     @property
     def has_quiz(self) -> bool:
-        return any(c.kind != "flashcard" for c in self.cards)
+        return any(c.kind not in ("flashcard", "explain") for c in self.cards)
 
     def due_flashcards(self, now: datetime | None = None):
         now = now or utcnow()

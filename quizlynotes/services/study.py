@@ -87,7 +87,7 @@ def update_card_from_form(card: Card, form, prefix: str) -> bool:
     raw = {"section": 0, "kind": card.kind, "prompt": field("prompt"), "explanation": field("explanation")}
     if card.kind == "flashcard":
         raw.update(options=[], answers=[field("answer", 600)])
-    elif card.kind == "multiple_choice":
+    elif card.kind in ("multiple_choice", "odd_one_out"):
         options = lines("options")
         correct = clean_int(form.get(f"{prefix}-correct"), 0)
         raw.update(options=options, answers=[options[correct]] if 0 <= correct < len(options) else [])

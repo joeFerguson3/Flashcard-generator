@@ -29,7 +29,7 @@
                 {"@type": "Offer", "name": "Pro (yearly)", "price": config.PRICE_YEARLY_DISPLAY.lstrip("£"), "priceCurrency": "GBP"}]
                 if site.monetisation else [{"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "GBP"}]),
      "featureList": ["Turn notes into quiz questions", "PDF and lecture slides to quiz",
-                     "AI flashcard maker", "Spaced repetition", "Multiple choice, true/false, fill in the blank, short answer, ordering, matching, select all that apply, sort into groups, numeric and explain questions",
+                     "AI flashcard maker", "Spaced repetition", "Multiple choice, true/false, fill in the blank, short answer, ordering, matching, select all that apply, sort into groups, numeric and odd one out questions",
                      "Mock exams and weak-spot review" ~ (" (Pro)" if site.monetisation else ""), "Share quizzes with a link"]}
   ]
 }|tojson }}

@@ -16,7 +16,7 @@ QUESTION_TYPES = [
     ("Select all that apply", "Questions with more than one right answer, which test whether you really know the topic."),
     ("Sort into groups", "Put each item in the right category, for comparing and classifying."),
     ("Numeric", "Calculation and number answers, with sensible rounding allowed."),
-    ("Explain", "Write a short explanation, then check it against the key points a good answer covers."),
+    ("Odd one out", "Spot the item that doesn't belong, which tests whether you know what links the others."),
     ("Flashcards", "One idea per card, reviewed with spaced repetition so you see hard cards more often."),
 ]
 
@@ -186,11 +186,11 @@ LANDING_PAGES = {
               "mentioned, and a quiz you can trust the night before an exam."]),
             ("Ten question types, not just multiple choice",
              ["QuizlyNotes writes multiple choice, true or false, fill in the blank, short answer, ordering, "
-              "matching, select all that apply, sort into groups, numeric and explain questions, plus "
+              "matching, select all that apply, sort into groups, numeric and odd one out questions, plus "
               "flashcards. Mixing formats makes you recall information in different ways, which is closer to "
               "how real exams test you.",
               "Short answers are marked generously, so small typos and alternative wordings still count. "
-              "Explain questions show the key points a good answer should cover."]),
+              "Every question is marked automatically, so you get your score straight away."]),
             ("A flashcard and quiz generator in one",
              ["Every set comes with both a practice quiz and a deck of flashcards made from the same notes. "
               "Flashcards use spaced repetition, so cards you find hard come back sooner. There are also quick "
@@ -237,7 +237,7 @@ KEY_FACTS = [
     ("Input", "PDFs (including scanned pages and lecture slides), Word (.docx), PowerPoint (.pptx), plain text, or pasted notes."),
     ("Output", "Revision notes grouped by topic, a practice quiz with explained answers, and a flashcard deck."),
     ("Question types", "Multiple choice, true or false, fill in the blank, short answer, ordering, matching, "
-                       "select all that apply, sort into groups, numeric and explain, plus flashcards."),
+                       "select all that apply, sort into groups, numeric and odd one out, plus flashcards. Every question is marked automatically."),
     ("Study modes", "Topic-by-topic quiz, flashcards with spaced repetition (Again, Hard, Good, Easy), and Match, "
                     "Speed and Write games. Pro adds timed mock exams across a subject and weak-spot review."),
     ("AI model", "Google Gemini Flash. Questions are written only from the notes made from your material."),

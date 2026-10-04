@@ -32,33 +32,7 @@
       <details class="gen-options">
         <summary>Quiz options</summary>
         <div class="gen-options__panel">
-          <label class="field">
-            <span class="field__label">Number of questions</span>
-            <select data-count>
-              <option value="">Auto (based on your notes)</option>
-              {% for n in [5, 10, 15, 20, 30, 40, 60] %}
-              {% if plan and n > plan.limits.max_questions %}<option value="{{ n }}" disabled>{{ n }} (Pro)</option>{% else %}<option value="{{ n }}">{{ n }}</option>{% endif %}
-              {% endfor %}
-            </select>
-          </label>
-          <fieldset class="field">
-            <legend class="field__label">Difficulty</legend>
-            <div class="segmented">
-              {% for d in ['easy', 'medium', 'hard'] %}
-              <label><input type="radio" name="difficulty" value="{{ d }}" {% if d == 'medium' %}checked{% endif %}><span>{{ d|capitalize }}</span></label>
-              {% endfor %}
-            </div>
-          </fieldset>
-          <fieldset class="field">
-            <legend class="field__label">Question types</legend>
-            <div class="checks">
-              {% set labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True / false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering', 'matching': 'Matching', 'multi_select': 'Select all that apply', 'categorize': 'Sort into groups', 'numeric': 'Numeric', 'explain': 'Explain'} %}
-              {% for k in kinds %}
-              <label><input type="checkbox" value="{{ k }}" data-kind checked> {{ labels[k] }}</label>
-              {% endfor %}
-            </div>
-          </fieldset>
-          <p class="muted small">Flashcards are always included.</p>
+          {% include "partials/quiz_fields.html" %}
         </div>
       </details>
       <p class="form-error" data-error hidden></p>

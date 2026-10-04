@@ -72,9 +72,13 @@ Question kinds:
 - numeric: only when the notes contain numbers, quantities or a calculation the
   student should know. `answers` is [the number with no units or commas,
   optional unit], e.g. ["120", "million"] or ["9.81", "m/s²"].
-- explain: an open "Explain why/how..." question needing 2 to 4 sentences.
-  `answers` lists 2 to 4 short key points a good answer must include. Use for
-  the most important mechanisms or arguments only.
+- odd_one_out: 4 short items in `options` where three share a property from
+  the notes and one doesn't. `answers` is [the odd item, copied exactly]. The
+  prompt says what to look for, e.g. "Which of these is NOT a product of
+  aerobic respiration?" or "Which is the odd one out?", and the explanation
+  names the shared property.
+Every question must have one objectively correct answer that can be marked
+automatically. Never ask open "explain" or essay questions.
 - flashcard: front is a question or a term, back is a concise answer
   (under 25 words) that a student could recall from memory.
 

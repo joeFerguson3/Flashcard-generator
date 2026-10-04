@@ -32,7 +32,7 @@ class NoteSections(BaseModel):
 
 CardKind = Literal[
     "flashcard", "multiple_choice", "true_false", "fill_blank", "short_answer", "ordering",
-    "matching", "multi_select", "categorize", "numeric", "explain",
+    "matching", "multi_select", "categorize", "numeric", "odd_one_out",
 ]
 
 
@@ -50,7 +50,7 @@ class GenCard(BaseModel):
         description=(
             "multiple_choice: 4 answer options. ordering: the items in the CORRECT order "
             "(they are shuffled for the student). matching: the terms (left column). "
-            "multi_select: 4-6 options. categorize: the items to sort. "
+            "multi_select: 4-6 options. categorize: the items to sort. odd_one_out: 4 items. "
             "Empty list for every other kind."
         )
     )
@@ -63,7 +63,7 @@ class GenCard(BaseModel):
             "multi_select: every correct option, copied exactly. "
             "categorize: the category name for each item, same order as options. "
             "numeric: [the number only, then optionally the unit]. "
-            "explain: 2-4 key points a good answer must mention."
+            "odd_one_out: [the item that doesn't belong, copied exactly]."
         )
     )
     explanation: str = Field(description="One or two sentences explaining why the answer is correct.")
