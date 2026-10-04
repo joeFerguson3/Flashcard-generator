@@ -15,9 +15,33 @@
 
   <div class="set-main">
     <header class="set-head">
-      <p class="eyebrow">{{ s.subject }}</p>
-      <h1 class="page-title">{{ s.title }}</h1>
-      <p class="muted small">{% if s.source_name %}From {{ s.source_name }} · {% endif %}Created {{ s.created_at|ago }}</p>
+      <div class="set-head__text">
+        <p class="eyebrow">{{ s.subject }}</p>
+        <h1 class="page-title">{{ s.title }}</h1>
+        <p class="muted small">{% if s.source_name %}From {{ s.source_name }} · {% endif %}Created {{ s.created_at|ago }}</p>
+      </div>
+      <div class="set-head__actions">
+        <a class="btn btn--hl" href="{{ url_for('study.edit_notes', set_id=s.id) }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          Edit notes
+        </a>
+        {% if s.cards %}<a class="btn btn--ghost" href="{{ url_for('study.edit_cards', set_id=s.id) }}">Edit questions</a>{% endif %}
+        <details class="manage menu-pop">
+          <summary class="btn btn--ghost" aria-label="Rename, move or delete">Rename / delete</summary>
+          <div class="menu-pop__panel">
+          <form method="post" action="{{ url_for('study.rename_set', set_id=s.id) }}" class="manage__form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label class="field"><span class="field__label">Title</span><input name="title" value="{{ s.title }}" maxlength="200" required></label>
+            <label class="field"><span class="field__label">Subject</span><input name="subject" value="{{ s.subject }}" maxlength="120" required></label>
+            <button class="btn btn--primary btn--sm" type="submit">Save</button>
+          </form>
+          <form method="post" action="{{ url_for('study.delete_set', set_id=s.id) }}" class="manage__delete" data-confirm="Delete “{{ s.title }}” and all its questions and scores? This can't be undone.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn--danger btn--sm" type="submit">Delete this set</button>
+          </form>
+          </div>
+        </details>
+      </div>
     </header>
 
     {% if not s.has_quiz %}
@@ -86,7 +110,7 @@
         <h2 class="block__title">Notes</h2>
         <div class="btn-row">
           <a class="btn btn--ghost btn--sm" href="{{ url_for('study.edit_notes', set_id=s.id) }}">Edit notes</a>
-          {% if s.cards %}<a class="btn btn--ghost btn--sm" href="{{ url_for('study.edit_cards', set_id=s.id) }}">Edit cards</a>{% endif %}
+          {% if s.cards %}<a class="btn btn--ghost btn--sm" href="{{ url_for('study.edit_cards', set_id=s.id) }}">Edit questions</a>{% endif %}
         </div>
       </div>
       <div class="notes-read">
@@ -143,21 +167,6 @@
     </section>
     {% endif %}
 
-    <section class="block block--quiet">
-      <details class="manage">
-        <summary>Rename, move or delete</summary>
-        <form method="post" action="{{ url_for('study.rename_set', set_id=s.id) }}" class="grid-2 manage__form">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <label class="field"><span class="field__label">Title</span><input name="title" value="{{ s.title }}" maxlength="200" required></label>
-          <label class="field"><span class="field__label">Subject</span><input name="subject" value="{{ s.subject }}" maxlength="120" required></label>
-          <div><button class="btn btn--ghost btn--sm" type="submit">Save</button></div>
-        </form>
-        <form method="post" action="{{ url_for('study.delete_set', set_id=s.id) }}" data-confirm="Delete “{{ s.title }}” and all its questions and scores? This can't be undone.">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn--danger btn--sm" type="submit">Delete this set</button>
-        </form>
-      </details>
-    </section>
   </div>
 </section>
 {% endblock %}
