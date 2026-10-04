@@ -501,17 +501,28 @@
       var select = h('select', { class: 'match-select', 'aria-label': 'Match for ' + term, 'data-autofocus': i === 0 ? true : null },
         [h('option', { value: '', text: 'Choose…' })].concat(choices.map(function (c) { return h('option', { value: c, text: c }); })));
       selects.push(select);
-      select.addEventListener('change', update);
+      select._prev = '';
+      select.addEventListener('change', function () { swap(select); update(); });
       return h('div', { class: 'match-row' }, [h('span', { class: 'match-row__term', text: term }), select]);
     });
     article.appendChild(h('div', { class: 'match-rows' }, rows));
     var check = h('button', { type: 'button', class: 'btn btn--primary', text: 'Check', disabled: true });
+    // Each definition is used once. Picking one that another term already has
+    // swaps them, so you can rearrange freely without clearing anything first.
+    function swap(changed) {
+      var v = changed.value;
+      if (v) selects.forEach(function (other) {
+        if (other !== changed && other.value === v) other.value = changed._prev;
+      });
+      selects.forEach(function (sel) { sel._prev = sel.value; });
+    }
     function update() {
-      // Each definition can only be used once: grey it out in the other dropdowns.
-      var used = selects.map(function (s) { return s.value; });
-      selects.forEach(function (s) {
-        Array.prototype.forEach.call(s.options, function (o) {
-          o.disabled = !!o.value && o.value !== s.value && used.indexOf(o.value) !== -1;
+      var used = selects.map(function (sel) { return sel.value; });
+      selects.forEach(function (sel) {
+        Array.prototype.forEach.call(sel.options, function (o) {
+          if (!o.value) return;
+          var owner = used.indexOf(o.value);
+          o.textContent = o.value + (owner !== -1 && selects[owner] !== sel ? '  (swap with ' + card.options[owner] + ')' : '');
         });
       });
       check.disabled = used.some(function (v) { return !v; });
