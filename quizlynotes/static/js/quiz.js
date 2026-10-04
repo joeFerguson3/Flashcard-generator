@@ -81,6 +81,23 @@
     return levenshtein(g, e) <= allowed;
   }
 
+  /* Typed answers are marked as soon as they're right: after a short pause in
+     typing, if `isRight()` passes, `grade()` runs. Wrong answers still wait
+     for Enter or Check, so a half-typed word is never marked wrong. */
+  function autoMark(inputs, isRight, grade) {
+    var timer = null, done = false;
+    inputs.forEach(function (input) {
+      input.addEventListener('input', function () {
+        clearTimeout(timer);
+        if (done || input.readOnly) return;
+        timer = setTimeout(function () {
+          if (!done && !input.readOnly && isRight()) { done = true; grade(false); }
+        }, 600);
+      });
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') clearTimeout(timer); });
+    });
+  }
+
   // ---- build steps -------------------------------------------------------
   var steps = [];
   var questions = [];
@@ -361,6 +378,9 @@
     }
     check.addEventListener('click', function () { grade(false); });
     giveUp.addEventListener('click', function () { grade(true); });
+    autoMark(inputs, function () {
+      return inputs.every(function (input, i) { return matches(input.value, card.answers[i]); });
+    }, grade);
     inputs.forEach(function (input, i) {
       input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
@@ -388,6 +408,9 @@
     }
     check.addEventListener('click', function () { if (input.value.trim()) grade(false); else input.focus(); });
     giveUp.addEventListener('click', function () { grade(true); });
+    autoMark([input], function () {
+      return (card.answers || []).some(function (a) { return matches(input.value, a); });
+    }, grade);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); e.stopPropagation(); grade(false); }
     });
@@ -633,6 +656,11 @@
     var giveUp = h('button', { type: 'button', class: 'link-btn small', text: 'Show answer' });
     check.addEventListener('click', function () { if (input.value.trim()) grade(false); else input.focus(); });
     giveUp.addEventListener('click', function () { grade(true); });
+    // Auto-mark only an exact number, so typing "12" on the way to "120" isn't caught early.
+    autoMark([input], function () {
+      var given = parseFloat(String(input.value).replace(/,/g, '').replace(/[^\d.eE+-]/g, ''));
+      return isFinite(given) && Math.abs(given - expected) < 1e-9;
+    }, grade);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); e.stopPropagation(); grade(false); }
     });
