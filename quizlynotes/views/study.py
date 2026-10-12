@@ -66,7 +66,7 @@ def study_set(set_id: int):
     )
     return render_template(
         "app/set.html", s=s, siblings=siblings, due=len(s.due_flashcards()),
-        attempts=s.attempts[:8],
+        attempts=s.attempts[:8], subjects=subjects_for(current_user),
     )
 
 
@@ -87,6 +87,9 @@ def quiz(set_id: int):
         return redirect(url_for("study.edit_notes", set_id=s.id))
     only_missed = request.args.get("mode") == "missed"
     payload = build_quiz_payload(s.to_dict(), only_ids=_ids(request.args.get("ids")) if only_missed else None)
+    n = request.args.get("n", type=int)
+    if n is not None and not only_missed:
+        _limit_questions(payload, max(0, n))
     payload["submit_url"] = url_for("api.submit_attempt", set_id=s.id)
     payload["set_url"] = url_for("study.study_set", set_id=s.id)
     payload["retry_url"] = url_for("study.quiz", set_id=s.id)
@@ -337,6 +340,17 @@ def _ids(raw: str | None) -> set[int] | None:
         if part.strip().isdigit():
             out.add(int(part))
     return out or None
+
+
+def _limit_questions(payload: dict, n: int) -> None:
+    """Keep a random `n` questions, in their original order. Every topic's notes stay."""
+    all_ids = [c["id"] for g in payload["groups"] for c in g["cards"]]
+    if n >= len(all_ids):
+        return
+    keep = set(random.sample(all_ids, n))
+    for g in payload["groups"]:
+        g["cards"] = [c for c in g["cards"] if c["id"] in keep]
+    payload["notes_only"] = n == 0
 
 
 def build_quiz_payload(data: dict, only_ids: set[int] | None = None) -> dict:

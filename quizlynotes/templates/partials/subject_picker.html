@@ -1,0 +1,14 @@
+{# Pick an existing subject or type a new one.
+   Params: name (input name or none), value (current subject), subjects, auto (bool: allow "detect automatically"),
+   input_attrs (extra attributes for the text input, e.g. data-subject). #}
+{% set pid = 'subj-' ~ range(100000, 999999)|random %}
+<div class="subject-picker" data-subject-picker>
+  <select class="subject-picker__select" aria-label="Subject" data-subject-select>
+    {% if auto %}<option value="" {% if not value %}selected{% endif %}>Work it out from my notes</option>{% endif %}
+    {% for x in subjects %}<option value="{{ x }}" {% if x == value %}selected{% endif %}>{{ x }}</option>{% endfor %}
+    {% if value and value not in subjects %}<option value="{{ value }}" selected>{{ value }}</option>{% endif %}
+    <option value="__new__">+ New subject…</option>
+  </select>
+  <input type="text" class="subject-picker__new" maxlength="120" placeholder="New subject name, e.g. Biology"
+         value="{{ value or '' }}" {% if name %}name="{{ name }}"{% endif %} {{ input_attrs|default('')|safe }} hidden data-subject-input aria-label="New subject name">
+</div>

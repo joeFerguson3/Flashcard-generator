@@ -163,5 +163,56 @@
     }
   });
 
+  // Subject picker: choose an existing subject, or "+ New subject…" to type one.
+  function initSubjectPickers() {
+    document.querySelectorAll('[data-subject-picker]').forEach(function (box) {
+      var select = box.querySelector('[data-subject-select]');
+      var input = box.querySelector('[data-subject-input]');
+      var last = select.value;
+      function fire() { input.dispatchEvent(new Event('input', { bubbles: true })); }
+      select.addEventListener('change', function () {
+        if (select.value === '__new__') {
+          input.hidden = false;
+          input.value = '';
+          input.focus();
+        } else {
+          input.hidden = true;
+          input.value = select.value;
+          last = select.value;
+          fire();
+        }
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { select.value = last; input.hidden = true; input.value = last; fire(); }
+      });
+    });
+  }
+
+  // Quiz launcher on a set page: slider for how many questions (0 = notes only).
+  function initQuizLaunch() {
+    var form = document.querySelector('[data-quiz-launch]');
+    if (!form) return;
+    var range = form.querySelector('[data-n]');
+    var out = form.querySelector('[data-n-out]');
+    var go = form.querySelector('[data-n-go]');
+    var max = parseInt(range.max, 10);
+    var key = 'qn-quiz-n-' + form.getAttribute('data-set');
+    try { var saved = localStorage.getItem(key); if (saved !== null && +saved <= max) range.value = saved; } catch (e) {}
+    function update() {
+      var n = parseInt(range.value, 10);
+      out.textContent = n === 0 ? 'none, just the notes' : n === max ? 'all ' + max : n + ' of ' + max;
+      go.textContent = n === 0 ? 'Read the notes →' : 'Start quiz →';
+      range.style.setProperty('--fill', (max ? n / max * 100 : 100) + '%');
+    }
+    range.addEventListener('input', update);
+    form.addEventListener('submit', function () {
+      try { localStorage.setItem(key, range.value); } catch (e) {}
+      if (parseInt(range.value, 10) === max) range.disabled = true; // plain URL for "all"
+    });
+    update();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () { initSubjectPickers(); initQuizLaunch(); });
+
   window.QN = { request: request, toast: toast, startLoader: startLoader, tabs: tabs, showUpgrade: showUpgrade };
 })();

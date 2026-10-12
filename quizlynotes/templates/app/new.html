@@ -33,11 +33,10 @@
     </div>
 
     <div class="grid-2">
-      <label class="field">
-        <span class="field__label">Subject <span class="muted">(optional)</span></span>
-        <input type="text" name="subject" list="subject-list" maxlength="120" placeholder="Leave blank to detect it">
-        <datalist id="subject-list">{% for s in subjects %}<option value="{{ s }}">{% endfor %}</datalist>
-      </label>
+      <div class="field">
+        <span class="field__label">Subject</span>
+        {% with name='subject', value='', auto=true %}{% include "partials/subject_picker.html" %}{% endwith %}
+      </div>
       <label class="field">
         <span class="field__label">Title <span class="muted">(optional)</span></span>
         <input type="text" name="title" maxlength="200" placeholder="e.g. Lecture 12: How vision works">

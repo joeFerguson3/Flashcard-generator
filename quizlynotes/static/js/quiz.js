@@ -109,7 +109,9 @@
       questions.push(q);
     });
   });
-  if (!questions.length) {
+  var notesOnly = !questions.length && steps.length > 0;
+  if (notesOnly) showNotes = true;
+  if (!questions.length && !notesOnly) {
     root.appendChild(h('div', { class: 'step' }, [h('p', { text: 'No questions to show.' })]));
     return;
   }
@@ -123,6 +125,12 @@
   }
 
   function renderProgress() {
+    if (notesOnly) {
+      var read = Math.min(index, steps.length);
+      progressFill.style.width = (read / steps.length * 100) + '%';
+      progressLabel.textContent = read + ' / ' + steps.length + ' topics';
+      return;
+    }
     var done = questions.filter(function (q) { return q.result !== null; }).length;
     progressFill.style.width = (done / questions.length * 100) + '%';
     progressLabel.textContent = done + ' / ' + questions.length;
@@ -235,10 +243,10 @@
         return h('span', { class: i === page ? 'is-on' : '' });
       })) : h('span', { class: 'step__hint', text: count + ' question' + (count === 1 ? '' : 's') + ' on this topic' });
       var back = page > 0 ? h('button', { class: 'btn btn--ghost', type: 'button', text: '← Back', onclick: function () { page--; draw(); } }) : null;
-      var skipNotes = !last ? h('button', { class: 'btn btn--ghost', type: 'button', text: 'Skip notes', title: 'Go straight to the questions on this topic', onclick: next }) : null;
+      var skipNotes = (!last && !notesOnly) ? h('button', { class: 'btn btn--ghost', type: 'button', text: 'Skip notes', title: 'Go straight to the questions on this topic', onclick: next }) : null;
       var fwd = h('button', {
         class: 'btn btn--primary', type: 'button', 'data-autofocus': true,
-        text: last ? 'I’m ready →' : 'Next →',
+        text: last ? (notesOnly ? 'Next topic →' : 'I’m ready →') : 'Next →',
         onclick: function () { if (last) next(); else { page++; draw(); } }
       });
       article.appendChild(h('div', { class: 'step__actions' }, [dots, h('div', { class: 'btn-row' }, [skipNotes, back, fwd])]));
@@ -723,6 +731,17 @@
 
   // ---- results -----------------------------------------------------------
   function renderResults() {
+    if (notesOnly) {
+      return h('article', { class: 'step results' }, [
+        h('p', { class: 'step__kind', text: 'Notes read' }),
+        h('h2', { class: 'notes-title', text: 'That’s all the notes' }),
+        h('p', { class: 'muted', text: 'Ready to test yourself? Pick how many questions on the set page, or take the whole quiz now.' }),
+        h('div', { class: 'results__actions' }, [
+          h('a', { class: 'btn btn--primary', href: data.retry_url, text: 'Take the full quiz' }),
+          h('a', { class: 'btn btn--ghost', href: data.set_url, text: 'Back to set' })
+        ])
+      ]);
+    }
     var correctCount = questions.filter(function (q) { return q.result === true; }).length;
     var score = Math.round(correctCount / questions.length * 100);
     var missed = questions.filter(function (q) { return q.result !== true; });

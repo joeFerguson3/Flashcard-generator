@@ -10,7 +10,6 @@
       <p class="muted">{{ sets|length }} set{{ 's' if sets|length != 1 }} across {{ subjects|length }} subject{{ 's' if subjects|length != 1 }}{% if due_total %} · <strong class="due-text">{{ due_total }} flashcard{{ 's' if due_total != 1 }} due</strong>{% endif %}</p>
       {% endif %}
     </div>
-    <a class="btn btn--primary" href="{{ url_for('study.new_set') }}">New set</a>
   </header>
 
   {% if plan %}
@@ -40,22 +39,37 @@
     <a class="btn btn--primary btn--lg" href="{{ url_for('study.new_set') }}">Add notes</a>
   </div>
   {% else %}
-  <div class="toolbar" data-library-filters>
-    <div class="chips" role="group" aria-label="Filter by subject">
-      <button type="button" class="chip" data-subject="" aria-pressed="{{ 'true' if not active_subject else 'false' }}">All</button>
-      {% for subject in subjects %}
-      <button type="button" class="chip" data-subject="{{ subject }}" aria-pressed="{{ 'true' if active_subject == subject else 'false' }}">{{ subject }}</button>
-      {% endfor %}
+  <section class="revise-strip" aria-label="Revise across all your sets">
+    <a class="revise-tile" href="{{ url_for('study.mock_exam', subject=active_subject) if active_subject else url_for('study.mock_exam') }}">
+      <span class="revise-tile__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 13V9M10 3h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      <span><strong>Mock exam{% if not plan.pro %} <span class="pro-badge pro-badge--sm">Pro</span>{% endif %}</strong><span class="muted small">A timed quiz mixing every set in a subject</span></span>
+      <span class="revise-tile__arrow" aria-hidden="true">→</span>
+    </a>
+    <a class="revise-tile" href="{{ url_for('study.weak_spots') }}">
+      <span class="revise-tile__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l9 16H3L12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      <span><strong>Weak spots{% if not plan.pro %} <span class="pro-badge pro-badge--sm">Pro</span>{% endif %}</strong><span class="muted small">Practise the questions you keep getting wrong</span></span>
+      <span class="revise-tile__arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+  <div class="lib-filters" data-library-filters>
+    <div class="lib-filters__subjects">
+      <span class="lib-filters__label" id="subject-filter-label">Subjects</span>
+      <div class="chips" role="group" aria-labelledby="subject-filter-label">
+        <button type="button" class="chip" data-subject="" aria-pressed="{{ 'true' if not active_subject else 'false' }}">All <span class="chip__n">{{ sets|length }}</span></button>
+        {% for subject in subjects %}
+        <button type="button" class="chip" data-subject="{{ subject }}" aria-pressed="{{ 'true' if active_subject == subject else 'false' }}">{{ subject }} <span class="chip__n">{{ sets|selectattr('subject', 'equalto', subject)|list|length }}</span></button>
+        {% endfor %}
+      </div>
     </div>
-    <div class="toolbar__right">
-      <a class="btn btn--ghost btn--sm" href="{{ url_for('study.mock_exam', subject=active_subject) if active_subject else url_for('study.mock_exam') }}">Mock exam{% if not plan.pro %} <span class="pro-badge pro-badge--sm">Pro</span>{% endif %}</a>
-      <a class="btn btn--ghost btn--sm" href="{{ url_for('study.weak_spots') }}">Weak spots{% if not plan.pro %} <span class="pro-badge pro-badge--sm">Pro</span>{% endif %}</a>
-      <label class="field field--inline">
+    <div class="lib-filters__tools">
+      <label class="field field--inline lib-search">
         <span class="sr-only">Search sets</span>
-        <input type="search" placeholder="Search" data-search>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="search" placeholder="Search your sets" data-search>
       </label>
-      <label class="field field--inline">
-        <span class="sr-only">Sort</span>
+      <label class="field field--inline lib-sort">
+        <span class="muted small">Sort</span>
         <select data-sort>
           <option value="recent">Recently updated</option>
           <option value="az">A–Z</option>
@@ -78,7 +92,7 @@
         <div class="set-card__foot">
           <div class="scorebar" title="Best score">
             <span class="scorebar__track"><span class="scorebar__fill" style="--w: {{ s.best_score or 0 }}%"></span></span>
-            <span class="scorebar__label">{{ s.best_score|pct }}</span>
+            <span class="scorebar__label">{{ ('Best ' ~ (s.best_score|pct)) if s.best_score is not none else 'Not taken yet' }}</span>
           </div>
           {% if due %}<span class="pill pill--due">{{ due }} due</span>{% else %}<span class="muted small">{{ s.last_studied_at|ago }}</span>{% endif %}
         </div>

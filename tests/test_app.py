@@ -320,3 +320,20 @@ def test_quiz_page_has_options_and_skips_legacy_explain(client, app):
     with app.app_context():
         kinds = {c.kind for c in db.session.get(StudySet, set_id).quiz_cards}
         assert kinds <= {"odd_one_out", "multiple_choice"}
+
+
+def test_quiz_question_count(client, app):
+    login(client)
+    set_id = make_set(client)
+    client.post(f"/api/sets/{set_id}/generate", json={"count": 20})
+    def count(url):
+        html = client.get(url).get_data(as_text=True)
+        data = json.loads(html.split('id="quiz-data">')[1].split("</script>")[0])
+        return sum(len(g["cards"]) for g in data["groups"]), data.get("notes_only", False), len(data["groups"])
+    total, _, groups = count(f"/sets/{set_id}/quiz")
+    assert total > 3
+    assert count(f"/sets/{set_id}/quiz?n=3")[0] == 3
+    n, notes_only, g = count(f"/sets/{set_id}/quiz?n=0")
+    assert n == 0 and notes_only and g == groups
+    page = client.get(f"/sets/{set_id}").get_data(as_text=True)
+    assert 'type="range" name="n"' in page and "data-subject-picker" in page

@@ -8,11 +8,10 @@
     <div class="editor-head__fields">
       <label class="sr-only" for="set-title">Title</label>
       <input id="set-title" class="title-input" value="{{ s.title }}" maxlength="200" data-title>
-      <label class="subject-input">
+      <div class="subject-input">
         <span class="muted small">Subject</span>
-        <input value="{{ s.subject }}" maxlength="120" list="subject-list" data-subject>
-        <datalist id="subject-list">{% for x in subjects %}<option value="{{ x }}">{% endfor %}</datalist>
-      </label>
+        {% with name=none, value=s.subject, auto=false, input_attrs='data-subject' %}{% include "partials/subject_picker.html" %}{% endwith %}
+      </div>
     </div>
     <p class="save-state muted small" data-save-state aria-live="polite">All changes saved</p>
   </div>

@@ -3,7 +3,8 @@
 {% block content %}
 <section class="wrap page set-layout">
   <aside class="set-aside" aria-label="Sets in {{ s.subject }}">
-    <a class="back" href="{{ url_for('study.library', subject=s.subject) }}">← {{ s.subject }}</a>
+    <a class="back" href="{{ url_for('study.library', subject=s.subject) }}">← Library</a>
+    <p class="side-label">Sets in {{ s.subject }}</p>
     <ul class="side-list">
       {% for other in siblings %}
       <li><a href="{{ url_for('study.study_set', set_id=other.id) }}" {% if other.id == s.id %}aria-current="page"{% endif %}>
@@ -27,12 +28,15 @@
         </a>
         {% if s.cards %}<a class="btn btn--ghost" href="{{ url_for('study.edit_cards', set_id=s.id) }}">Edit questions</a>{% endif %}
         <details class="manage menu-pop">
-          <summary class="btn btn--ghost" aria-label="Rename, move or delete">Rename / delete</summary>
+          <summary class="btn btn--manage" aria-label="Rename, change subject or delete">
+            <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Rename / delete
+          </summary>
           <div class="menu-pop__panel">
           <form method="post" action="{{ url_for('study.rename_set', set_id=s.id) }}" class="manage__form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label class="field"><span class="field__label">Title</span><input name="title" value="{{ s.title }}" maxlength="200" required></label>
-            <label class="field"><span class="field__label">Subject</span><input name="subject" value="{{ s.subject }}" maxlength="120" required></label>
+            <div class="field"><span class="field__label">Subject</span>{% with name='subject', value=s.subject, auto=false %}{% include "partials/subject_picker.html" %}{% endwith %}</div>
             <button class="btn btn--primary btn--sm" type="submit">Save</button>
           </form>
           <form method="post" action="{{ url_for('study.delete_set', set_id=s.id) }}" class="manage__delete" data-confirm="Delete “{{ s.title }}” and all its questions and scores? This can't be undone.">
@@ -62,11 +66,22 @@
 
     <h2 class="block__title">Ways to study</h2>
     <div class="modes">
-      <a class="mode mode--primary" href="{{ url_for('study.quiz', set_id=s.id) }}">
-        <span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 5l12 7-12 7V5z" fill="currentColor"/></svg></span>
-        <strong>{{ 'Retake quiz' if s.attempts else 'Start quiz' }}</strong>
-        <span>Notes and questions, topic by topic</span>
-      </a>
+      {% set total_q = s.quiz_cards|length %}
+      <form class="mode mode--primary quiz-launch" method="get" action="{{ url_for('study.quiz', set_id=s.id) }}" data-quiz-launch data-set="{{ s.id }}">
+        <div class="quiz-launch__top">
+          <span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 5l12 7-12 7V5z" fill="currentColor"/></svg></span>
+          <div>
+            <strong>{{ 'Retake quiz' if s.attempts else 'Start quiz' }}</strong>
+            <span class="quiz-launch__sub">Notes and questions, topic by topic</span>
+          </div>
+        </div>
+        <label class="quiz-launch__slider">
+          <span class="quiz-launch__label">Questions: <output data-n-out>{{ total_q }} of {{ total_q }}</output></span>
+          <input type="range" name="n" min="0" max="{{ total_q }}" step="1" value="{{ total_q }}" data-n aria-label="Number of questions">
+          <span class="quiz-launch__ends" aria-hidden="true"><span>Notes only</span><span>All {{ total_q }}</span></span>
+        </label>
+        <button class="btn btn--hl quiz-launch__go" type="submit" data-n-go>Start quiz →</button>
+      </form>
       <a class="mode" href="{{ url_for('study.flashcards', set_id=s.id) }}">
         <span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="6" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7 4h12a2 2 0 012 2v9" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
         <strong>Flashcards</strong>
