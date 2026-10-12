@@ -7,7 +7,7 @@
       <p class="eyebrow">Library</p>
       <h1 class="page-title">Hi {{ current_user.display_name.split(' ')[0] }}</h1>
       {% if sets %}
-      <p class="muted">{{ sets|length }} set{{ 's' if sets|length != 1 }} across {{ subjects|length }} subject{{ 's' if subjects|length != 1 }}{% if due_total %} · <strong class="due-text">{{ due_total }} flashcard{{ 's' if due_total != 1 }} due</strong>{% endif %}</p>
+      <p class="muted">{{ sets|length }} set{{ 's' if sets|length != 1 }} across {{ subjects|length }} subject{{ 's' if subjects|length != 1 }}</p>
       {% endif %}
     </div>
   </header>
