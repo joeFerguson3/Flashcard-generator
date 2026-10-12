@@ -360,3 +360,12 @@ def test_quality_and_dropoff_events(client, app):
     client.post("/api/beacon", data='{"kind":"quiz_abandon","fields":{}}')
     with app.app_context():
         assert SiteEvent.query.count() == before
+
+
+def test_google_ads_tag_needs_consent(client):
+    html = client.get("/").get_data(as_text=True)
+    assert "AW-TEST" in html and "data-cookie-banner" in html
+    # The gtag script is only injected by JS after consent, never as a static tag.
+    assert 'src="https://www.googletagmanager.com' not in html
+    assert "qn_ads=yes" in html
+    assert 'id="cookies"' in client.get("/privacy").get_data(as_text=True)

@@ -136,6 +136,8 @@ def _register_template_helpers(app: Flask) -> None:
                 "guest_demo": app.config["ENABLE_GUEST_DEMO"],
                 "dev_login": app.config["ENABLE_DEV_LOGIN"],
                 "monetisation": app.config.get("MONETISATION_ENABLED", True),
+                "ads_id": app.config.get("GOOGLE_ADS_ID", ""),
+                "ads_signup_label": app.config.get("GOOGLE_ADS_SIGNUP_LABEL", ""),
             },
         }
 

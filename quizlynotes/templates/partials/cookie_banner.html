@@ -1,0 +1,39 @@
+{% if site.ads_id %}
+<div class="cookie-banner" data-cookie-banner role="region" aria-label="Cookie choice" hidden>
+  <p class="cookie-banner__text">Can we use advertising cookies? They let Google Ads tell us which ads bring people to QuizlyNotes. Nothing changes about how the site works either way. <a href="{{ url_for('public.privacy') }}#cookies">More about cookies</a></p>
+  <div class="cookie-banner__actions">
+    <button type="button" class="btn btn--ghost btn--sm" data-cookie-answer="no">No thanks</button>
+    <button type="button" class="btn btn--ghost btn--sm" data-cookie-answer="yes">Allow</button>
+  </div>
+</div>
+<script>
+  (function () {
+    var banner = document.querySelector('[data-cookie-banner]');
+    if (!banner) return;
+    var hasChoice = /(?:^|;\s*)qn_ads=(yes|no)/.test(document.cookie);
+    if (!hasChoice) banner.hidden = false;
+    function clearGoogleCookies() {
+      document.cookie.split(';').forEach(function (c) {
+        var name = c.split('=')[0].trim();
+        if (/^_gcl|^_ga|^_gid/.test(name)) {
+          ['', '; domain=' + location.hostname, '; domain=.' + location.hostname.replace(/^www\./, '')].forEach(function (d) {
+            document.cookie = name + '=; Max-Age=0; path=/' + d;
+          });
+        }
+      });
+    }
+    banner.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cookie-answer]');
+      if (!b) return;
+      var yes = b.getAttribute('data-cookie-answer') === 'yes';
+      document.cookie = 'qn_ads=' + (yes ? 'yes' : 'no') + '; Max-Age=' + (60 * 60 * 24 * 180) + '; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+      banner.hidden = true;
+      if (yes) { if (window.QN_ADS) QN_ADS.load(); }
+      else { clearGoogleCookies(); if (window.QN_ADS && QN_ADS.loaded) location.reload(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-cookie-choices]')) { banner.hidden = false; banner.querySelector('button').focus(); }
+    });
+  })();
+</script>
+{% endif %}

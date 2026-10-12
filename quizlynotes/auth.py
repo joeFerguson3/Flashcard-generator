@@ -86,6 +86,7 @@ def _complete_login(email: str, name: str | None, picture: str | None):
         from .activity import attribute_signup
 
         attribute_signup(user)
+        session["ads_signup"] = 1  # fire the Google Ads sign-up conversion on the next page
     user.name = clean_text(name, 255) or user.name
     user.picture = clean_text(picture, 500) or user.picture
     user.last_login_at = utcnow()

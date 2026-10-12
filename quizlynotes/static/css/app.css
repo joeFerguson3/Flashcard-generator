@@ -1142,3 +1142,12 @@ th.is-sortable:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .cohort__cell { background: color-mix(in srgb, var(--chart) calc(var(--a, 0) * 100%), transparent); font-weight: 600; }
 .hbars__label--wide { min-width: 12rem; }
 .hbars li:has(.hbars__label--wide) { grid-template-columns: 12rem 1fr 2.5rem; }
+
+/* Cookie choice for the optional Google Ads tag */
+.cookie-banner { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 60; max-width: 34rem; margin-left: auto;
+  display: flex; flex-direction: column; gap: .7rem; padding: 1rem 1.1rem; background: var(--paper); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.cookie-banner[hidden] { display: none; }
+.cookie-banner__text { margin: 0; font-size: .9rem; line-height: 1.45; }
+.cookie-banner__actions { display: flex; gap: .5rem; justify-content: flex-end; }
+.cookie-banner__actions .btn { min-width: 6.5rem; }

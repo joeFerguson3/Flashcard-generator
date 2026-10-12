@@ -16,13 +16,13 @@
     <li><strong>Study content:</strong> the notes, questions, flashcards and titles created in your account, plus quiz scores and flashcard review history.</li>
     <li><strong>Files you upload:</strong> these are processed to create your notes and are not stored by QuizlyNotes after processing.</li>
     <li><strong>Plan and usage:</strong> your plan, trial and subscription status, and counts of AI actions used each month (to apply plan limits), plus who invited you if you joined via an invite link.</li>
-    <li><strong>How you found us:</strong> the first page you visited, the website that sent you (for example Google or a shared quiz link), and whether you're on a phone, tablet or computer, stored with a random visit ID. If you create an account, this is saved with it. We use it only to see which pages and links bring people to QuizlyNotes, and we don't use third-party analytics or advertising cookies.</li>
+    <li><strong>How you found us:</strong> the first page you visited, the website that sent you (for example Google or a shared quiz link), and whether you're on a phone, tablet or computer, stored with a random visit ID. If you create an account, this is saved with it. We use it only to see which pages and links bring people to QuizlyNotes,. Advertising cookies are only set if you allow them (see Cookies below).</li>
     <li><strong>Study activity:</strong> which days you used QuizlyNotes and which features (quizzes, flashcards, games), plus questions you skip or mark as right, so we can improve the questions.</li>
     <li><strong>Technical data:</strong> standard server logs (IP address, browser, pages requested), used for security, rate limiting and fixing problems.</li>
   </ul>
 
   <h2 id="analytics">Usage analytics and your choice</h2>
-  <p>To improve QuizlyNotes we record how the site is used: for example which page you arrived on, where you stop in a quiz, how often generated notes and questions are edited or reported, and how long generation takes. This uses our own database only. There are no third-party analytics or advertising cookies, and the data is never sold or used for advertising.</p>
+  <p>To improve QuizlyNotes we record how the site is used: for example which page you arrived on, where you stop in a quiz, how often generated notes and questions are edited or reported, and how long generation takes. This uses our own database only. It uses no third-party analytics, and this data is never sold or shared with advertisers.</p>
   <form method="post" action="{{ url_for('public.analytics_choice') }}" class="inline-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="next" value="{{ url_for('public.privacy') }}">
@@ -51,8 +51,9 @@
     <li><strong>Stripe</strong> processes payments for Pro subscriptions. We never see or store your card details; we keep only your Stripe customer ID and subscription status.</li>
   </ul>
 
-  <h2>Cookies</h2>
-  <p>We use a small number of essential cookies to keep you signed in and to protect forms against cross-site attacks. Your theme choice is stored in your browser. We do not use advertising cookies.</p>
+  <h2 id="cookies">Cookies</h2>
+  <p>We use a small number of essential cookies to keep you signed in and to protect forms against cross-site attacks. Your theme choice is stored in your browser.</p>
+  <p><strong>Advertising cookies (optional).</strong> We advertise QuizlyNotes on Google. If you click "Allow" on the cookie message, we load Google's ad tag, which sets cookies (such as <code>_gcl_au</code>) so Google Ads can tell us when someone who clicked an ad goes on to sign up. Google processes this data under its own <a href="https://policies.google.com/technologies/ads" rel="noopener">advertising policies</a>. We don't use it to show you personalised ads. If you click "No thanks", or don't answer, the tag is never loaded. You can change your mind at any time with "Cookie choices" at the bottom of every page.</p>
 
   <h2>Your rights</h2>
   <p>You can export all of your data as a file, or permanently delete your account and everything in it, from <strong>Settings</strong> at any time. Under UK GDPR you also have the right to access, correct or restrict the processing of your data, and to complain to the Information Commissioner's Office (ico.org.uk).</p>

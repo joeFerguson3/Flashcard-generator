@@ -1,0 +1,27 @@
+{% set ads_signup = session.pop('ads_signup', None) %}
+{% if site.ads_id %}
+<script>
+  // Google Ads tag. It only loads after the visitor accepts ad cookies (UK PECR needs consent).
+  window.QN_ADS = {
+    id: {{ site.ads_id|tojson }},
+    signup: {{ ((site.ads_id ~ '/' ~ site.ads_signup_label) if (ads_signup and site.ads_signup_label) else none)|tojson }}
+  };
+  (function () {
+    QN_ADS.load = function () {
+      if (QN_ADS.loaded) return;
+      QN_ADS.loaded = true;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { dataLayer.push(arguments); };
+      gtag('consent', 'default', { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'denied', analytics_storage: 'denied' });
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(QN_ADS.id);
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', QN_ADS.id);
+      if (QN_ADS.signup) gtag('event', 'conversion', { send_to: QN_ADS.signup });
+    };
+    if (/(?:^|;\s*)qn_ads=yes/.test(document.cookie)) QN_ADS.load();
+  })();
+</script>
+{% endif %}

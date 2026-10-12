@@ -23,6 +23,7 @@
   </div>
   <div class="wrap site-footer__bottom">
     <span>&copy; {{ site.year }} QuizlyNotes</span>
+    {% if site.ads_id %}<button type="button" class="link-btn" data-cookie-choices>Cookie choices</button>{% endif %}
     <button type="button" class="link-btn" data-theme-cycle>Theme: <span data-theme-label>System</span></button>
   </div>
 </footer>

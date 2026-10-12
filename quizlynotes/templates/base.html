@@ -29,6 +29,7 @@
     })();
   </script>
   {% block head %}{% endblock %}
+  {% include "partials/ads_tag.html" %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -38,6 +39,7 @@
     {% block content %}{% endblock %}
   </main>
   {% block footer %}{% include "partials/footer.html" %}{% endblock %}
+  {% include "partials/cookie_banner.html" %}
   <script src="{{ asset('js/common.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>

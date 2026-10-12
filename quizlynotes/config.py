@@ -61,6 +61,9 @@ class Config:
     # Plans, limits, trials, referrals and payments. While off, everyone gets
     # the full product (with Pro's fair-use caps) and nothing mentions Pro.
     MONETISATION_ENABLED = _bool("MONETISATION_ENABLED", False)
+    # Google Ads tag (conversion tracking). Loaded only after the visitor accepts ad cookies.
+    GOOGLE_ADS_ID = os.getenv("GOOGLE_ADS_ID", "AW-18509577941" if ENV == "production" else "")
+    GOOGLE_ADS_SIGNUP_LABEL = os.getenv("GOOGLE_ADS_SIGNUP_LABEL", "")
     ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
     STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
@@ -112,6 +115,7 @@ class TestConfig(Config):
     AI_PROVIDER = "fake"
     ENABLE_DEV_LOGIN = True
     MONETISATION_ENABLED = True
+    GOOGLE_ADS_ID = "AW-TEST"
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     SESSION_COOKIE_SECURE = False
