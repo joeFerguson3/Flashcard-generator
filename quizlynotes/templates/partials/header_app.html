@@ -25,6 +25,7 @@
       <div class="menu__panel">
         <p class="menu__who"><strong>{{ current_user.display_name }}</strong><span>{{ current_user.email }}</span></p>
         <a href="{{ url_for('study.settings') }}">Settings</a>
+        {% if is_admin %}<a href="{{ url_for('admin.stats') }}">Stats</a>{% endif %}
         {% if site.monetisation %}
         <a href="{{ url_for('study.settings') }}#plan">{{ 'Plan & billing' if plan and plan.pro else 'Upgrade to Pro' }}</a>
         <a href="{{ url_for('study.settings') }}#invite">Invite friends, get Pro</a>

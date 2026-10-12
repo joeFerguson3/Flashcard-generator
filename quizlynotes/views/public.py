@@ -7,6 +7,7 @@ from flask import (Blueprint, Response, abort, current_app, jsonify, redirect,
                    render_template, request, session, url_for)
 
 from .. import seo
+from ..activity import log_event
 from ..ai import AIError, SourceError, get_provider
 from ..extensions import db, limiter
 from ..models import GuestDraft, utcnow
@@ -231,6 +232,8 @@ def try_it():
     try:
         data = get_provider().quick_study(text)
     except (AIError, SourceError) as exc:
+        db.session.rollback()
+        log_event("error_demo", str(exc))
         return jsonify(error=str(exc)), 502
     # Drafts nobody claimed within two days are discarded.
     cutoff = utcnow() - timedelta(days=2)
@@ -239,6 +242,7 @@ def try_it():
     db.session.add(draft)
     db.session.commit()
     session["guest_draft"] = draft.id
+    log_event("demo")
     return jsonify(redirect=url_for("public.try_result", draft_id=draft.id))
 
 
@@ -270,6 +274,7 @@ def shared_quiz(token: str):
     study_set = StudySet.query.filter_by(share_token=token).first()
     if study_set is None or not study_set.has_quiz:
         abort(404)
+    log_event("share_open", str(study_set.id))
     payload = build_quiz_payload(study_set.to_dict())
     payload["submit_url"] = None
     payload["guest"] = True

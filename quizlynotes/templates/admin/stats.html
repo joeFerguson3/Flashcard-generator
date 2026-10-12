@@ -1,0 +1,233 @@
+{% extends "app/base_app.html" %}
+{% block title %}Stats | QuizlyNotes{% endblock %}
+{% block content %}
+{% set t = s.tiles %}
+<section class="wrap page stats-page">
+  <header class="stats-head">
+    <div>
+      <p class="eyebrow">Owner only</p>
+      <h1 class="page-title">Statistics</h1>
+      <p class="muted small">UK time. {% if include_me %}Including your own account.{% else %}Your own account is left out.{% endif %}</p>
+    </div>
+    <nav class="seg-links" aria-label="Options">
+      <a href="{{ url_for('admin.stats', range=days, me=None if include_me else '1') }}">{{ 'Hide my account' if include_me else 'Include my account' }}</a>
+      <a href="{{ url_for('admin.stats', range='90' if days == 30 else None, me='1' if include_me else None) }}">{{ 'Show 90 days' if days == 30 else 'Show 30 days' }}</a>
+    </nav>
+  </header>
+
+  <div class="stat-tiles">
+    <div class="stat-tile"><span class="stat-tile__n">{{ t.users }}</span><span class="stat-tile__l">Users</span><span class="stat-tile__s">+{{ t.new_week }} in the last 7 days</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ t.active_week }}</span><span class="stat-tile__l">Active in the last 7 days</span><span class="stat-tile__s">did anything on the site</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ t.returned }}</span><span class="stat-tile__l">Repeat users</span><span class="stat-tile__s">{{ t.returned_pct if t.returned_pct is not none else '–' }}% came back on another day</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ t.quizzes }}</span><span class="stat-tile__l">Quizzes completed</span><span class="stat-tile__s">{{ t.quizzes_week }} in the last 7 days{% if t.cross %} · +{{ t.cross }} mock/weak-spot{% endif %}</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ t.avg_score if t.avg_score is not none else '–' }}{% if t.avg_score is not none %}<small>%</small>{% endif %}</span><span class="stat-tile__l">Average quiz score</span><span class="stat-tile__s">across all quizzes</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ t.sets }}</span><span class="stat-tile__l">Study sets made</span><span class="stat-tile__s">{{ t.guests }} try-it demos without an account</span></div>
+  </div>
+
+  {% macro bars(key, label, unit) %}
+  {% set mx = s.series_max[key] %}
+  <figure class="mini-chart">
+    <figcaption><strong>{{ label }}</strong> <span class="muted small">per day, last {{ s.days }} days</span></figcaption>
+    <div class="mini-chart__plot" role="img" aria-label="{{ label }} per day">
+      <span class="mini-chart__max muted">{{ mx }}</span>
+      {% for p in s.series %}
+      <span class="mini-chart__col" tabindex="0" data-tip="{{ p.day.strftime('%a %-d %b') }}: {{ p[key] }} {{ unit if p[key] == 1 else unit ~ 's' }}">
+        <span class="mini-chart__bar{% if not p[key] %} is-zero{% endif %}" style="--h: {{ (p[key] / mx * 100)|round(1) }}%"></span>
+      </span>
+      {% endfor %}
+    </div>
+    <div class="mini-chart__axis muted small"><span>{{ s.series[0].day.strftime('%-d %b') }}</span><span>Today</span></div>
+  </figure>
+  {% endmacro %}
+
+  <section class="block">
+    <h2 class="block__title">Over time</h2>
+    <div class="mini-charts">
+      {{ bars('quizzes', 'Quizzes completed', 'quiz') }}
+      {{ bars('active', 'Active users', 'user') }}
+      {{ bars('signups', 'New sign-ups', 'sign-up') }}
+    </div>
+    <details class="stats-table-toggle">
+      <summary>Show as a table</summary>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th scope="col">Day</th><th scope="col">Quizzes</th><th scope="col">Active users</th><th scope="col">Sign-ups</th></tr></thead>
+          <tbody>{% for p in s.series|reverse %}{% if p.quizzes or p.active or p.signups %}<tr><td>{{ p.day.strftime('%a %-d %b') }}</td><td>{{ p.quizzes }}</td><td>{{ p.active }}</td><td>{{ p.signups }}</td></tr>{% endif %}{% endfor %}</tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Sign-up funnel <span class="muted small">last {{ s.days }} days</span></h2>
+    <ul class="hbars hbars--funnel">
+      {% for label, n, note in s.funnel %}
+      <li><span class="hbars__label">{{ label }}</span><span class="hbars__track"><span class="hbars__bar" style="--w: {{ (n / s.funnel_max * 100)|round(1) }}%"></span></span><span class="hbars__n">{{ n }}</span><span class="hbars__note muted small">{{ note }}</span></li>
+      {% endfor %}
+    </ul>
+    {% if not s.tracking_since %}<p class="muted small">Visits and demo use are counted from when this update went live.</p>{% else %}<p class="muted small">Visits counted since {{ s.tracking_since.strftime('%-d %B') }}. Bots are left out.</p>{% endif %}
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Where people come from <span class="muted small">last {{ s.days }} days</span></h2>
+    <p class="muted small">Tip: add <code>?ref=name</code> to links you post (for example <code>quizlynotes.com/?ref=tiktok</code>) and they'll show up here by name.</p>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">Source</th><th scope="col">Visits</th><th scope="col">Sign-ups</th><th scope="col">Sign-up rate</th><th scope="col">Sign-ups who finished a quiz</th></tr></thead>
+        <tbody>
+          {% for r in s.sources %}
+          <tr><td>{{ r.source }}</td><td>{{ r.visits }}</td><td>{{ r.signups }}</td><td>{{ (r.rate ~ '%') if r.rate is not none else '–' }}</td><td>{{ r.active }}</td></tr>
+          {% else %}<tr><td colspan="5" class="muted">No visits recorded yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="two-col">
+      <div>
+        <h3 class="sub-title">First page people land on</h3>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th scope="col">Page</th><th scope="col">Visits</th><th scope="col">Sign-ups</th></tr></thead>
+            <tbody>
+              {% for r in s.pages %}<tr><td><code>{{ r.path }}</code></td><td>{{ r.visits }}</td><td>{{ r.signups }}</td></tr>
+              {% else %}<tr><td colspan="3" class="muted">Nothing yet.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3 class="sub-title">Devices</h3>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead><tr><th scope="col">Device</th><th scope="col">Visits</th><th scope="col">Sign-ups</th></tr></thead>
+            <tbody>
+              {% for d, n in s.devices %}<tr><td>{{ d|capitalize }}</td><td>{{ n }}</td><td>{{ s.signup_devices.get(d, 0) }}</td></tr>
+              {% else %}<tr><td colspan="3" class="muted">Nothing yet.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <h3 class="sub-title">Shared quizzes and invites</h3>
+        <ul class="kv">
+          <li><span>Shared quiz opened</span><strong>{{ s.shares.opens }}</strong></li>
+          <li><span>People who opened one</span><strong>{{ s.shares.visitors }}</strong></li>
+          <li><span>Different quizzes shared</span><strong>{{ s.shares.quizzes }}</strong></li>
+          <li><span>Sign-ups from shared quizzes</span><strong>{{ s.shares.signups }}</strong></li>
+          <li><span>Sign-ups from invite links</span><strong>{{ s.shares.invite_signups }}</strong></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Repeat users</h2>
+    <div class="repeat-grid">
+      <div>
+        <p class="muted small">How many different days each person has used QuizlyNotes.</p>
+        {% set bmax = (s.buckets|map(attribute=1)|max) or 1 %}
+        <ul class="hbars">
+          {% for label, n in s.buckets %}
+          <li><span class="hbars__label">{{ label }}</span><span class="hbars__track"><span class="hbars__bar" style="--w: {{ (n / bmax * 100)|round(1) }}%"></span></span><span class="hbars__n">{{ n }}</span></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="repeat-note">
+        {% if t.old_enough %}
+        <p><strong>{{ t.returned_old_pct }}%</strong> of the {{ t.old_enough }} people who joined at least a week ago have come back on another day.</p>
+        {% else %}
+        <p class="muted">Nobody joined more than a week ago yet.</p>
+        {% endif %}
+        <p class="muted small">Days count sign-ups, logins, sets, quizzes, flashcards and games.{% if s.visits_since %} Plain visits are counted from {{ s.visits_since.strftime('%-d %B') }}{% else %} Plain visits are counted from now on{% endif %}, so older numbers may be a little low.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Users</h2>
+    <div class="table-scroll">
+      <table class="data-table data-table--users">
+        <thead><tr>
+          <th scope="col">User</th><th scope="col">Joined</th><th scope="col">Last active</th><th scope="col">Days active</th>
+          <th scope="col">Sets</th><th scope="col">Quizzes</th><th scope="col">Avg score</th><th scope="col">Flashcard days</th><th scope="col">Game days</th>
+        </tr></thead>
+        <tbody>
+          {% for u in s.users %}
+          <tr>
+            <td><span class="data-table__email">{{ u.email }}</span>{% if u.name %}<span class="muted small">{{ u.name }}</span>{% endif %}</td>
+            <td>{{ u.joined.strftime('%-d %b') if u.joined else '–' }}</td>
+            <td>{{ u.last_active.strftime('%-d %b') if u.last_active else '–' }}</td>
+            <td>{{ u.active_days }}{% if u.returned %} <span class="pill pill--sm">repeat</span>{% endif %}</td>
+            <td>{{ u.sets }}</td>
+            <td>{{ u.quizzes }}{% if u.cross %} <span class="muted small">+{{ u.cross }}</span>{% endif %}</td>
+            <td>{{ (u.avg_score ~ '%') if u.avg_score is not none else '–' }}</td>
+            <td>{{ u.flash_days }}</td>
+            <td>{{ u.game_days }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="muted">No users yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Question types</h2>
+    <p class="muted small">All time. Low scores, lots of skips or lots of "I was right, count it" point to question types that are too hard, unclear or marked too strictly.</p>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">Type</th><th scope="col">Questions made</th><th scope="col">Times answered</th><th scope="col">Correct</th><th scope="col">Skipped</th><th scope="col">"I was right"</th></tr></thead>
+        <tbody>
+          {% for q in s.qtypes %}
+          <tr><td>{{ q.kind }}</td><td>{{ q.cards }}</td><td>{{ q.seen }}</td><td>{{ (q.accuracy ~ '%') if q.accuracy is not none else '–' }}</td><td>{{ q.skips }}{% if q.skip_rate %} <span class="muted small">({{ q.skip_rate }}%)</span>{% endif %}</td><td>{{ q.overrides }}</td></tr>
+          {% else %}<tr><td colspan="6" class="muted">No questions answered yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted small">Skips and "I was right" are counted from when this update went live.</p>
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Problems</h2>
+    <ul class="kv kv--row">
+      <li><span>Uploads rejected</span><strong>{{ s.error_counts.get('error_upload', 0) }}</strong></li>
+      <li><span>AI failures</span><strong>{{ s.error_counts.get('error_ai', 0) }}</strong></li>
+      <li><span>Demo failures</span><strong>{{ s.error_counts.get('error_demo', 0) }}</strong></li>
+      <li><span>Signed up but no study set</span><strong>{{ s.no_sets|length }}</strong></li>
+    </ul>
+    {% if s.no_sets %}
+    <h3 class="sub-title">Signed up but never made a set</h3>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">User</th><th scope="col">Joined</th><th scope="col">Last active</th><th scope="col">Errors they hit</th></tr></thead>
+        <tbody>{% for u in s.no_sets %}<tr><td>{{ u.email }}</td><td>{{ u.joined.strftime('%-d %b') if u.joined else '–' }}</td><td>{{ u.last_active.strftime('%-d %b') if u.last_active else '–' }}</td><td>{{ u.errors }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% if s.recent_errors %}
+    <h3 class="sub-title">Recent errors</h3>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">When</th><th scope="col">What</th><th scope="col">Who</th><th scope="col">Message shown</th></tr></thead>
+        <tbody>{% for e in s.recent_errors %}<tr><td>{{ e.when.strftime('%a %-d %b, %H:%M') }}</td><td>{{ e.kind }}</td><td>{{ e.who }}</td><td>{{ e.detail }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% endif %}
+    <p class="muted small">Errors are counted from when this update went live.</p>
+  </section>
+
+  <section class="block">
+    <h2 class="block__title">Recent quizzes</h2>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">When</th><th scope="col">User</th><th scope="col">Set</th><th scope="col">Score</th></tr></thead>
+        <tbody>
+          {% for r in s.recent %}
+          <tr><td>{{ r.when.strftime('%a %-d %b, %H:%M') }}</td><td>{{ r.email }}</td><td>{{ r.title }}</td><td>{{ r.score|round|int }}% <span class="muted small">({{ r.correct }}/{{ r.total }})</span></td></tr>
+          {% else %}
+          <tr><td colspan="4" class="muted">No quizzes yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

@@ -9,7 +9,8 @@ from flask_login import current_user, login_required
 from .. import billing
 from ..ai import AIError, PlanLimitError, SourceError, from_text, from_upload, get_provider, plan_counts
 from ..extensions import db, limiter
-from ..models import QUIZ_KINDS, Card, StudySet, get_owned_set
+from ..activity import log_event, track
+from ..models import QUIZ_KINDS, Card, StudySet, UsageEvent, get_owned_set
 from ..sanitize import clean_int, clean_text
 from ..services.study import create_set, record_attempt, replace_cards, review_card, save_sections
 
@@ -29,6 +30,7 @@ def error(message: str, status: int = 400):
 @api_bp.errorhandler(AIError)
 def handle_ai_error(exc):
     db.session.rollback()
+    log_event("error_ai", str(exc))
     return error(str(exc), 502)
 
 
@@ -37,6 +39,8 @@ def handle_source_error(exc):
     if isinstance(exc, PlanLimitError):
         return jsonify(error=str(exc), upgrade=billing.enabled(), feature="file_size",
                        upgrade_url=url_for("billing.pricing", feature="file_size")), 402
+    db.session.rollback()
+    log_event("error_upload", str(exc))
     return error(str(exc), 400)
 
 
@@ -194,6 +198,8 @@ def card_results():
         if r.get("correct"):
             card.times_correct += 1
             correct += 1
+    if cards:
+        db.session.add(UsageEvent(user_id=current_user.id, kind="cross_quiz"))
     db.session.commit()
     total = len([r for r in results if clean_int(r.get("card_id")) in cards]) or 1
     return jsonify(score=round(correct / total * 100, 1), best=None, next=None)
@@ -208,4 +214,5 @@ def review(card_id: int):
     get_owned_set(card.set_id, current_user)
     review_card(card, (request.get_json(silent=True) or {}).get("grade", "good"))
     db.session.commit()
+    track("flashcards")
     return jsonify(ok=True, due_at=card.due_at.isoformat() if card.due_at else None)

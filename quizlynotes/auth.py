@@ -83,6 +83,9 @@ def _complete_login(email: str, name: str | None, picture: str | None):
         referrer = User.query.filter_by(referral_code=ref).first() if ref else None
         if referrer is not None:
             user.referred_by_id = referrer.id
+        from .activity import attribute_signup
+
+        attribute_signup(user)
     user.name = clean_text(name, 255) or user.name
     user.picture = clean_text(picture, 500) or user.picture
     user.last_login_at = utcnow()

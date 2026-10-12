@@ -274,6 +274,7 @@
       if (!correct && allowOverride) {
         var override = h('button', { type: 'button', class: 'link-btn small', text: 'I was right, count it', onclick: function () {
           step.result = true;
+          step.overridden = true;
           fb.className = 'feedback feedback--good';
           fb.querySelector('.feedback__title').textContent = 'Counted as correct';
           override.remove();
@@ -777,7 +778,7 @@
 
     if (data.submit_url) {
       QN.request(data.submit_url, {
-        body: { results: questions.map(function (q) { return { card_id: q.card.id, correct: q.result === true }; }) }
+        body: { results: questions.map(function (q) { return { card_id: q.card.id, correct: q.result === true, skipped: !!q.skipped, overridden: !!q.overridden }; }) }
       }).then(function (res) {
         var parts = [];
         if (res.best !== null && res.best !== undefined) parts.push('Best score: ' + Math.round(res.best) + '%.');

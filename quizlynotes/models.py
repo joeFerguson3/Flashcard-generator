@@ -58,6 +58,11 @@ class User(UserMixin, db.Model):
     referral_code = db.Column(db.String(16), unique=True, index=True)
     referred_by_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"))
     referral_rewarded = db.Column(db.Boolean, nullable=False, default=False)
+    # How this person found the site (first visit in the session they signed up in).
+    signup_source = db.Column(db.String(60))
+    signup_landing = db.Column(db.String(200))
+    signup_device = db.Column(db.String(10))
+    signup_sid = db.Column(db.String(16))
 
     sets = db.relationship(
         "StudySet", back_populates="owner", cascade="all, delete-orphan", lazy="dynamic"
@@ -215,6 +220,27 @@ class GuestDraft(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     payload = db.Column(db.JSON, nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+
+class SiteEvent(db.Model):
+    """Anonymous-friendly analytics event for the owner's stats page.
+
+    kinds: "landing" (first page of a visit), "demo" (try-it used), "share_open",
+    "error_upload", "error_ai", "error_demo", "q_skip", "q_override".
+    `sid` is a random per-browser-session id, never linked to anything else.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(32), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"))
+    sid = db.Column(db.String(16))
+    source = db.Column(db.String(60))
+    path = db.Column(db.String(200))
+    device = db.Column(db.String(10))
+    detail = db.Column(db.String(200))
+
+    __table_args__ = (db.Index("ix_site_event_kind_time", "kind", "created_at"),)
 
 
 class UsageEvent(db.Model):

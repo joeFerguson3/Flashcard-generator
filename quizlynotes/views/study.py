@@ -10,8 +10,9 @@ import random
 import secrets
 
 from .. import billing
+from ..activity import track
 from ..extensions import db
-from ..models import (QUIZ_KINDS, Card, PromoRedemption, StudySet, UsageEvent, User, get_owned_set,
+from ..models import (QUIZ_KINDS, Card, PromoRedemption, SiteEvent, StudySet, UsageEvent, User, get_owned_set,
                       subjects_for, utcnow)
 from ..sanitize import clean_text
 from ..services.study import update_card_from_form
@@ -125,6 +126,7 @@ def play(set_id: int, game: str):
     s = get_owned_set(set_id, current_user)
     if game not in GAMES:
         abort(404)
+    track("game")
     flash_cards = [{"id": c.id, "front": c.prompt, "back": (c.answers or [""])[0]} for c in s.flashcards]
     choice_cards = [
         {"id": c.id, "prompt": c.prompt,
@@ -318,6 +320,7 @@ def delete_account():
     user = current_user._get_current_object()
     logout_user()
     UsageEvent.query.filter_by(user_id=user.id).delete()
+    SiteEvent.query.filter_by(user_id=user.id).delete()
     PromoRedemption.query.filter_by(user_id=user.id).delete()
     User.query.filter_by(referred_by_id=user.id).update({"referred_by_id": None})
     db.session.delete(user)

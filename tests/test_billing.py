@@ -249,3 +249,56 @@ def test_monetisation_switched_off():
         assert new_set(client).status_code == 200
     assert client.get("/mock-exam").status_code == 200
     assert "Plan & billing" not in client.get("/settings").get_data(as_text=True)
+
+
+def test_admin_stats_page(client, app):
+    login(client, "someone@example.com")
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    client.post(f"/api/sets/{set_id}/attempts", json={"results": []})
+    client.get("/library")
+    client.get("/library")
+    assert client.get("/admin/stats").status_code == 404
+    with app.app_context():
+        from quizlynotes.models import UsageEvent
+        assert UsageEvent.query.filter_by(kind="visit").count() == 1  # once per day
+    client.post("/logout")
+    login(client, "boss@example.com")
+    assert b">Stats<" in client.get("/library").data
+    page = client.get("/admin/stats")
+    assert page.status_code == 200 and page.headers["X-Robots-Tag"].startswith("noindex")
+    html = page.get_data(as_text=True)
+    assert "someone@example.com" in html and "boss@example.com" not in html.split("Users</h2>")[1]
+    assert "boss@example.com" in client.get("/admin/stats?me=1").get_data(as_text=True).split("Users</h2>")[1]
+    assert client.get("/admin/stats?range=90").status_code == 200
+
+
+def test_growth_stats(client, app):
+    ua = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) Mobile"}
+    client.get("/notes-to-quiz?ref=TikTok", headers=ua)
+    client.get("/", headers=ua)  # same session: not a second landing
+    app.test_client().get("/", headers={"User-Agent": "Googlebot/2.1"})  # bots ignored
+    app.test_client().get("/pdf-to-quiz", headers={"User-Agent": "Mozilla/5.0", "Referer": "https://www.google.com/"})
+    login(client, "fan@example.com")
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    with app.app_context():
+        from quizlynotes.models import SiteEvent
+        u = User.query.filter_by(email="fan@example.com").one()
+        assert (u.signup_source, u.signup_landing, u.signup_device) == ("tiktok", "/notes-to-quiz", "mobile")
+        assert SiteEvent.query.filter_by(kind="landing").count() == 2
+        card = StudySet.query.one().quiz_cards[0]
+        card_id, kind = card.id, card.kind
+    client.post(f"/api/sets/{set_id}/attempts", json={"results": [{"card_id": card_id, "correct": False, "skipped": True}]})
+    client.post("/api/sets", data={"text": "too short"})  # rejected upload
+    client.post("/logout")
+    login(client, "boss@example.com")
+    html = client.get("/admin/stats").get_data(as_text=True)
+    assert "tiktok" in html and "Google" in html and "/notes-to-quiz" in html
+    assert "Upload rejected" in html
+    with app.app_context():
+        from quizlynotes.activity import build_stats
+        s = build_stats({"boss@example.com"})
+        q = next(r for r in s["qtypes"] if r["skips"])
+        assert q["skips"] == 1
+        assert dict((label, n) for label, n, _ in s["funnel"])["Signed up"] == 1

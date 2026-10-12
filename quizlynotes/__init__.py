@@ -54,6 +54,7 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
 
     from .auth import auth_bp, register_google
     from .views.api import api_bp
+    from .views.admin import admin_bp
     from .views.billing import billing_bp
     from .views.public import public_bp
     from .views.study import study_bp
@@ -64,6 +65,22 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     app.register_blueprint(study_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(billing_bp)
+    app.register_blueprint(admin_bp)
+
+    @app.before_request
+    def _track_visit():
+        # First page of each browser session: where the visitor came from.
+        # Then one "visit" per signed-in user per day, for repeat-use statistics.
+        from flask import request as _req
+
+        from .activity import capture_visit
+
+        capture_visit(_req)
+
+        if _req.method == "GET" and _req.endpoint and _req.endpoint.split(".")[0] in ("study", "public"):
+            from .activity import track
+
+            track("visit")
 
     _register_template_helpers(app)
     _register_error_handlers(app)
