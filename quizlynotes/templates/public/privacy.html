@@ -21,6 +21,20 @@
     <li><strong>Technical data:</strong> standard server logs (IP address, browser, pages requested), used for security, rate limiting and fixing problems.</li>
   </ul>
 
+  <h2 id="analytics">Usage analytics and your choice</h2>
+  <p>To improve QuizlyNotes we record how the site is used: for example which page you arrived on, where you stop in a quiz, how often generated notes and questions are edited or reported, and how long generation takes. This uses our own database only. There are no third-party analytics or advertising cookies, and the data is never sold or used for advertising.</p>
+  <form method="post" action="{{ url_for('public.analytics_choice') }}" class="inline-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ url_for('public.privacy') }}">
+    {% if analytics_off %}
+    <p><strong>Usage analytics is off for this browser.</strong></p>
+    <button class="btn btn--ghost btn--sm" type="submit" name="choice" value="on">Turn analytics back on</button>
+    {% else %}
+    <p>You can turn it off at any time. It stays off for this browser.</p>
+    <button class="btn btn--ghost btn--sm" type="submit" name="choice" value="off">Turn off usage analytics</button>
+    {% endif %}
+  </form>
+
   <h2>How we use it</h2>
   <ul>
     <li>To provide the service: generating notes and quizzes, saving them to your library and tracking your progress.</li>

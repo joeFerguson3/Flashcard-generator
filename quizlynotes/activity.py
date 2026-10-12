@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from flask import current_app, session
+from flask import current_app, has_request_context, request, session
 from flask_login import current_user
 
 from .extensions import db
@@ -26,9 +26,33 @@ def local_day(dt: datetime | None) -> date | None:
     return dt.replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ).date()
 
 
+OPT_OUT_COOKIE = "qn_analytics"
+
+
+def analytics_allowed() -> bool:
+    """False when this browser has opted out of usage analytics."""
+    return not (has_request_context() and request.cookies.get(OPT_OUT_COOKIE) == "off")
+
+
+def kv(**fields) -> str:
+    """Compact "key=value;key=value" detail string for SiteEvents."""
+    return ";".join(f"{k}={v}" for k, v in fields.items() if v is not None)[:200]
+
+
+def parse_kv(detail: str | None) -> dict:
+    out = {}
+    for part in (detail or "").split(";"):
+        if "=" in part:
+            k, v = part.split("=", 1)
+            out[k] = v
+    return out
+
+
 def track(kind: str) -> None:
     """Record `kind` for the signed-in user, once per day. Never raises."""
     try:
+        if not analytics_allowed():
+            return
         if not current_user or not current_user.is_authenticated:
             return
         today = utcnow().date().isoformat()
@@ -98,7 +122,7 @@ def capture_visit(req) -> None:
     try:
         if req.method != "GET" or not req.endpoint or req.endpoint in _SKIP_ENDPOINTS:
             return
-        if req.endpoint.startswith(("api.", "admin.")) or session.get("sid"):
+        if req.endpoint.startswith(("api.", "admin.")) or session.get("sid") or not analytics_allowed():
             return
         ua = req.headers.get("User-Agent", "")
         if not ua or _BOT_RE.search(ua):
@@ -120,6 +144,8 @@ def capture_visit(req) -> None:
 def log_event(kind: str, detail: str | None = None, user_id: int | None = None) -> None:
     """Store a SiteEvent with the current visit's source. Never raises."""
     try:
+        if not analytics_allowed():
+            return
         if user_id is None and current_user and current_user.is_authenticated:
             user_id = current_user.id
         db.session.add(SiteEvent(kind=kind, sid=session.get("sid"), source=session.get("src"),
@@ -158,6 +184,9 @@ def build_stats(exclude_emails: set[str], days: int = 30) -> dict:
     guests = GuestDraft.query.all()
 
     today = local_day(utcnow())
+    if not days:  # "all time": from the first sign-up
+        first = min((local_day(u.created_at) for u in users), default=today)
+        days = max(7, (today - first).days + 1)
     window = [today - timedelta(days=i) for i in range(days - 1, -1, -1)]
     week_ago = today - timedelta(days=6)
 
@@ -252,8 +281,10 @@ def build_stats(exclude_emails: set[str], days: int = 30) -> dict:
 
     week_active = sum(1 for ds in active.values() if any(d >= week_ago for d in ds))
     growth = _growth_stats(users, sets, attempts, active, exclude_emails, window[0], today)
+    insight = _insight_stats(users, sets, attempts, active, exclude_emails, window[0], today)
     return {
         **growth,
+        **insight,
         "today": today,
         "days": days,
         "tiles": {
@@ -380,7 +411,7 @@ def _growth_stats(users, sets, attempts, active, exclude_emails, start: date, to
               "multi_select": "Select all that apply", "categorize": "Sort into groups", "numeric": "Numeric",
               "odd_one_out": "Odd one out", "explain": "Explain (old)"}
     qtypes = sorted(({
-        "kind": labels.get(k, k), "cards": v["cards"], "seen": v["seen"],
+        "key": k, "kind": labels.get(k, k), "cards": v["cards"], "seen": v["seen"],
         "accuracy": _pct(v["correct"], v["seen"]), "skips": skips.get(k, 0), "skip_rate": _pct(skips.get(k, 0), v["seen"]),
         "overrides": overrides.get(k, 0),
     } for k, v in by_kind.items()), key=lambda r: (r["accuracy"] is None, r["accuracy"] if r["accuracy"] is not None else 0))
@@ -407,3 +438,183 @@ def set_rows(sets, attempts, email_of) -> list[dict]:
     } for st in sets]
     rows.sort(key=lambda r: r["created"] or date.min, reverse=True)
     return rows
+
+
+def _median(values):
+    v = sorted(values)
+    if not v:
+        return None
+    mid = len(v) // 2
+    return v[mid] if len(v) % 2 else (v[mid - 1] + v[mid]) / 2
+
+
+def _p90(values):
+    v = sorted(values)
+    return v[min(len(v) - 1, int(len(v) * 0.9))] if v else None
+
+
+def _secs(ms_list):
+    return round(sum(ms_list) / len(ms_list) / 1000, 1) if ms_list else None
+
+
+def _insight_stats(users, sets, attempts, active, exclude_emails, start: date, today: date) -> dict:
+    """Engagement, drop-off and AI-quality signals for the period."""
+    excluded_ids = {u.id for u in User.query.all() if (u.email or "").lower() in exclude_emails}
+    in_period = lambda dt: dt is not None and local_day(dt) >= start  # noqa: E731
+    ev = [e for e in SiteEvent.query.order_by(SiteEvent.created_at).all()
+          if e.user_id not in excluded_ids and in_period(e.created_at)]
+    by_kind = defaultdict(list)
+    for e in ev:
+        by_kind[e.kind].append((e, parse_kv(e.detail)))
+    email_of = {u.id: u.email for u in users}
+    title_of = {st.id: st.title for st in sets}
+
+    # --- Quiz engagement ---------------------------------------------------------
+    starts, dones, quits = by_kind["quiz_start"], by_kind["quiz_done"], by_kind["quiz_abandon"]
+    modes = ["full", "part", "notes", "missed", "shared", "mock", "weak"]
+    mode_labels = {"full": "Whole quiz", "part": "Chosen number of questions", "notes": "Notes only",
+                   "missed": "Retry missed", "shared": "Shared link", "mock": "Mock exam", "weak": "Weak spots"}
+    start_by_mode = Counter(d.get("mode", "full") for _, d in starts)
+    quit_by_mode = Counter({"quiz": "full"}.get(d.get("mode"), d.get("mode", "full")) for _, d in quits)
+    mode_rows = [{"mode": mode_labels.get(m, m), "started": start_by_mode.get(m, 0), "left": quit_by_mode.get(m, 0)}
+                 for m in modes if start_by_mode.get(m) or quit_by_mode.get(m)]
+    for r in mode_rows:
+        r["left_pct"] = _pct(r["left"], r["started"])
+
+    quit_points = Counter()
+    quit_kinds = Counter()
+    for _, d in quits:
+        answered, of = int(d.get("answered", 0) or 0), int(d.get("of", 0) or 0)
+        if d.get("stage") == "notes" and answered == 0:
+            quit_points["While reading the notes"] += 1
+        elif of == 0:
+            quit_points["Notes-only reading"] += 1
+        else:
+            frac = answered / of
+            label = ("Before answering anything" if answered == 0 else "In the first quarter" if frac < .25
+                     else "In the second quarter" if frac < .5 else "In the third quarter" if frac < .75
+                     else "Near the end")
+            quit_points[label] += 1
+        if d.get("qkind"):
+            quit_kinds[d["qkind"]] += 1
+    point_order = ["While reading the notes", "Before answering anything", "In the first quarter",
+                   "In the second quarter", "In the third quarter", "Near the end", "Notes-only reading"]
+    quit_rows = [{"label": p, "n": quit_points[p]} for p in point_order if quit_points.get(p)]
+
+    durations = [int(d["secs"]) for _, d in dones if d.get("secs", "").isdigit()]
+    per_q = [int(d["secs"]) / max(1, int(d.get("n", 1) or 1)) for _, d in dones
+             if d.get("secs", "").isdigit() and d.get("n", "").isdigit()]
+
+    # --- Retention by sign-up week ------------------------------------------------
+    def week_start(d):
+        return d - timedelta(days=d.weekday())
+    cohorts = defaultdict(list)
+    for u in users:
+        cohorts[week_start(local_day(u.created_at))].append(u)
+    cohort_rows = []
+    for wk in sorted(cohorts, reverse=True)[:10]:
+        members = cohorts[wk]
+        row = {"week": wk, "size": len(members), "cells": []}
+        for k in range(5):
+            lo, hi = wk + timedelta(days=7 * k), wk + timedelta(days=7 * k + 6)
+            if lo > today:
+                row["cells"].append(None)
+                continue
+            back = sum(1 for u in members if any(lo <= d <= hi for d in active[u.id] - ({local_day(u.created_at)} if k == 0 else set())))
+            row["cells"].append(_pct(back, len(members)))
+        cohort_rows.append(row)
+
+    # --- Gone quiet: users not seen for a week, and the last thing they did -----------
+    last_event = {}
+    for e in SiteEvent.query.filter(SiteEvent.user_id.isnot(None)).order_by(SiteEvent.created_at).all():
+        if e.kind != "landing":
+            last_event[e.user_id] = e
+    labels = {"quiz_abandon": "Left a quiz part-way", "quiz_done": "Finished a quiz", "quiz_start": "Started a quiz",
+              "notes_made": "Made notes", "quiz_made": "Generated a quiz", "notes_edit": "Edited notes",
+              "error_upload": "Upload was rejected", "error_ai": "Hit an AI error", "q_report": "Reported a question",
+              "card_edit": "Edited questions", "card_delete": "Deleted questions", "ai_edit_done": "Used Simplify/Improve",
+              "share_open": "Opened a shared quiz", "ai_undo": "Undid an AI edit"}
+    quiet = []
+    for u in users:
+        last = max(active[u.id]) if active[u.id] else None
+        if last and (today - last).days >= 7:
+            e = last_event.get(u.id)
+            quiet.append({"id": u.id, "email": u.email, "joined": local_day(u.created_at), "last_active": last,
+                          "days_away": (today - last).days, "active_days": len(active[u.id]),
+                          "last_did": labels.get(e.kind, e.kind) if e else "–"})
+    quiet.sort(key=lambda r: r["days_away"])
+
+    # --- AI quality --------------------------------------------------------------------
+    made = by_kind["notes_made"]
+    made_sets = {d.get("set") for _, d in made}
+    edits_before_quiz = defaultdict(lambda: {"changed": 0, "added": 0, "removed": 0, "saves": 0})
+    for _, d in by_kind["notes_edit"]:
+        if d.get("quiz") == "0":
+            row = edits_before_quiz[d.get("set")]
+            row["saves"] += 1
+            for k in ("changed", "added", "removed"):
+                row[k] += int(d.get(k, 0) or 0)
+    edited_sets = [sid for sid in made_sets if sid in edits_before_quiz]
+    points_made = {d.get("set"): int(d.get("points", 0) or 0) for _, d in made}
+    removed_share = [min(100, round(edits_before_quiz[sid]["removed"] / points_made[sid] * 100))
+                     for sid in edited_sets if points_made.get(sid)]
+    sources = Counter(d.get("src", "?") for _, d in made)
+    pages = [int(d["pages"]) for _, d in made if d.get("pages", "").isdigit()]
+    quiz_made = by_kind["quiz_made"]
+    regen = [d for _, d in quiz_made if d.get("gen", "1").isdigit() and int(d["gen"]) > 1]
+    ai_edits = Counter(d.get("mode") for _, d in by_kind["ai_edit_done"])
+    undos = Counter(d.get("mode") for _, d in by_kind["ai_undo"])
+    shrink = [1 - int(d["after"]) / int(d["before"]) for _, d in by_kind["ai_edit_done"]
+              if d.get("mode") == "simplify" and d.get("before", "0").isdigit() and int(d["before"]) > 0]
+
+    edits_kind = Counter(d.get("kind") for _, d in by_kind["card_edit"])
+    deletes_kind = Counter(d.get("kind") for _, d in by_kind["card_delete"])
+    reports_kind = Counter(d.get("kind") for _, d in by_kind["q_report"])
+    reasons = Counter(d.get("reason") for _, d in by_kind["q_report"])
+    reason_labels = {"wrong": "Answer is wrong", "unclear": "Question is unclear", "not_in_notes": "Not in my notes",
+                     "too_easy": "Too easy", "other": "Something else"}
+    reports = [{"when": e.created_at, "who": email_of.get(e.user_id, "–"), "set_id": int(d["set"]) if d.get("set", "").isdigit() else None,
+                "title": title_of.get(int(d["set"])) if d.get("set", "").isdigit() else None,
+                "kind": d.get("kind"), "reason": reason_labels.get(d.get("reason"), d.get("reason"))}
+               for e, d in reversed(by_kind["q_report"][-30:])]
+
+    def ms_of(kind):
+        return [int(d["ms"]) for _, d in by_kind[kind] if d.get("ms", "").isdigit()]
+    speed = [
+        {"label": "Writing notes from an upload", "n": len(ms_of("notes_made")), "avg": _secs(ms_of("notes_made")),
+         "p90": round(_p90(ms_of("notes_made")) / 1000, 1) if ms_of("notes_made") else None},
+        {"label": "Writing a quiz", "n": len(ms_of("quiz_made")), "avg": _secs(ms_of("quiz_made")),
+         "p90": round(_p90(ms_of("quiz_made")) / 1000, 1) if ms_of("quiz_made") else None},
+        {"label": "Simplify / Improve", "n": len(ms_of("ai_edit_done")), "avg": _secs(ms_of("ai_edit_done")),
+         "p90": round(_p90(ms_of("ai_edit_done")) / 1000, 1) if ms_of("ai_edit_done") else None},
+    ]
+    ai_calls = len(made) + len(quiz_made) + len(by_kind["ai_edit_done"])
+    ai_fail = len(by_kind["error_ai"]) + len(by_kind["error_demo"])
+
+    return {
+        "eng": {
+            "started": len(starts), "finished": len(dones), "left": len(quits),
+            "finish_pct": _pct(len(dones), len(starts)),
+            "median_secs": _median(durations), "secs_per_q": round(_median(per_q)) if per_q else None,
+            "mode_rows": mode_rows, "quit_rows": quit_rows, "quit_max": max([r["n"] for r in quit_rows] + [1]),
+            "quit_kinds": quit_kinds,
+        },
+        "cohorts": cohort_rows,
+        "quiet": quiet,
+        "quality": {
+            "sets_made": len(made), "edited_pct": _pct(len(edited_sets), len(made_sets)),
+            "removed_pct": round(sum(removed_share) / len(removed_share)) if removed_share else None,
+            "avg_points": round(sum(points_made.values()) / len(points_made)) if points_made else None,
+            "sources": sorted(sources.items(), key=lambda kv_: -kv_[1]),
+            "avg_pages": round(sum(pages) / len(pages)) if pages else None,
+            "quizzes_made": len(quiz_made), "regen_pct": _pct(len(regen), len(quiz_made)),
+            "simplify": ai_edits.get("simplify", 0), "improve": ai_edits.get("improve", 0),
+            "simplify_undo_pct": _pct(undos.get("simplify", 0), ai_edits.get("simplify", 0)),
+            "improve_undo_pct": _pct(undos.get("improve", 0), ai_edits.get("improve", 0)),
+            "simplify_cut_pct": round(sum(shrink) / len(shrink) * 100) if shrink else None,
+            "edits_kind": edits_kind, "deletes_kind": deletes_kind, "reports_kind": reports_kind,
+            "reasons": [(reason_labels.get(k, k), v) for k, v in reasons.most_common()],
+            "reports": reports, "speed": speed,
+            "ai_calls": ai_calls, "ai_fail": ai_fail, "fail_pct": _pct(ai_fail, ai_calls + ai_fail),
+        },
+    }

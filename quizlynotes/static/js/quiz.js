@@ -290,6 +290,7 @@
         } });
         fb.appendChild(h('p', { class: 'feedback__override' }, [override]));
       }
+      if (data.report_url && typeof card.id === 'number') fb.appendChild(reportControl(card));
       article.insertBefore(fb, actions);
       actions.innerHTML = '';
       actions.appendChild(h('span', { class: 'step__hint', text: 'Press Enter to continue' }));
@@ -729,8 +730,46 @@
     actions.appendChild(reveal);
   }
 
+  // "Report a problem" with a question: helps find bad AI questions.
+  var REPORT_REASONS = [['wrong', 'The answer is wrong'], ['unclear', 'The question is unclear'],
+    ['not_in_notes', 'It’s not in my notes'], ['too_easy', 'Too easy'], ['other', 'Something else']];
+  function reportControl(card) {
+    var wrap = h('div', { class: 'report' });
+    var open = h('button', { type: 'button', class: 'link-btn small report__open', text: 'Report a problem with this question' });
+    open.addEventListener('click', function () {
+      open.remove();
+      wrap.appendChild(h('span', { class: 'small muted', text: 'What’s wrong? ' }));
+      REPORT_REASONS.forEach(function (r) {
+        var b = h('button', { type: 'button', class: 'chip chip--sm', text: r[1] });
+        b.addEventListener('click', function () {
+          wrap.innerHTML = '';
+          wrap.appendChild(h('span', { class: 'small muted', text: 'Thanks, reported. You can fix or delete it in Edit questions.' }));
+          QN.request(data.report_url.replace('{id}', card.id), { body: { reason: r[0] } }).catch(function () {});
+        });
+        wrap.appendChild(b);
+      });
+    });
+    wrap.appendChild(open);
+    return wrap;
+  }
+
+  // Leaving part-way through: note where, so the hardest drop-off points show up in stats.
+  var finished = false, sentLeave = false;
+  window.addEventListener('pagehide', function () {
+    if (finished || sentLeave || index === 0 && !questions.some(function (q) { return q.result !== null; })) return;
+    sentLeave = true;
+    var step = steps[index];
+    QN.beacon('quiz_abandon', {
+      set: data.set_id || '', mode: data.shared ? 'shared' : data.timed ? 'mock' : (data.notes_only ? 'notes' : 'quiz'),
+      answered: questions.filter(function (q) { return q.result !== null; }).length,
+      of: questions.length, stage: step ? step.type : 'end', qkind: step && step.card ? step.card.kind : '',
+      secs: Math.round((Date.now() - startedAt) / 1000)
+    });
+  });
+
   // ---- results -----------------------------------------------------------
   function renderResults() {
+    finished = true;
     if (notesOnly) {
       return h('article', { class: 'step results' }, [
         h('p', { class: 'step__kind', text: 'Notes read' }),
@@ -797,7 +836,7 @@
 
     if (data.submit_url) {
       QN.request(data.submit_url, {
-        body: { results: questions.map(function (q) { return { card_id: q.card.id, correct: q.result === true, skipped: !!q.skipped, overridden: !!q.overridden }; }) }
+        body: { secs: Math.round((Date.now() - startedAt) / 1000), results: questions.map(function (q) { return { card_id: q.card.id, correct: q.result === true, skipped: !!q.skipped, overridden: !!q.overridden }; }) }
       }).then(function (res) {
         var parts = [];
         if (res.best !== null && res.best !== undefined) parts.push('Best score: ' + Math.round(res.best) + '%.');

@@ -362,6 +362,7 @@
         var note = el('div', { class: 'topic__note' }, [el('span', { text: AI_LABELS[mode].done + ' ' }), undo]);
         fresh.insertBefore(note, fresh.querySelector('[data-secs]'));
         undo.addEventListener('click', function () {
+          QN.beacon('ai_undo', { set: config.set_id || '', mode: mode });
           fresh.replaceWith(renderTopic(heading, before));
           changed();
         });

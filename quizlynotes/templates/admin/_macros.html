@@ -1,0 +1,57 @@
+{# Chart macros for the stats page. They read `s` passed in explicitly. #}
+  {% macro bars(s, key, label, unit) %}
+  {% set mx = s.series_max[key] %}
+  <figure class="mini-chart">
+    <figcaption><strong>{{ label }}</strong> <span class="muted small">per day, last {{ s.days }} days</span></figcaption>
+    <div class="mini-chart__plot" role="img" aria-label="{{ label }} per day">
+      <span class="mini-chart__max muted">{{ mx }}</span>
+      {% for p in s.series %}
+      <span class="mini-chart__col" tabindex="0" data-tip="{{ p.day.strftime('%a %-d %b') }}: {{ p[key] }} {{ unit if p[key] == 1 else unit ~ 's' }}">
+        <span class="mini-chart__bar{% if not p[key] %} is-zero{% endif %}" style="--h: {{ (p[key] / mx * 100)|round(1) }}%"></span>
+      </span>
+      {% endfor %}
+    </div>
+    <div class="mini-chart__axis muted small"><span>{{ s.series[0].day.strftime('%-d %b') }}</span><span>Today</span></div>
+  </figure>
+  {% endmacro %}
+
+  {% macro cols(title, sub, pts, unit) %}
+  {% set mx = (pts|map(attribute='v')|max) or 1 %}
+  <figure class="mini-chart">
+    <figcaption><strong>{{ title }}</strong> <span class="muted small">{{ sub }}</span></figcaption>
+    <div class="mini-chart__plot" role="img" aria-label="{{ title }}">
+      <span class="mini-chart__max muted">{{ mx }}</span>
+      {% for p in pts %}
+      <span class="mini-chart__col" tabindex="0" data-tip="{{ p.tip }}: {{ p.v }} {{ unit if p.v == 1 else unit ~ 's' }}">
+        <span class="mini-chart__bar{% if not p.v %} is-zero{% endif %}" style="--h: {{ (p.v / mx * 100)|round(1) }}%"></span>
+      </span>
+      {% endfor %}
+    </div>
+    <div class="mini-chart__axis mini-chart__axis--all muted small">{% for p in pts %}<span>{{ p.label if (pts|length <= 7 or loop.index0 % 6 == 0) else '' }}</span>{% endfor %}</div>
+  </figure>
+  {% endmacro %}
+
+  {% macro hbar_list(rows, label_key, value_key, suffix='') %}
+  {% set mx = (rows|map(attribute=value_key)|select|max) or 1 %}
+  <ul class="hbars">
+    {% for r in rows %}
+    <li><span class="hbars__label">{{ r[label_key] }}</span><span class="hbars__track"><span class="hbars__bar" style="--w: {{ ((r[value_key] or 0) / mx * 100)|round(1) }}%"></span></span><span class="hbars__n">{{ r[value_key] if r[value_key] is not none else '–' }}{{ suffix if r[value_key] is not none }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endmacro %}
+
+{% macro total_line(s) %}
+{% set cum = s.cumulative %}{% set cmax = (cum|map(attribute='total')|max) or 1 %}{% set n = cum|length %}
+      <figure class="mini-chart">
+        <figcaption><strong>Total users</strong> <span class="muted small">running total, last {{ s.days }} days</span></figcaption>
+        <div class="line-chart">
+          <span class="mini-chart__max muted">{{ cmax }}</span>
+          <svg viewBox="0 0 300 100" preserveAspectRatio="none" role="img" aria-label="Total users over time, now {{ cum[-1].total }}">
+            <polygon class="line-chart__area" points="0,100 {% for p in cum %}{{ (loop.index0 / ([n - 1, 1]|max) * 300)|round(2) }},{{ (100 - p.total / cmax * 92)|round(2) }} {% endfor %}300,100"/>
+            <polyline class="line-chart__line" vector-effect="non-scaling-stroke" points="{% for p in cum %}{{ (loop.index0 / ([n - 1, 1]|max) * 300)|round(2) }},{{ (100 - p.total / cmax * 92)|round(2) }} {% endfor %}"/>
+          </svg>
+          <div class="line-chart__hits">{% for p in cum %}<span class="mini-chart__col" tabindex="0" data-tip="{{ p.day.strftime('%a %-d %b') }}: {{ p.total }} user{{ 's' if p.total != 1 }}"></span>{% endfor %}</div>
+        </div>
+        <div class="mini-chart__axis muted small"><span>{{ cum[0].day.strftime('%-d %b') }}</span><span>Today: {{ cum[-1].total }}</span></div>
+      </figure>
+{% endmacro %}

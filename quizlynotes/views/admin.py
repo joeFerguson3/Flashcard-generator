@@ -36,8 +36,10 @@ def no_index(response):
 def stats():
     include_me = request.args.get("me") == "1"
     exclude = set() if include_me else set(current_app.config["ADMIN_EMAILS"])
-    days = 90 if request.args.get("range") == "90" else 30
-    return render_template("admin/stats.html", s=build_stats(exclude, days=days), include_me=include_me, days=days)
+    choice = request.args.get("range", type=int)
+    choice = choice if choice in (0, 7, 30, 90) else 30
+    return render_template("admin/stats.html", s=build_stats(exclude, days=choice), include_me=include_me,
+                           range_choice=choice)
 
 
 @admin_bp.route("/sets/<int:set_id>")

@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import logging
+import time
+from collections import Counter
 
 from flask import Blueprint, current_app, jsonify, request, url_for
 from flask_login import current_user, login_required
 
 from .. import billing
 from ..ai import AIError, PlanLimitError, SourceError, from_text, from_upload, get_provider, plan_counts
-from ..extensions import db, limiter
-from ..activity import log_event, track
+from ..extensions import csrf, db, limiter
+from ..activity import kv, log_event, track
 from ..models import QUIZ_KINDS, Card, StudySet, UsageEvent, get_owned_set
 from ..sanitize import clean_int, clean_text
 from ..services.study import create_set, record_attempt, replace_cards, review_card, save_sections
@@ -67,9 +69,14 @@ def _generate_cards(study_set: StudySet, payload: dict) -> None:
     limit = billing.limits_for(current_user).max_questions
     quiz_count, flash_count = plan_counts(sections, count)
     quiz_count = min(quiz_count, limit)
+    started = time.monotonic()
     cards = get_provider().make_cards(sections, quiz_count, flash_count, kinds, difficulty)
+    gen_ms = int((time.monotonic() - started) * 1000)
     replace_cards(study_set, cards)
     study_set.generations = (study_set.generations or 0) + 1
+    log_event("quiz_made", kv(set=study_set.id, q=sum(1 for c in cards if c["kind"] != "flashcard"),
+                              f=sum(1 for c in cards if c["kind"] == "flashcard"), asked=count or "auto",
+                              diff=difficulty, gen=study_set.generations, ms=gen_ms))
     billing.record(current_user, "quiz")
 
 
@@ -87,7 +94,9 @@ def create_study_set():
     else:
         source = from_text(form.get("text", ""), max_chars=lim.max_text_chars)
 
+    started = time.monotonic()
     notes = get_provider().make_notes(source)
+    notes_ms = int((time.monotonic() - started) * 1000)
     study_set = create_set(
         current_user, notes,
         title=form.get("title", ""), subject=form.get("subject", ""),
@@ -96,6 +105,12 @@ def create_study_set():
     billing.record(current_user, "new_set")
     billing.reward_referrer(current_user)
     db.session.commit()  # keep the notes even if quiz generation fails
+    name = (source.name or "").lower()
+    kind = "paste" if not request.files.get("file") else (name.rsplit(".", 1)[-1] if "." in name else "file")
+    log_event("notes_made", kv(set=study_set.id, src=kind, pages=source.pages,
+                               chars=len(source.text or "") or None, ms=notes_ms,
+                               sections=len(study_set.sections),
+                               points=sum(len(x.points or []) for x in study_set.sections)))
 
     if form.get("skip_review") == "1":
         try:
@@ -117,7 +132,16 @@ def update_notes(set_id: int):
     if "subject" in payload:
         study_set.subject = clean_text(payload["subject"], 120) or study_set.subject
     if isinstance(payload.get("sections"), list):
+        before = [p.get("text", "") for x in study_set.sections for p in (x.points or [])]
         save_sections(study_set, payload["sections"])
+        after = [p.get("text", "") for x in study_set.sections for p in (x.points or [])]
+        added, removed = Counter(after) - Counter(before), Counter(before) - Counter(after)
+        if added or removed:
+            changed = min(sum(added.values()), sum(removed.values()))
+            db.session.commit()
+            log_event("notes_edit", kv(set=study_set.id, changed=changed,
+                                       added=sum(added.values()) - changed, removed=sum(removed.values()) - changed,
+                                       quiz=int(study_set.has_quiz)))
     db.session.commit()
     return jsonify(ok=True, sections=[s.to_dict() for s in study_set.sections])
 
@@ -149,9 +173,14 @@ def enhance(set_id: int):
         return error("Nothing to improve yet.")
     mode = "simplify" if payload.get("mode") == "simplify" else "improve"
     billing.check_ai_edit(current_user)
+    started = time.monotonic()
     improved = get_provider().enhance(heading, sections[:20], mode=mode)
     billing.record(current_user, "ai_edit")
     db.session.commit()
+    before = sum(len(x.get("points") or []) for x in sections[:20])
+    after = sum(len(x.get("points") or []) for x in improved)
+    log_event("ai_edit_done", kv(set=set_id, mode=mode, before=before, after=after,
+                                 ms=int((time.monotonic() - started) * 1000)))
     return jsonify(sections=improved)
 
 
@@ -162,6 +191,9 @@ def submit_attempt(set_id: int):
     payload = request.get_json(silent=True) or {}
     attempt = record_attempt(study_set, payload.get("results") or [])
     db.session.commit()
+    log_event("quiz_done", kv(set=study_set.id, n=attempt.total, score=round(attempt.score),
+                              secs=clean_int(payload.get("secs")) or None,
+                              skipped=sum(1 for r in payload.get("results") or [] if r.get("skipped"))))
 
     next_set = (
         StudySet.query.filter(
@@ -216,3 +248,46 @@ def review(card_id: int):
     db.session.commit()
     track("flashcards")
     return jsonify(ok=True, due_at=card.due_at.isoformat() if card.due_at else None)
+
+
+# --- Usage analytics from the browser ----------------------------------------
+
+BEACON_KINDS = {"quiz_abandon", "ai_undo", "quiz_options"}
+
+
+@api_bp.post("/beacon")
+@csrf.exempt
+@limiter.limit("120 per hour")
+def beacon():
+    """Small analytics events sent with navigator.sendBeacon (e.g. leaving a quiz part-way)."""
+    import json
+
+    try:
+        data = json.loads(request.get_data(as_text=True) or "{}")
+    except ValueError:
+        return "", 204
+    kind = data.get("kind")
+    if kind not in BEACON_KINDS:
+        return "", 204
+    fields = {k: clean_text(str(v), 40) for k, v in (data.get("fields") or {}).items()
+              if k.isalnum() and len(k) <= 12 and v is not None}
+    log_event(kind, kv(**dict(list(fields.items())[:10])))
+    return "", 204
+
+
+REPORT_REASONS = {"wrong": "Answer is wrong", "unclear": "Question is unclear",
+                  "not_in_notes": "Not in my notes", "too_easy": "Too easy", "other": "Something else"}
+
+
+@api_bp.post("/cards/<int:card_id>/report")
+@login_required
+@limiter.limit("60 per hour")
+def report_card(card_id: int):
+    card = db.session.get(Card, card_id)
+    if card is None:
+        return error("Not found.", 404)
+    get_owned_set(card.set_id, current_user)
+    payload = request.get_json(silent=True) or {}
+    reason = payload.get("reason") if payload.get("reason") in REPORT_REASONS else "other"
+    log_event("q_report", kv(card=card.id, set=card.set_id, kind=card.kind, reason=reason))
+    return jsonify(ok=True)

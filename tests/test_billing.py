@@ -268,9 +268,11 @@ def test_admin_stats_page(client, app):
     page = client.get("/admin/stats")
     assert page.status_code == 200 and page.headers["X-Robots-Tag"].startswith("noindex")
     html = page.get_data(as_text=True)
-    assert "someone@example.com" in html and "boss@example.com" not in html.split("Users</h2>")[1]
-    assert "boss@example.com" in client.get("/admin/stats?me=1").get_data(as_text=True).split("Users</h2>")[1]
-    assert client.get("/admin/stats?range=90").status_code == 200
+    users_table = html.split('id="t-users"')[1]
+    assert "someone@example.com" in users_table and "boss@example.com" not in users_table
+    assert "boss@example.com" in client.get("/admin/stats?me=1").get_data(as_text=True).split('id="t-users"')[1]
+    for r in (7, 30, 90, 0):
+        assert client.get(f"/admin/stats?range={r}").status_code == 200
 
 
 def test_growth_stats(client, app):
@@ -319,3 +321,42 @@ def test_admin_set_and_user_preview(client, app):
     assert page.status_code == 200 and b"Preview" in page.data and b"Questions" in page.data
     assert client.get(f"/admin/users/{uid}").status_code == 200
     assert client.get("/admin/sets/99999").status_code == 404
+
+
+def test_quality_and_dropoff_events(client, app):
+    from quizlynotes.models import SiteEvent
+
+    login(client, "learner@example.com")
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    with app.app_context():
+        st = db.session.get(StudySet, set_id)
+        sections = [x.to_dict() for x in st.sections]
+    sections[0]["points"] = sections[0]["points"][1:]  # delete a point
+    assert client.put(f"/api/sets/{set_id}/notes", json={"sections": sections}).status_code == 200
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    client.get(f"/sets/{set_id}/quiz?n=2")
+    with app.app_context():
+        card = StudySet.query.get(set_id).quiz_cards[0]
+        cid, ckind = card.id, card.kind
+    client.post(f"/api/sets/{set_id}/attempts", json={"secs": 95, "results": [{"card_id": cid, "correct": True}]})
+    client.post("/api/beacon", data='{"kind":"quiz_abandon","fields":{"set":"%d","answered":"1","of":"4","stage":"question","qkind":"%s"}}' % (set_id, ckind))
+    client.post("/api/beacon", data='{"kind":"evil","fields":{}}')
+    assert client.post(f"/api/cards/{cid}/report", json={"reason": "wrong"}).json["ok"]
+    client.post(f"/sets/{set_id}/cards", data={f"c{cid}-delete": "1"})
+    with app.app_context():
+        kinds = {e.kind for e in SiteEvent.query.all()}
+        assert {"notes_made", "notes_edit", "quiz_made", "quiz_start", "quiz_done", "quiz_abandon",
+                "q_report", "card_delete"} <= kinds and "evil" not in kinds
+        edit = SiteEvent.query.filter_by(kind="notes_edit").first()
+        assert "removed=1" in edit.detail
+    client.post("/logout")
+    login(client, "boss@example.com")
+    html = client.get("/admin/stats").get_data(as_text=True)
+    assert "Answer is wrong" in html and "Where people stop" in html and "Coming back" in html
+    # Opting out stops new events.
+    with app.app_context():
+        before = SiteEvent.query.count()
+    client.post("/privacy/analytics", data={"choice": "off"})
+    client.post("/api/beacon", data='{"kind":"quiz_abandon","fields":{}}')
+    with app.app_context():
+        assert SiteEvent.query.count() == before

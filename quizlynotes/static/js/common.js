@@ -214,5 +214,14 @@
 
   document.addEventListener('DOMContentLoaded', function () { initSubjectPickers(); initQuizLaunch(); });
 
-  window.QN = { request: request, toast: toast, startLoader: startLoader, tabs: tabs, showUpgrade: showUpgrade };
+  // Anonymous usage events (server ignores them if analytics is turned off).
+  function beacon(kind, fields) {
+    try {
+      var body = JSON.stringify({ kind: kind, fields: fields || {} });
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/beacon', new Blob([body], { type: 'text/plain' }));
+      else fetch('/api/beacon', { method: 'POST', body: body, keepalive: true });
+    } catch (e) {}
+  }
+
+  window.QN = { beacon: beacon, request: request, toast: toast, startLoader: startLoader, tabs: tabs, showUpgrade: showUpgrade };
 })();

@@ -1,13 +1,13 @@
 {# Clickable list of study sets. Expects `rows` from activity.set_rows. #}
 <div class="table-scroll">
-  <table class="data-table data-table--sets">
+  <table class="data-table data-table--sets" id="t-sets" data-sortable>
     <thead><tr><th scope="col">Set</th><th scope="col">Owner</th><th scope="col">Made</th><th scope="col">Questions</th><th scope="col">Flashcards</th><th scope="col">Quizzes taken</th><th scope="col">Best</th></tr></thead>
     <tbody>
       {% for r in rows %}
       <tr class="row-link">
         <td><a href="{{ url_for('admin.set_preview', set_id=r.id) }}" class="row-link__a">{{ r.title }}</a><span class="muted small">{{ r.subject }}{% if r.source %} · {{ r.source }}{% endif %}</span></td>
         <td><a href="{{ url_for('admin.user_detail', user_id=r.user_id) }}">{{ r.email }}</a></td>
-        <td>{{ r.created.strftime('%-d %b') if r.created else '–' }}</td>
+        <td data-sort="{{ r.created.isoformat() if r.created else '' }}">{{ r.created.strftime('%-d %b') if r.created else '–' }}</td>
         <td>{{ r.questions }}</td><td>{{ r.flashcards }}</td><td>{{ r.quizzes }}</td><td>{{ r.best|pct }}</td>
       </tr>
       {% else %}<tr><td colspan="7" class="muted">No sets yet.</td></tr>{% endfor %}

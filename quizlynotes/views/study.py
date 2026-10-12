@@ -10,7 +10,7 @@ import random
 import secrets
 
 from .. import billing
-from ..activity import track
+from ..activity import kv, log_event, track
 from ..extensions import db
 from ..models import (QUIZ_KINDS, Card, PromoRedemption, SiteEvent, StudySet, UsageEvent, User, get_owned_set,
                       subjects_for, utcnow)
@@ -94,6 +94,11 @@ def quiz(set_id: int):
     payload["set_url"] = url_for("study.study_set", set_id=s.id)
     payload["retry_url"] = url_for("study.quiz", set_id=s.id)
     payload["generate_url"] = url_for("api.generate_quiz", set_id=s.id)
+    payload["set_id"] = s.id
+    payload["report_url"] = url_for("api.report_card", card_id=0).replace("/0/", "/{id}/")
+    n_q = sum(len(g["cards"]) for g in payload["groups"])
+    mode = "missed" if only_missed else "notes" if payload.get("notes_only") else "part" if n is not None and n_q < len(s.quiz_cards) else "full"
+    log_event("quiz_start", kv(set=s.id, n=n_q, mode=mode))
     return render_template("app/quiz.html", s=s, payload=payload, kinds=QUIZ_KINDS)
 
 
@@ -154,14 +159,19 @@ def edit_cards(set_id: int):
     if request.method == "POST":
         action = request.form.get("action", "save")
         invalid = 0
+        edits = []
         for card in list(s.cards):
             prefix = f"c{card.id}"
             if request.form.get(f"{prefix}-delete") == "1":
+                edits.append(("card_delete", card.kind))
                 s.cards.remove(card)
                 db.session.delete(card)
                 continue
+            before = (card.prompt, list(card.options or []), list(card.answers or []), card.explanation)
             if f"{prefix}-prompt" in request.form and not update_card_from_form(card, request.form, prefix):
                 invalid += 1
+            elif (card.prompt, list(card.options or []), list(card.answers or []), card.explanation) != before:
+                edits.append(("card_edit", card.kind))
         if action == "add_flashcard":
             front = clean_text(request.form.get("new-front"), 1000)
             back = clean_text(request.form.get("new-back"), 600)
@@ -172,6 +182,8 @@ def edit_cards(set_id: int):
                                     position=len(s.cards)))
         s.updated_at = utcnow()
         db.session.commit()
+        for kind_, card_kind in edits[:50]:
+            log_event(kind_, kv(set=s.id, kind=card_kind))
         if invalid:
             flash(f"{invalid} card(s) had a missing answer and weren't changed.", "error")
         else:
@@ -278,6 +290,7 @@ def mock_exam():
     random.shuffle(payload["groups"][0]["cards"])
     payload["timed"] = True
     n_sets = len({c.set_id for c in picked})
+    log_event("quiz_start", kv(n=len(picked), mode="mock"))
     return render_template("app/quiz_multi.html", payload=payload, title=f"Mock exam: {subject}",
                            subtitle=f"{len(picked)} questions from {n_sets} set{'s' if n_sets != 1 else ''}")
 
@@ -296,6 +309,7 @@ def weak_spots():
     )[:25]
     if not weak:
         return render_template("app/weak_empty.html")
+    log_event("quiz_start", kv(n=len(weak), mode="weak"))
     return render_template("app/quiz_multi.html", payload=_cards_payload("Weak spots", weak),
                            title="Weak spots", subtitle=f"{len(weak)} questions you've found hardest")
 

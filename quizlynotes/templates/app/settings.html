@@ -65,6 +65,7 @@
     <h2 class="block__title">Your data</h2>
     <p class="muted">You have {{ set_count }} study set{{ 's' if set_count != 1 }}. Download everything (notes, questions, flashcards and scores) as a JSON file.</p>
     <a class="btn btn--ghost" href="{{ url_for('study.export_data') }}">Export my data</a>
+    <p class="muted small" style="margin-top:1rem">We record anonymous usage (like where people stop in a quiz) to improve the site. <a href="{{ url_for('public.privacy') }}#analytics">Turn this off or read more</a>.</p>
   </section>
 
   <section class="panel panel--danger">

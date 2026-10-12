@@ -7,7 +7,7 @@ from flask import (Blueprint, Response, abort, current_app, jsonify, redirect,
                    render_template, request, session, url_for)
 
 from .. import seo
-from ..activity import log_event
+from ..activity import kv, log_event
 from ..ai import AIError, SourceError, get_provider
 from ..extensions import db, limiter
 from ..models import GuestDraft, utcnow
@@ -129,7 +129,31 @@ def favicon():
 
 @public_bp.route("/privacy")
 def privacy():
-    return render_template("public/privacy.html")
+    from ..activity import OPT_OUT_COOKIE
+
+    return render_template("public/privacy.html", analytics_off=request.cookies.get(OPT_OUT_COOKIE) == "off")
+
+
+@public_bp.post("/privacy/analytics")
+def analytics_choice():
+    """Turn usage analytics off (or back on) for this browser."""
+    from flask import flash, make_response
+
+    from ..activity import OPT_OUT_COOKIE
+
+    off = request.form.get("choice") == "off"
+    back = request.form.get("next") or url_for("public.privacy")
+    if not back.startswith("/") or back.startswith("//"):
+        back = url_for("public.privacy")
+    res = make_response(redirect(back + "#analytics"))
+    if off:
+        res.set_cookie(OPT_OUT_COOKIE, "off", max_age=60 * 60 * 24 * 365 * 2, samesite="Lax",
+                       secure=current_app.config.get("SESSION_COOKIE_SECURE", False), httponly=True)
+        flash("Usage analytics is off for this browser.", "success")
+    else:
+        res.delete_cookie(OPT_OUT_COOKIE)
+        flash("Usage analytics is on again. Thanks for helping improve QuizlyNotes.", "success")
+    return res
 
 
 @public_bp.route("/terms")
@@ -275,6 +299,7 @@ def shared_quiz(token: str):
     if study_set is None or not study_set.has_quiz:
         abort(404)
     log_event("share_open", str(study_set.id))
+    log_event("quiz_start", kv(set=study_set.id, n=len(study_set.quiz_cards), mode="shared"))
     payload = build_quiz_payload(study_set.to_dict())
     payload["submit_url"] = None
     payload["guest"] = True

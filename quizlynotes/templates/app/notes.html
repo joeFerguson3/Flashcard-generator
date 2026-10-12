@@ -45,6 +45,7 @@
 <script type="application/json" id="notes-data">{{ {
   "sections": notes_json,
   "save_url": url_for('api.update_notes', set_id=s.id),
+  "set_id": s.id,
   "generate_url": url_for('api.generate_quiz', set_id=s.id),
   "enhance_url": url_for('api.enhance', set_id=s.id),
   "has_quiz": s.has_quiz,
