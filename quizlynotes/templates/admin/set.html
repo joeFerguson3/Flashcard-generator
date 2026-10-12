@@ -1,0 +1,81 @@
+{% extends "app/base_app.html" %}
+{% block title %}Preview: {{ s.title }} | Stats{% endblock %}
+{% set kind_labels = {'multiple_choice': 'Multiple choice', 'true_false': 'True or false', 'fill_blank': 'Fill in the blank', 'short_answer': 'Short answer', 'ordering': 'Ordering', 'matching': 'Matching', 'multi_select': 'Select all that apply', 'categorize': 'Sort into groups', 'numeric': 'Numeric', 'odd_one_out': 'Odd one out', 'explain': 'Explain (old)', 'flashcard': 'Flashcard'} %}
+{% block content %}
+<section class="wrap page stats-page pv">
+  <a class="back" href="{{ url_for('admin.stats') }}">← Stats</a>
+  <header class="pv-head">
+    <p class="eyebrow">Preview · read only</p>
+    <h1 class="page-title">{{ s.title }}</h1>
+    <p class="muted small">{{ s.subject }} · by <a href="{{ url_for('admin.user_detail', user_id=owner.id) }}">{{ owner.email }}</a> · made {{ s.created_at|uk }}{% if s.source_name %} · from {{ s.source_name }}{% endif %} · generated {{ s.generations or 0 }} time{{ 's' if (s.generations or 0) != 1 }}</p>
+  </header>
+
+  <div class="stat-tiles">
+    <div class="stat-tile"><span class="stat-tile__n">{{ s.quiz_cards|length }}</span><span class="stat-tile__l">Questions</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ s.flashcards|length }}</span><span class="stat-tile__l">Flashcards</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ attempts|length }}</span><span class="stat-tile__l">Quizzes taken</span></div>
+    <div class="stat-tile"><span class="stat-tile__n">{{ s.best_score|pct }}</span><span class="stat-tile__l">Best score</span><span class="stat-tile__s">last {{ s.last_score|pct }}</span></div>
+  </div>
+
+  <div class="pv-tabs" role="tablist">
+    <a href="#notes" class="pv-tab">Notes</a><a href="#questions" class="pv-tab">Questions ({{ s.quiz_cards|length }})</a><a href="#flashcards" class="pv-tab">Flashcards ({{ s.flashcards|length }})</a><a href="#scores" class="pv-tab">Scores ({{ attempts|length }})</a>
+  </div>
+
+  <section class="block" id="notes">
+    <h2 class="block__title">Notes</h2>
+    <div class="notes-read">
+      {% for group in s.heading_groups() %}
+      <details class="notes-read__group" {% if loop.first %}open{% endif %}>
+        <summary><h3>{{ group.heading }}</h3><span class="muted small">{{ group.sections|length }} section{{ 's' if group.sections|length != 1 }}</span></summary>
+        {% for sec in group.sections %}
+        <div class="notes-read__sec">
+          <h4>{{ sec.subheading }}</h4>
+          <div class="chunks">
+            {% for ch in sec.points|note_chunks %}
+            <section class="chunk">
+              {% if ch.lead %}<p class="chunk__lead">{{ ch.lead.text|term }}</p>{% endif %}
+              {% if ch["items"] %}<ul class="chunk__items">{% for it in ch["items"] %}<li class="chunk__item"><p>{{ it.point.text|term }}</p>{% if it.subs %}<ul class="chunk__subs">{% for sp in it.subs %}<li>{{ sp.text|term }}</li>{% endfor %}</ul>{% endif %}</li>{% endfor %}</ul>{% endif %}
+            </section>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </details>
+      {% else %}<p class="muted">No notes.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="block" id="questions">
+    <h2 class="block__title">Questions</h2>
+    <ol class="pv-cards">
+      {% for c in s.quiz_cards %}
+      <li class="pv-card">
+        <p class="pv-card__meta"><span class="eyebrow">{{ kind_labels.get(c.kind, c.kind) }}</span>{% if c.times_seen %}<span class="muted small">answered {{ c.times_seen }}× · {{ ((c.times_correct / c.times_seen) * 100)|round|int }}% right</span>{% endif %}</p>
+        <p class="pv-card__q">{{ c.prompt|replace('{blank}', '_____') }}</p>
+        {% if c.kind == 'fill_blank' %}<p class="pv-ans">Answers: <strong>{{ c.answers|join(', ') }}</strong></p>{% else %}{% include "admin/_answer.html" %}{% endif %}
+        {% if c.explanation %}<p class="muted small pv-card__why">{{ c.explanation }}</p>{% endif %}
+      </li>
+      {% else %}<li class="muted">No questions yet.</li>{% endfor %}
+    </ol>
+  </section>
+
+  <section class="block" id="flashcards">
+    <h2 class="block__title">Flashcards</h2>
+    <div class="pv-flash">
+      {% for c in s.flashcards %}
+      <div class="pv-flash__card"><p class="pv-flash__front">{{ c.prompt }}</p><p class="pv-flash__back">{{ c.answers[0] if c.answers else '' }}</p>{% if c.reps %}<p class="muted small">reviewed {{ c.reps }}×</p>{% endif %}</div>
+      {% else %}<p class="muted">No flashcards.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="block" id="scores">
+    <h2 class="block__title">Quiz history</h2>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">When</th><th scope="col">Score</th><th scope="col">Correct</th></tr></thead>
+        <tbody>{% for a in attempts %}<tr><td>{{ a.created_at|uk }}</td><td>{{ a.score|round|int }}%</td><td>{{ a.correct }}/{{ a.total }}</td></tr>{% else %}<tr><td colspan="3" class="muted">Not taken yet.</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

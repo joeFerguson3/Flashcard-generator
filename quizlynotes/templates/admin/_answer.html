@@ -1,0 +1,17 @@
+{# Read-only answer for any card kind. Expects `c`. #}
+{% set k = c.kind %}
+{% if k in ('multiple_choice', 'odd_one_out', 'multi_select') %}
+<ul class="pv-opts">{% for o in c.options %}<li class="{{ 'is-right' if o in c.answers }}">{{ o }}</li>{% endfor %}</ul>
+{% elif k == 'true_false' %}
+<p class="pv-ans">Answer: <strong>{{ 'True' if c.answers and c.answers[0] == 'true' else 'False' }}</strong></p>
+{% elif k == 'ordering' %}
+<ol class="pv-order">{% for o in c.options %}<li>{{ o }}</li>{% endfor %}</ol>
+{% elif k in ('matching', 'categorize') %}
+<ul class="pv-pairs">{% for o in c.options %}<li><span>{{ o }}</span><span aria-hidden="true">→</span><strong>{{ c.answers[loop.index0] if loop.index0 < c.answers|length else '' }}</strong></li>{% endfor %}</ul>
+{% elif k == 'numeric' %}
+<p class="pv-ans">Answer: <strong>{{ c.answers[0] }}{% if c.answers|length > 1 %} {{ c.answers[1] }}{% endif %}</strong></p>
+{% elif k == 'flashcard' %}
+<p class="pv-ans">{{ c.answers[0] if c.answers else '' }}</p>
+{% else %}
+<p class="pv-ans">Answer: <strong>{{ c.answers|join(' / ') }}</strong></p>
+{% endif %}

@@ -38,3 +38,37 @@ def stats():
     exclude = set() if include_me else set(current_app.config["ADMIN_EMAILS"])
     days = 90 if request.args.get("range") == "90" else 30
     return render_template("admin/stats.html", s=build_stats(exclude, days=days), include_me=include_me, days=days)
+
+
+@admin_bp.route("/sets/<int:set_id>")
+def set_preview(set_id: int):
+    from ..models import Attempt, StudySet
+
+    s = StudySet.query.get_or_404(set_id)
+    attempts = Attempt.query.filter_by(set_id=s.id).order_by(Attempt.created_at.desc()).all()
+    return render_template("admin/set.html", s=s, owner=s.owner, attempts=attempts)
+
+
+@admin_bp.route("/users/<int:user_id>")
+def user_detail(user_id: int):
+    from ..activity import set_rows
+    from ..models import Attempt, StudySet, User
+
+    u = User.query.get_or_404(user_id)
+    sets = StudySet.query.filter_by(user_id=u.id).all()
+    ids = [x.id for x in sets]
+    attempts = Attempt.query.filter(Attempt.set_id.in_(ids)).order_by(Attempt.created_at.desc()).all() if ids else []
+    titles = {x.id: x.title for x in sets}
+    return render_template("admin/user.html", u=u, rows=set_rows(sets, attempts, {u.id: u.email}),
+                           attempts=attempts[:50], titles=titles)
+
+
+@admin_bp.app_template_filter("uk")
+def uk_time(dt, fmt="%a %-d %b, %H:%M"):
+    from datetime import timezone
+
+    from ..activity import LOCAL_TZ
+
+    if dt is None:
+        return "–"
+    return dt.replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ).strftime(fmt)

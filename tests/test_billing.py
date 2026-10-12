@@ -302,3 +302,20 @@ def test_growth_stats(client, app):
         q = next(r for r in s["qtypes"] if r["skips"])
         assert q["skips"] == 1
         assert dict((label, n) for label, n, _ in s["funnel"])["Signed up"] == 1
+
+
+def test_admin_set_and_user_preview(client, app):
+    login(client, "someone@example.com")
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    assert client.get(f"/admin/sets/{set_id}").status_code == 404
+    with app.app_context():
+        uid = User.query.filter_by(email="someone@example.com").one().id
+    client.post("/logout")
+    login(client, "boss@example.com")
+    stats = client.get("/admin/stats").get_data(as_text=True)
+    assert f"/admin/sets/{set_id}" in stats and f"/admin/users/{uid}" in stats
+    page = client.get(f"/admin/sets/{set_id}")
+    assert page.status_code == 200 and b"Preview" in page.data and b"Questions" in page.data
+    assert client.get(f"/admin/users/{uid}").status_code == 200
+    assert client.get("/admin/sets/99999").status_code == 404

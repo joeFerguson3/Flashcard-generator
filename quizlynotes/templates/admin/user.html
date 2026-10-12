@@ -1,0 +1,25 @@
+{% extends "app/base_app.html" %}
+{% block title %}{{ u.email }} | Stats{% endblock %}
+{% block content %}
+<section class="wrap page stats-page">
+  <a class="back" href="{{ url_for('admin.stats') }}">← Stats</a>
+  <header class="pv-head">
+    <p class="eyebrow">User</p>
+    <h1 class="page-title">{{ u.name or u.email }}</h1>
+    <p class="muted small">{{ u.email }} · joined {{ u.created_at|uk }} · last login {{ u.last_login_at|uk }}{% if u.signup_source %} · came from {{ u.signup_source }}{% if u.signup_landing %} ({{ u.signup_landing }}){% endif %}{% endif %}{% if u.signup_device %} on {{ u.signup_device }}{% endif %}</p>
+  </header>
+  <section class="block">
+    <h2 class="block__title">Study sets ({{ rows|length }})</h2>
+    {% include "admin/_sets_table.html" %}
+  </section>
+  <section class="block">
+    <h2 class="block__title">Quiz history</h2>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th scope="col">When</th><th scope="col">Set</th><th scope="col">Score</th></tr></thead>
+        <tbody>{% for a in attempts %}<tr><td>{{ a.created_at|uk }}</td><td><a href="{{ url_for('admin.set_preview', set_id=a.set_id) }}">{{ titles[a.set_id] }}</a></td><td>{{ a.score|round|int }}% <span class="muted small">({{ a.correct }}/{{ a.total }})</span></td></tr>{% else %}<tr><td colspan="3" class="muted">No quizzes yet.</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

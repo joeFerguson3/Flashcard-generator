@@ -187,11 +187,31 @@ def build_stats(exclude_emails: set[str], days: int = 30) -> dict:
     quizzes_per_day = Counter(local_day(a.created_at) for a in attempts)
     signups_per_day = Counter(local_day(u.created_at) for u in users)
     active_per_day = Counter(d for days_ in active.values() for d in days_)
+    sets_per_day = Counter(local_day(s.created_at) for s in sets)
+    hidden_ids = {u.id for u in User.query.all()} - user_ids
+    visits_per_day = Counter(local_day(e.created_at) for e in SiteEvent.query.filter_by(kind="landing").all()
+                             if e.user_id not in hidden_ids)
     series = [
         {"day": d, "quizzes": quizzes_per_day.get(d, 0), "active": active_per_day.get(d, 0),
-         "signups": signups_per_day.get(d, 0)}
+         "signups": signups_per_day.get(d, 0), "sets": sets_per_day.get(d, 0), "visits": visits_per_day.get(d, 0)}
         for d in window
     ]
+    # Running total of users, for the growth line.
+    joined_days = sorted(local_day(u.created_at) for u in users)
+    cumulative = [{"day": d, "total": sum(1 for j in joined_days if j <= d)} for d in window]
+
+    # When people study (all time, UK time).
+    local_times = [a.created_at.replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ) for a in attempts]
+    by_hour = Counter(t.hour for t in local_times)
+    by_weekday = Counter(t.weekday() for t in local_times)
+    hours = [{"label": f"{h:02d}", "v": by_hour.get(h, 0), "tip": f"{h:02d}:00–{h:02d}:59"} for h in range(24)]
+    weekdays = [{"label": n, "v": by_weekday.get(i, 0), "tip": n} for i, n in
+                enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])]
+
+    # How well people score.
+    score_bands = [("0–19%", 0, 20), ("20–39%", 20, 40), ("40–59%", 40, 60), ("60–79%", 60, 80), ("80–100%", 80, 101)]
+    scores_hist = [{"label": lab, "v": sum(1 for a in attempts if lo <= a.score < hi), "tip": lab}
+                   for lab, lo, hi in score_bands]
 
     # Repeat use.
     active_days = {uid: len(ds) for uid, ds in active.items()}
@@ -211,7 +231,7 @@ def build_stats(exclude_emails: set[str], days: int = 30) -> dict:
         scores = scores_by_user.get(u.id, [])
         last = max(active[u.id]) if active[u.id] else None
         rows.append({
-            "email": u.email, "name": u.name or "", "joined": local_day(u.created_at), "last_active": last,
+            "id": u.id, "email": u.email, "name": u.name or "", "joined": local_day(u.created_at), "last_active": last,
             "active_days": active_days.get(u.id, 0), "sets": sets_by_user.get(u.id, 0),
             "quizzes": quizzes_by_user.get(u.id, 0),
             "avg_score": round(sum(scores) / len(scores)) if scores else None,
@@ -225,6 +245,7 @@ def build_stats(exclude_emails: set[str], days: int = 30) -> dict:
     email_of = {u.id: u.email for u in users}
     recent = [
         {"when": a.created_at.replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ), "email": email_of[set_owner[a.set_id]],
+         "set_id": a.set_id, "user_id": set_owner[a.set_id],
          "title": set_title[a.set_id], "score": a.score, "correct": a.correct, "total": a.total}
         for a in reversed(attempts[-40:])
     ]
@@ -252,7 +273,10 @@ def build_stats(exclude_emails: set[str], days: int = 30) -> dict:
             "flash_users": len(flash_days),
         },
         "series": series,
-        "series_max": {k: max([s[k] for s in series] + [1]) for k in ("quizzes", "active", "signups")},
+        "series_max": {k: max([s[k] for s in series] + [1]) for k in ("quizzes", "active", "signups", "sets", "visits")},
+        "cumulative": cumulative,
+        "hours": hours, "weekdays": weekdays, "scores_hist": scores_hist,
+        "set_rows": set_rows(sets, attempts, email_of)[:60],
         "buckets": buckets,
         "users": rows,
         "recent": recent,
@@ -371,3 +395,15 @@ def _growth_stats(users, sets, attempts, active, exclude_emails, start: date, to
         "error_counts": error_counts, "recent_errors": recent_errors, "no_sets": no_sets,
         "qtypes": qtypes,
     }
+
+
+def set_rows(sets, attempts, email_of) -> list[dict]:
+    taken = Counter(a.set_id for a in attempts)
+    rows = [{
+        "id": st.id, "title": st.title, "subject": st.subject, "email": email_of.get(st.user_id, ""),
+        "user_id": st.user_id, "created": local_day(st.created_at), "questions": len(st.quiz_cards),
+        "flashcards": len(st.flashcards), "quizzes": taken.get(st.id, 0), "best": st.best_score,
+        "source": st.source_name or "",
+    } for st in sets]
+    rows.sort(key=lambda r: r["created"] or date.min, reverse=True)
+    return rows
