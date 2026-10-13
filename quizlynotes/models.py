@@ -63,10 +63,22 @@ class User(UserMixin, db.Model):
     signup_landing = db.Column(db.String(200))
     signup_device = db.Column(db.String(10))
     signup_sid = db.Column(db.String(16))
+    # Part of the login cookie. Changing it signs this account out on every device.
+    session_token = db.Column(db.String(64))
 
     sets = db.relationship(
         "StudySet", back_populates="owner", cascade="all, delete-orphan", lazy="dynamic"
     )
+
+    def get_id(self) -> str:
+        if not self.session_token:
+            self.rotate_session_token()
+        return f"{self.id}.{self.session_token}"
+
+    def rotate_session_token(self) -> None:
+        import secrets
+
+        self.session_token = secrets.token_urlsafe(24)
 
     @property
     def display_name(self) -> str:

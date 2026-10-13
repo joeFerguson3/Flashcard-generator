@@ -224,9 +224,12 @@ def redeem(user: User, code: str) -> str:
         raise ValueError("That code isn't valid.")
     if PromoRedemption.query.filter_by(code_id=promo.id, user_id=user.id).first():
         raise ValueError("You've already used this code.")
-    if promo.max_redemptions is not None and promo.redemptions >= promo.max_redemptions:
+    # Claim a use atomically, so two people redeeming at once can't go over the limit.
+    query = PromoCode.query.filter(PromoCode.id == promo.id)
+    if promo.max_redemptions is not None:
+        query = query.filter(PromoCode.redemptions < promo.max_redemptions)
+    if not query.update({PromoCode.redemptions: PromoCode.redemptions + 1}, synchronize_session=False):
         raise ValueError("This code has been fully used.")
-    promo.redemptions += 1
     db.session.add(PromoRedemption(code_id=promo.id, user_id=user.id))
     if promo.days is None:
         user.lifetime_pro = True

@@ -1,5 +1,6 @@
 """Application configuration, read from environment variables."""
 import os
+from datetime import timedelta
 
 
 def _bool(name: str, default: bool = False) -> bool:
@@ -94,12 +95,15 @@ class Config:
     RATELIMIT_HEADERS_ENABLED = True
     GENERATION_LIMIT = os.getenv("GENERATION_LIMIT", "30 per hour;100 per day")
     GUEST_LIMIT = os.getenv("GUEST_LIMIT", "1 per minute;4 per day")
+    GUEST_DAILY_CAP = int(os.getenv("GUEST_DAILY_CAP", "200"))
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = IS_PRODUCTION
     REMEMBER_COOKIE_SECURE = IS_PRODUCTION
     REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_DURATION = timedelta(days=90)
     PREFERRED_URL_SCHEME = "https" if IS_PRODUCTION else "http"
 
     WTF_CSRF_TIME_LIMIT = None  # tokens live as long as the session

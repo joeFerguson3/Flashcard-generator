@@ -14,6 +14,7 @@ from ..extensions import csrf, db, limiter
 from ..activity import kv, log_event, track
 from ..models import QUIZ_KINDS, Card, StudySet, UsageEvent, get_owned_set
 from ..sanitize import clean_int, clean_text
+from ..ai.validate import notes_size_problem
 from ..services.study import create_set, record_attempt, replace_cards, review_card, save_sections
 
 log = logging.getLogger(__name__)
@@ -23,6 +24,18 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 def _generation_limit():
     return current_app.config["GENERATION_LIMIT"]
+
+
+@api_bp.after_request
+def _no_store(response):
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
+
+
+def _json_dict() -> dict:
+    """The JSON body if it's an object, else {} (lists/strings would crash .get())."""
+    data = request.get_json(silent=True)
+    return data if isinstance(data, dict) else {}
 
 
 def error(message: str, status: int = 400):
@@ -124,9 +137,12 @@ def create_study_set():
 
 @api_bp.put("/sets/<int:set_id>/notes")
 @login_required
+@limiter.limit("1200 per hour")
 def update_notes(set_id: int):
     study_set = get_owned_set(set_id, current_user)
-    payload = request.get_json(silent=True) or {}
+    payload = _json_dict()
+    if "sections" in payload and (problem := notes_size_problem(payload["sections"], current_app.config["MAX_TEXT_CHARS"])):
+        return error(problem)
     if "title" in payload:
         study_set.title = clean_text(payload["title"], 200) or study_set.title
     if "subject" in payload:
@@ -151,7 +167,9 @@ def update_notes(set_id: int):
 @limiter.limit(_generation_limit)
 def generate_quiz(set_id: int):
     study_set = get_owned_set(set_id, current_user)
-    payload = request.get_json(silent=True) or {}
+    payload = _json_dict()
+    if "sections" in payload and (problem := notes_size_problem(payload["sections"], current_app.config["MAX_TEXT_CHARS"])):
+        return error(problem)
     billing.check_regenerate(current_user, study_set)
     if isinstance(payload.get("sections"), list):
         save_sections(study_set, payload["sections"])
@@ -166,11 +184,15 @@ def generate_quiz(set_id: int):
 @limiter.limit(_generation_limit)
 def enhance(set_id: int):
     get_owned_set(set_id, current_user)
-    payload = request.get_json(silent=True) or {}
+    payload = _json_dict()
     heading = clean_text(payload.get("heading"), 200)
     sections = payload.get("sections") or []
     if not sections:
         return error("Nothing to improve yet.")
+    sections = sections[:20] if isinstance(sections, list) else sections
+    # One heading's sections at a time; well under the size of a full set.
+    if problem := notes_size_problem(sections, 60_000):
+        return error(problem)
     mode = "simplify" if payload.get("mode") == "simplify" else "improve"
     billing.check_ai_edit(current_user)
     started = time.monotonic()
@@ -186,9 +208,13 @@ def enhance(set_id: int):
 
 @api_bp.post("/sets/<int:set_id>/attempts")
 @login_required
+@limiter.limit("300 per hour")
 def submit_attempt(set_id: int):
     study_set = get_owned_set(set_id, current_user)
-    payload = request.get_json(silent=True) or {}
+    payload = _json_dict()
+    if not isinstance(payload.get("results"), list):
+        payload["results"] = []
+    payload["results"] = [r for r in payload["results"][:500] if isinstance(r, dict)]
     attempt = record_attempt(study_set, payload.get("results") or [])
     db.session.commit()
     log_event("quiz_done", kv(set=study_set.id, n=attempt.total, score=round(attempt.score),
@@ -216,7 +242,7 @@ def submit_attempt(set_id: int):
 @login_required
 def card_results():
     """Results from a cross-set quiz (mock exam / weak spots)."""
-    payload = request.get_json(silent=True) or {}
+    payload = _json_dict()
     results = payload.get("results") or []
     ids = [clean_int(r.get("card_id")) for r in results]
     cards = {c.id: c for c in Card.query.join(StudySet).filter(
@@ -244,7 +270,7 @@ def review(card_id: int):
     if card is None:
         return error("Not found.", 404)
     get_owned_set(card.set_id, current_user)
-    review_card(card, (request.get_json(silent=True) or {}).get("grade", "good"))
+    review_card(card, _json_dict().get("grade", "good"))
     db.session.commit()
     track("flashcards")
     return jsonify(ok=True, due_at=card.due_at.isoformat() if card.due_at else None)
@@ -266,10 +292,11 @@ def beacon():
         data = json.loads(request.get_data(as_text=True) or "{}")
     except ValueError:
         return "", 204
-    kind = data.get("kind")
-    if kind not in BEACON_KINDS:
+    if not isinstance(data, dict) or data.get("kind") not in BEACON_KINDS:
         return "", 204
-    fields = {k: clean_text(str(v), 40) for k, v in (data.get("fields") or {}).items()
+    kind = data["kind"]
+    raw_fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+    fields = {k: clean_text(str(v), 40) for k, v in raw_fields.items()
               if k.isalnum() and len(k) <= 12 and v is not None}
     log_event(kind, kv(**dict(list(fields.items())[:10])))
     return "", 204
@@ -287,7 +314,7 @@ def report_card(card_id: int):
     if card is None:
         return error("Not found.", 404)
     get_owned_set(card.set_id, current_user)
-    payload = request.get_json(silent=True) or {}
+    payload = _json_dict()
     reason = payload.get("reason") if payload.get("reason") in REPORT_REASONS else "other"
     log_event("q_report", kv(card=card.id, set=card.set_id, kind=card.kind, reason=reason))
     return jsonify(ok=True)

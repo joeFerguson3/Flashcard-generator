@@ -68,6 +68,15 @@
     <p class="muted small" style="margin-top:1rem">We record anonymous usage (like where people stop in a quiz) to improve the site. <a href="{{ url_for('public.privacy') }}#analytics">Turn this off or read more</a>.</p>
   </section>
 
+  <section class="panel">
+    <h2 class="block__title">Signed-in devices</h2>
+    <p class="muted">Signed in on a shared or school computer and forgot to sign out? This signs you out everywhere, including this device.</p>
+    <form method="post" action="{{ url_for('auth.logout_everywhere') }}" class="inline-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn--ghost">Sign out of all devices</button>
+    </form>
+  </section>
+
   <section class="panel panel--danger">
     <h2 class="block__title">Delete account</h2>
     <p class="muted">This permanently deletes your account and all of your sets, cards and scores. It can't be undone.</p>

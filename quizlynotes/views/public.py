@@ -142,9 +142,9 @@ def analytics_choice():
     from ..activity import OPT_OUT_COOKIE
 
     off = request.form.get("choice") == "off"
-    back = request.form.get("next") or url_for("public.privacy")
-    if not back.startswith("/") or back.startswith("//"):
-        back = url_for("public.privacy")
+    from ..auth import _safe_next
+
+    back = _safe_next(request.form.get("next")) or url_for("public.privacy")
     res = make_response(redirect(back + "#analytics"))
     if off:
         res.set_cookie(OPT_OUT_COOKIE, "off", max_age=60 * 60 * 24 * 365 * 2, samesite="Lax",
@@ -246,11 +246,18 @@ def try_it():
     """Generate a short quiz from pasted text without an account."""
     if not current_app.config["ENABLE_GUEST_DEMO"]:
         abort(404)
-    payload = request.get_json(silent=True) or request.form
-    text = (payload.get("text") or "").strip()
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = request.form
+    text = str(payload.get("text") or "").strip()
     max_chars = current_app.config["GUEST_DEMO_MAX_CHARS"]
     if len(text) < 150:
         return jsonify(error="Paste at least a paragraph of notes (150+ characters)."), 400
+    # A site-wide daily cap, so the no-account demo can't run up a big AI bill even if
+    # someone spreads requests over many IP addresses or server instances.
+    cap = current_app.config.get("GUEST_DAILY_CAP", 200)
+    if GuestDraft.query.filter(GuestDraft.created_at >= utcnow() - timedelta(days=1)).count() >= cap:
+        return jsonify(error="The free try is busy right now. Sign in with Google (it's free) to make your quiz."), 429
     if len(text) > max_chars:
         return jsonify(error=f"The free try is limited to {max_chars:,} characters. Sign in to use longer notes or upload files."), 400
     try:

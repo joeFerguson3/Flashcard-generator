@@ -29,8 +29,9 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
             raise RuntimeError("FLASK_SECRET_KEY must be set in production.")
         app.config["SECRET_KEY"] = "dev-only-secret"
 
-    # Cloud Run sits behind Google's proxy; trust its forwarded headers.
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    # Cloud Run sits behind Google's proxy; trust its client-IP and scheme headers
+    # (not X-Forwarded-Host: Cloud Run passes the real Host header, and clients could spoof it).
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     if not app.config["IS_PRODUCTION"]:
         os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
@@ -43,6 +44,9 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     limiter.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
+    from .auth import upgrade_legacy_login
+
+    app.before_request(upgrade_legacy_login)
     login_manager.login_message = None
 
     try:
@@ -240,9 +244,40 @@ def _register_error_handlers(app: Flask) -> None:
                                message="Please try again in a moment."), 500
 
 
+# Content-Security-Policy: only our own scripts (plus inline ones carrying this request's
+# nonce) and Google's ad tag may run. Google Fonts for styles; images from https anywhere
+# (Google profile pictures, ad pixels).
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'nonce-{nonce}' https://www.googletagmanager.com https://www.googleadservices.com "
+    "https://googleads.g.doubleclick.net https://www.google.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: blob: https:; "
+    "connect-src 'self' https://www.google.com https://www.googletagmanager.com https://www.googleadservices.com "
+    "https://googleads.g.doubleclick.net https://*.doubleclick.net https://*.google-analytics.com; "
+    "frame-src https://*.doubleclick.net https://www.googletagmanager.com; "
+    "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
+    "form-action 'self' https://accounts.google.com https://checkout.stripe.com https://billing.stripe.com"
+)
+
+
 def _register_security_headers(app: Flask) -> None:
+    import secrets
+
+    from flask import g
+
+    def csp_nonce() -> str:
+        if "csp_nonce" not in g:
+            g.csp_nonce = secrets.token_urlsafe(16)
+        return g.csp_nonce
+
+    app.jinja_env.globals["csp_nonce"] = csp_nonce
+
     @app.after_request
     def headers(response):
+        if response.mimetype == "text/html":
+            response.headers.setdefault("Content-Security-Policy", _CSP.format(nonce=csp_nonce()))
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("X-Frame-Options", "DENY")

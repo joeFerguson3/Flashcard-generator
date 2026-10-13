@@ -1,6 +1,6 @@
 {% set ads_signup = session.pop('ads_signup', None) %}
 {% if site.ads_id %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   // Google Ads tag. It only loads after the visitor accepts ad cookies (UK PECR needs consent).
   window.QN_ADS = {
     id: {{ site.ads_id|tojson }},

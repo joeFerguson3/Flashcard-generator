@@ -8,7 +8,7 @@ from flask import (Blueprint, abort, current_app, flash, jsonify, redirect, rend
 from flask_login import current_user, login_required
 
 from .. import billing
-from ..extensions import csrf, db
+from ..extensions import csrf, db, limiter
 from ..models import User
 from ..sanitize import clean_text
 
@@ -174,6 +174,7 @@ def webhook():
 
 @billing_bp.route("/redeem", methods=["POST"])
 @login_required
+@limiter.limit("10 per hour")
 def redeem():
     code = clean_text(request.form.get("code"), 64)
     try:
@@ -183,7 +184,9 @@ def redeem():
     except ValueError as exc:
         db.session.rollback()
         flash(str(exc), "error")
-    return redirect(request.form.get("next") or url_for("study.settings"))
+    from ..auth import _safe_next
+
+    return redirect(_safe_next(request.form.get("next")) or url_for("study.settings"))
 
 
 @billing_bp.route("/r/<code>")

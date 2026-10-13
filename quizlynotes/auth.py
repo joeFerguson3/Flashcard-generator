@@ -1,9 +1,11 @@
 """Google sign-in (Flask-Dance) + Flask-Login sessions."""
 from __future__ import annotations
 
+import os
+
 from urllib.parse import urlparse
 
-from flask import Blueprint, abort, current_app, flash, redirect, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, g, redirect, request, session, url_for
 from flask_dance.consumer import oauth_authorized, oauth_error
 from flask_dance.contrib.google import make_google_blueprint
 from flask_login import current_user, login_user, logout_user
@@ -17,10 +19,35 @@ auth_bp = Blueprint("auth", __name__)
 
 @login_manager.user_loader
 def load_user(user_id: str):
+    """Login cookies hold "<id>.<session token>", so changing the token signs out every device.
+    Cookies from before tokens existed ("<id>" only) are accepted once and upgraded."""
+    import hmac
+
+    raw = str(user_id or "")
+    uid, _, token = raw.partition(".")
     try:
-        return db.session.get(User, int(user_id))
+        user = db.session.get(User, int(uid))
     except (TypeError, ValueError):
         return None
+    if user is None:
+        return None
+    if token:
+        return user if user.session_token and hmac.compare_digest(user.session_token, token) else None
+    if user.session_token:  # an old-style cookie after the account already moved on
+        return None
+    g.upgrade_login = True
+    return user
+
+
+def upgrade_legacy_login():
+    """Re-issue an old-style login cookie in the new format (runs before each request)."""
+    if request.endpoint in (None, "static"):
+        return
+    if current_user.is_authenticated and g.pop("upgrade_login", None):
+        user = current_user._get_current_object()
+        user.rotate_session_token()
+        db.session.commit()
+        login_user(user, remember=True)
 
 
 @login_manager.unauthorized_handler
@@ -34,7 +61,8 @@ def _safe_next(target: str | None) -> str | None:
     if not target:
         return None
     parsed = urlparse(target)
-    if parsed.scheme or parsed.netloc or not target.startswith("/") or target.startswith("//"):
+    if (parsed.scheme or parsed.netloc or not target.startswith("/") or target.startswith("//")
+            or "\\" in target or any(ord(c) < 32 for c in target)):
         return None
     return target
 
@@ -95,7 +123,10 @@ def _complete_login(email: str, name: str | None, picture: str | None):
     # Reverse trial: every account starts with a week of Pro (existing users
     # get it once too, as a launch gift).
     billing.start_trial(user, referred=bool(user.referred_by_id) and is_new)
+    if not user.session_token:
+        user.rotate_session_token()
     db.session.commit()
+    session.pop("_user_id", None)  # don't carry anything from before sign-in
     login_user(user, remember=True)
 
     target = _safe_next(session.pop("next", None))
@@ -135,10 +166,24 @@ def login():
 @auth_bp.route("/dev-login")
 def dev_login():
     """Local development only: sign in without Google."""
-    if not current_app.config["ENABLE_DEV_LOGIN"] or current_app.config["IS_PRODUCTION"]:
+    # Never on a real deployment: Cloud Run always sets K_SERVICE.
+    if not current_app.config["ENABLE_DEV_LOGIN"] or current_app.config["IS_PRODUCTION"] or os.getenv("K_SERVICE"):
         abort(404)
     email = request.args.get("email", "dev@example.com")
     return _complete_login(email, "Dev Student", None)
+
+
+@auth_bp.route("/logout-everywhere", methods=["POST"])
+def logout_everywhere():
+    """Sign out on every device by changing the token in everyone's login cookie."""
+    if current_user.is_authenticated:
+        current_user.rotate_session_token()
+        db.session.commit()
+    logout_user()
+    session.clear()
+    session["_remember"] = "clear"
+    flash("You've been signed out on all your devices.", "success")
+    return redirect(url_for("public.home"))
 
 
 @auth_bp.route("/logout", methods=["POST"])

@@ -14,9 +14,35 @@ _BLANK_RE = re.compile(r"\{blank\}|_{3,}|\[blank\]", re.IGNORECASE)
 _BULLET_RE = re.compile(r"^\s*(?:[-*•–]+|\d+[.)])\s*")
 
 
+MAX_SECTIONS = 150
+MAX_POINTS_PER_SECTION = 200
+
+
+def notes_size_problem(sections, max_chars: int) -> str | None:
+    """Why edited notes are too big (or malformed) to save or send to the AI; None if fine.
+    Stops a user stuffing huge notes in and then running AI calls on them."""
+    if not isinstance(sections, list) or not all(isinstance(x, dict) for x in sections):
+        return "Those notes couldn't be read."
+    if len(sections) > MAX_SECTIONS:
+        return f"That's too many sections (the limit is {MAX_SECTIONS}). Split the notes into two sets."
+    total = 0
+    for x in sections:
+        points = x.get("points") or []
+        if not isinstance(points, list) or len(points) > MAX_POINTS_PER_SECTION:
+            return "One section has too many points. Split it into smaller sections."
+        for p in points:
+            total += len(p if isinstance(p, str) else str((p or {}).get("text", "")) if isinstance(p, dict) else "")
+        total += len(str(x.get("heading", ""))) + len(str(x.get("subheading", "")))
+    if total > max_chars:
+        return "These notes are too long to save. Split them into two sets."
+    return None
+
+
 def clean_notes(sections: list[dict]) -> list[dict]:
     cleaned = []
     for raw in sections or []:
+        if not isinstance(raw, dict):
+            continue
         heading = clean_text(raw.get("heading"), 200)
         subheading = clean_text(raw.get("subheading"), 200)
         points = []

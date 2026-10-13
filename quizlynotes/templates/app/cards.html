@@ -115,7 +115,7 @@
   </form>
 </section>
 {% endblock %}
-{% block scripts %}<script>
+{% block scripts %}<script nonce="{{ csp_nonce() }}">
 document.querySelectorAll('[data-delete-toggle]').forEach(function (box) {
   box.addEventListener('change', function () { box.closest('[data-edit-card]').classList.toggle('is-deleted', box.checked); });
 });

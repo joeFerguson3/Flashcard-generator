@@ -82,6 +82,8 @@
         if (r.hidden) return;
         lines.push(Array.prototype.map.call(r.cells, function (c) {
           var v = c.innerText.replace(/\s+/g, ' ').trim();
+          // Stop user-written text (set titles, names) being run as a spreadsheet formula.
+          if (/^[=+\-@\t\r]/.test(v) && !/^-?\d+(\.\d+)?%?$/.test(v)) v = "'" + v;
           return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
         }).join(','));
       });

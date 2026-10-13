@@ -12,6 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Run as an unprivileged user, not root.
+RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin app && chown -R app /app
+USER app
+
 # Apply database migrations, then serve. Generation requests can take a
 # minute, so use threads and a long timeout (match Cloud Run's --timeout).
 CMD flask --app wsgi db upgrade && \

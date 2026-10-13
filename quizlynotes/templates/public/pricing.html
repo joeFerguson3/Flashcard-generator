@@ -110,7 +110,7 @@
   </section>
 </section>
 {% endblock %}
-{% block scripts %}<script>
+{% block scripts %}<script nonce="{{ csp_nonce() }}">
 (function () {
   var toggle = document.querySelector('[data-billing-toggle]');
   if (!toggle) return;

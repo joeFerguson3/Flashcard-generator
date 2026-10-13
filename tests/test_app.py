@@ -162,8 +162,12 @@ def test_upload_rejects_bad_files(client):
 
 def test_upload_pdf(client):
     login(client)
-    pdf = (b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\n"
-           b"trailer<</Root 1 0 R>>\n%%EOF")
+    from pypdf import PdfWriter
+
+    writer, buf = PdfWriter(), io.BytesIO()
+    writer.add_blank_page(width=200, height=200)
+    writer.write(buf)
+    pdf = buf.getvalue()
     res = client.post("/api/sets", data={"file": (io.BytesIO(pdf), "Lecture 3.pdf"), "skip_review": "1"},
                       content_type="multipart/form-data")
     assert res.status_code == 200
@@ -337,3 +341,77 @@ def test_quiz_question_count(client, app):
     assert n == 0 and notes_only and g == groups
     page = client.get(f"/sets/{set_id}").get_data(as_text=True)
     assert 'type="range" name="n"' in page and "data-subject-picker" in page
+
+
+def test_upload_rejects_zip_bomb_and_unreadable_pdf(client):
+    import zipfile
+
+    login(client)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", "<x/>")
+        zf.writestr("word/document.xml", "<w:p/>" * 2_000_000)
+    res = client.post("/api/sets", data={"file": (io.BytesIO(buf.getvalue()), "bomb.docx"), "skip_review": "1"},
+                      content_type="multipart/form-data")
+    assert res.status_code == 400 and "unpacked" in res.json["error"]
+    res = client.post("/api/sets", data={"file": (io.BytesIO(b"%PDF-1.4 garbage"), "bad.pdf"), "skip_review": "1"},
+                      content_type="multipart/form-data")
+    assert res.status_code == 400 and "couldn't read" in res.json["error"]
+
+
+def test_sign_out_everywhere_revokes_old_cookies(app):
+    a = app.test_client()
+    login(a, "dev1@example.com")
+    assert a.get("/library").status_code == 200
+    remember = a.get_cookie("remember_token").value
+    assert "." in remember.split("|")[0]  # "<id>.<token>|signature"
+    a.post("/logout-everywhere")
+    from flask import g
+
+    g.pop("_login_user", None)
+    b = app.test_client()
+    b.set_cookie("remember_token", remember)
+    assert b.get("/library").status_code == 302  # stolen cookie no longer works
+
+
+def test_old_style_login_cookie_is_upgraded(app):
+    from quizlynotes.models import User
+
+    c = app.test_client()
+    login(c, "old@example.com")
+    with app.app_context():
+        user = User.query.filter_by(email="old@example.com").first()
+        user.session_token = None
+        db.session.commit()
+        uid = user.id
+    c.delete_cookie("remember_token")
+    with c.session_transaction() as s:
+        s["_user_id"] = str(uid)  # how sessions looked before tokens
+    from flask import g
+
+    g.pop("_login_user", None)  # the test app context outlives requests; drop the cached user
+    assert c.get("/library").status_code == 200
+    with c.session_transaction() as s:
+        assert "." in s["_user_id"]
+    with app.app_context():
+        assert db.session.get(User, uid).session_token
+
+
+def test_input_hardening(client):
+    from quizlynotes.auth import _safe_next
+
+    assert _safe_next("/\\evil.com") is None and _safe_next("//evil.com") is None and _safe_next("/library") == "/library"
+    assert client.post("/api/beacon", data="[1]").status_code == 204
+    assert client.post("/api/beacon", data='{"kind":"cta","fields":[1]}').status_code == 204
+    assert client.post("/try", json=[1]).status_code in (400, 404)
+    login(client)
+    set_id = make_set(client)
+    huge = [{"heading": "h", "subheading": "s", "points": [{"text": "x" * 900, "level": 1}] * 199}] * 3
+    res = client.put(f"/api/sets/{set_id}/notes", json={"sections": huge * 1})
+    assert res.status_code == 200 or res.status_code == 400
+    too_many = [{"heading": "h", "subheading": "s", "points": []}] * 151
+    assert client.put(f"/api/sets/{set_id}/notes", json={"sections": too_many}).status_code == 400
+    assert client.post(f"/api/sets/{set_id}/attempts", json=[1]).status_code == 200
+    html = client.get("/library")
+    assert "Content-Security-Policy" in html.headers and "nonce-" in html.headers["Content-Security-Policy"]
+    assert "no-store" in html.headers["Cache-Control"]

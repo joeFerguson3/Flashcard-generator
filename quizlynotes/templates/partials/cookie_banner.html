@@ -6,7 +6,7 @@
     <button type="button" class="btn btn--ghost btn--sm" data-cookie-answer="yes">Allow</button>
   </div>
 </div>
-<script>
+<script nonce="{{ csp_nonce() }}">
   (function () {
     var banner = document.querySelector('[data-cookie-banner]');
     if (!banner) return;

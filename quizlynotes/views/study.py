@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, logout_user
 
 import random
@@ -30,6 +30,8 @@ def require_login():
 @study_bp.after_request
 def no_index(response):
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    # Private pages: don't let shared/school computers or proxies keep a copy.
+    response.headers["Cache-Control"] = "private, no-store"
     return response
 
 
@@ -276,7 +278,7 @@ def mock_exam():
     subject = request.args.get("subject")
     if subject not in subjects:
         return render_template("app/mock_pick.html", subjects=subjects)
-    size = min(max(int(request.args.get("n", 20) or 20), 5), 60)
+    size = min(max((request.args.get("n", 20, type=int) or 20), 5), 60)
     cards = (Card.query.join(StudySet)
              .filter(StudySet.user_id == current_user.id, StudySet.subject == subject,
                      Card.kind.notin_(("flashcard", "explain"))).all())
@@ -335,6 +337,16 @@ def delete_account():
         flash("Type DELETE to confirm.", "error")
         return redirect(url_for("study.settings"))
     user = current_user._get_current_object()
+    # Stop any paid subscription so a deleted account is never charged again.
+    if user.stripe_subscription_id and user.subscription_status in ("active", "trialing", "past_due", "unpaid"):
+        from .. import billing as _billing
+
+        try:
+            _billing.stripe_client().v1.subscriptions.cancel(user.stripe_subscription_id)
+        except Exception:
+            current_app.logger.exception("Could not cancel Stripe subscription for user %s", user.id)
+            flash("We couldn't cancel your subscription automatically. Please email us before deleting your account.", "error")
+            return redirect(url_for("study.settings"))
     logout_user()
     UsageEvent.query.filter_by(user_id=user.id).delete()
     SiteEvent.query.filter_by(user_id=user.id).delete()

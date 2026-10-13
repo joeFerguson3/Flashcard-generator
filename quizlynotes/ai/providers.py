@@ -46,6 +46,20 @@ class BaseProvider:
         raise NotImplementedError
 
 
+AI_DEADLINE_SECONDS = 270
+
+
+def _request_deadline() -> float:
+    """One time budget per web request, shared by every AI call it makes."""
+    from flask import g, has_request_context
+
+    if has_request_context():
+        if "ai_deadline" not in g:
+            g.ai_deadline = time.monotonic() + AI_DEADLINE_SECONDS
+        return g.ai_deadline
+    return time.monotonic() + AI_DEADLINE_SECONDS
+
+
 class GeminiProvider(BaseProvider):
     def __init__(self, api_key: str, model: str, fast_model: str, fallback_model: str = ""):
         from google import genai
@@ -60,7 +74,7 @@ class GeminiProvider(BaseProvider):
             api_key=api_key,
             http_options=types.HttpOptions(
                 timeout=240_000,  # ms
-                retry_options=types.HttpRetryOptions(attempts=3, initial_delay=2.0, max_delay=20.0),
+                retry_options=types.HttpRetryOptions(attempts=2, initial_delay=2.0, max_delay=10.0),
             ),
         )
 
@@ -76,7 +90,18 @@ class GeminiProvider(BaseProvider):
         )
         models = [model] + ([self.fallback_model] if self.fallback_model and self.fallback_model != model else [])
         last_error: Exception | None = None
+        # Finish (or give up) before the web request times out (Cloud Run: 300 s), so a
+        # slow AI can't keep server threads busy after the user has gone.
+        deadline = _request_deadline()
         for attempt, current in enumerate(models + [models[-1]]):
+            remaining = deadline - time.monotonic()
+            if remaining < 15:
+                last_error = last_error or AIError("Out of time.")
+                break
+            config.http_options = types.HttpOptions(
+                timeout=int(min(240, remaining) * 1000),
+                retry_options=types.HttpRetryOptions(attempts=1),
+            )
             try:
                 response = self.client.models.generate_content(
                     model=current, contents=contents, config=config

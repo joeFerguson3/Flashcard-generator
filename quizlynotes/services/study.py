@@ -137,12 +137,14 @@ def record_attempt(study_set: StudySet, results: list[dict]) -> Attempt:
 
     # Skips and "I was right" overrides per question type, for the owner's stats.
     from ..models import SiteEvent
+    flagged = set()
     for r in results or []:
         card = cards.get(clean_int(r.get("card_id")))
         if card is None or card.kind == "flashcard":
             continue
         for flag, kind in (("skipped", "q_skip"), ("overridden", "q_override")):
-            if r.get(flag):
+            if r.get(flag) and (card.id, kind) not in flagged:  # once per card, however often it's sent
+                flagged.add((card.id, kind))
                 db.session.add(SiteEvent(kind=kind, user_id=study_set.user_id, detail=card.kind))
 
     attempt = Attempt(study_set=study_set, score=score, correct=correct, total=total)
