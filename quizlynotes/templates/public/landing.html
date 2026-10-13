@@ -75,7 +75,7 @@
   <div class="cta">
     <h2>Ready when you are</h2>
     <p>Free to use. Sign in with Google and your sets are saved to your library.</p>
-    <a href="{{ url_for('auth.login') }}" class="btn btn--hl btn--lg">Start for free</a>
+    <a href="{{ url_for('auth.login', next=url_for('study.new_set')) }}" class="btn btn--hl btn--lg" data-cta="bottom">Start for free</a>
   </div>
 </section>
 {% endblock %}

@@ -41,14 +41,19 @@
 <section class="hero">
   <div class="wrap hero__grid">
     <div class="hero__copy">
-      <p class="eyebrow">Free AI study tool</p>
+      <p class="eyebrow">Free AI study tool for students</p>
       <h1 class="display">Turn your notes into <mark>quizzes</mark> and flashcards</h1>
-      <p class="lede">QuizlyNotes reads your lecture slides, PDFs and class notes, writes clean revision notes, then quizzes you on them. Practice questions with explanations, and flashcards that come back when you're about to forget them.</p>
+      <p class="lede">Upload lecture slides, a PDF or your own notes. Get clear revision notes, a practice quiz with every answer explained, and flashcards that come back before you forget.</p>
       <ul class="ticks">
         <li>Reads slides, diagrams and scanned pages</li>
-        <li>Ten question types plus flashcards, every answer explained</li>
-        <li>{% if site.monetisation %}Free forever, with a 7-day Pro trial. No card needed{% else %}Completely free. No card, no limits on studying{% endif %}</li>
+        <li>Ten question types, from multiple choice to matching</li>
+        <li>{% if site.monetisation %}Free forever, with a 7-day Pro trial{% else %}Completely free, no limits on studying{% endif %}</li>
       </ul>
+      <div class="hero__cta" data-hero-cta>
+        {% include "partials/google_button.html" %}
+        <a class="hero__alt" href="#try" data-cta="hero-try">or try it without an account<span aria-hidden="true"> ↓</span></a>
+      </div>
+      <p class="hero__fine">No card needed · Sign up takes about 10 seconds · Uploaded files aren't kept</p>
     </div>
     <div class="hero__try" id="try">
       {% if site.guest_demo %}{% include "partials/tryit.html" %}{% else %}
@@ -158,11 +163,15 @@
   {% include "partials/faq.html" %}
 </section>
 
+<div class="sticky-cta" data-sticky-cta hidden>
+  {% with cta_place="sticky", cta_label="Start free with Google" %}{% include "partials/google_button.html" %}{% endwith %}
+</div>
+
 <section class="wrap section">
   <div class="cta">
     <h2>Your next exam, sorted one quiz at a time</h2>
     <p>Sign in with Google and turn your first set of notes into a quiz. {% if site.monetisation %}Your first week of Pro is on us.{% else %}It's free.{% endif %}</p>
-    <a href="{{ url_for('auth.login') }}" class="btn btn--hl btn--lg">Start for free</a>
+    <a href="{{ url_for('auth.login', next=url_for('study.new_set')) }}" class="btn btn--hl btn--lg" data-cta="bottom" data-sticky-stop>Start for free</a>
   </div>
 </section>
 {% endblock %}

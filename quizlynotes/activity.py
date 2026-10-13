@@ -79,9 +79,11 @@ _SKIP_ENDPOINTS = {
     "public.favicon", "public.healthz", "public.try_it",
 }
 _REFERRERS = [
+    ("gemini.google", "Gemini"), ("syndicatedsearch.goog", "Google Ads"), ("googleadservices", "Google Ads"),
+    ("doubleclick", "Google Ads"), ("googlesyndication", "Google Ads"),
     ("google.", "Google"), ("bing.com", "Bing"), ("duckduckgo.com", "DuckDuckGo"), ("yahoo.", "Yahoo"),
     ("ecosia.org", "Ecosia"), ("chatgpt.com", "ChatGPT"), ("openai.com", "ChatGPT"), ("perplexity.ai", "Perplexity"),
-    ("claude.ai", "Claude"), ("gemini.google", "Gemini"), ("copilot.microsoft", "Copilot"), ("reddit.com", "Reddit"),
+    ("claude.ai", "Claude"), ("copilot.microsoft", "Copilot"), ("reddit.com", "Reddit"),
     ("tiktok.com", "TikTok"), ("instagram.com", "Instagram"), ("facebook.com", "Facebook"), ("t.co", "X / Twitter"),
     ("x.com", "X / Twitter"), ("twitter.com", "X / Twitter"), ("youtube.com", "YouTube"), ("linkedin.com", "LinkedIn"),
     ("discord", "Discord"), ("whatsapp", "WhatsApp"), ("snapchat", "Snapchat"),
@@ -92,6 +94,8 @@ def classify_source(req) -> str:
     tag = req.args.get("ref") or req.args.get("utm_source")
     if tag:
         return re.sub(r"[^a-z0-9_\-]", "", tag.lower())[:40] or "Tagged link"
+    if any(req.args.get(k) for k in ("gclid", "gbraid", "wbraid", "gad_source")):
+        return "Google Ads"
     if req.path.startswith("/s/"):
         return "Shared quiz"
     if req.path.startswith("/r/"):
@@ -369,6 +373,15 @@ def _growth_stats(users, sets, attempts, active, exclude_emails, start: date, to
     ]
     funnel_max = max([n for _, n, _ in funnel] + [1])
 
+    # Which sign-up buttons people click.
+    cta_names = {"hero": "Home: Google button", "hero-try": "Home: \"try it first\" link", "header": "Header: Start free",
+                 "sticky": "Phone: sticky button", "bottom": "Bottom of page", "upload": "Upload tab",
+                 "sample": "Tried sample notes", "demo-save": "Demo: save banner", "demo-end": "Demo: end of quiz",
+                 "shared": "Shared quiz: header", "shared-end": "Shared quiz: end"}
+    cta_counts = Counter(parse_kv(e.detail).get("where", "?") for e in site
+                         if e.kind == "cta" and in_period(e.created_at))
+    ctas = [{"label": cta_names.get(k, k), "n": n} for k, n in cta_counts.most_common()]
+
     # Shared quizzes.
     share_opens = [e for e in site if e.kind == "share_open" and in_period(e.created_at)]
     shares = {
@@ -421,7 +434,7 @@ def _growth_stats(users, sets, attempts, active, exclude_emails, start: date, to
         "sources": sources, "pages": pages,
         "devices": sorted(devices.items(), key=lambda kv: -kv[1]),
         "signup_devices": dict(signup_devices),
-        "funnel": funnel, "funnel_max": funnel_max,
+        "funnel": funnel, "funnel_max": funnel_max, "ctas": ctas,
         "shares": shares,
         "error_counts": error_counts, "recent_errors": recent_errors, "no_sets": no_sets,
         "qtypes": qtypes,

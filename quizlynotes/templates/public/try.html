@@ -5,7 +5,7 @@
 <section class="wrap player-wrap">
   <div class="guest-banner">
     <p><strong>This is a preview.</strong> Sign in to save this quiz and its {{ flashcards|length }} flashcards to your library.</p>
-    <a class="btn btn--primary btn--sm" href="{{ url_for('auth.login') }}">Save with Google</a>
+    <a class="btn btn--primary btn--sm" href="{{ url_for('auth.login') }}" data-cta="demo-save">Save with Google</a>
   </div>
   <header class="player-head">
     <p class="eyebrow">{{ data.subject }}</p>

@@ -5,7 +5,7 @@
 <section class="wrap player-wrap">
   <div class="guest-banner">
     <p><strong>{{ owner_name }} shared this quiz with you.</strong> Make your own from any notes or PDF, free.</p>
-    <a class="btn btn--primary btn--sm" href="{{ url_for('auth.login') }}">Make my own</a>
+    <a class="btn btn--primary btn--sm" href="{{ url_for('auth.login') }}" data-cta="shared">Make my own</a>
   </div>
   <header class="player-head">
     <p class="eyebrow">{{ s.subject }}</p>

@@ -212,7 +212,29 @@
     update();
   }
 
-  document.addEventListener('DOMContentLoaded', function () { initSubjectPickers(); initQuizLaunch(); });
+  // Which sign-up buttons get clicked (owner stats).
+  document.addEventListener('click', function (e) {
+    var cta = e.target.closest('[data-cta]');
+    if (cta) beacon('cta', { where: cta.getAttribute('data-cta').slice(0, 12), page: (location.pathname.split('/')[1] || 'home').slice(0, 12) });
+  });
+
+  // Phones: a sign-up bar once the hero button has scrolled away.
+  function initStickyCta() {
+    var bar = document.querySelector('[data-sticky-cta]');
+    var hero = document.querySelector('[data-hero-cta]');
+    if (!bar || !hero || !('IntersectionObserver' in window)) return;
+    var heroGone = false, stopSeen = false;
+    function update() {
+      var banner = document.querySelector('[data-cookie-banner]');
+      bar.hidden = !(heroGone && !stopSeen && (!banner || banner.hidden));
+    }
+    new IntersectionObserver(function (es) { heroGone = !es[0].isIntersecting && es[0].boundingClientRect.top < 0; update(); }).observe(hero);
+    var stop = document.querySelector('[data-sticky-stop]') || document.querySelector('.site-footer');
+    if (stop) new IntersectionObserver(function (es) { stopSeen = es[0].isIntersecting; update(); }).observe(stop);
+    document.addEventListener('click', function (e) { if (e.target.closest('[data-cookie-answer]')) setTimeout(update, 0); });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () { initSubjectPickers(); initQuizLaunch(); initStickyCta(); });
 
   // Anonymous usage events (server ignores them if analytics is turned off).
   function beacon(kind, fields) {

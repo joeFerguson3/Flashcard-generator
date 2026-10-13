@@ -1151,3 +1151,26 @@ th.is-sortable:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .cookie-banner__text { margin: 0; font-size: .9rem; line-height: 1.45; }
 .cookie-banner__actions { display: flex; gap: .5rem; justify-content: flex-end; }
 .cookie-banner__actions .btn { min-width: 6.5rem; }
+
+/* Home hero: one clear sign-up action */
+.hero__cta { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1.25rem; margin-top: 1.6rem; }
+.btn--google { background: var(--ink); color: var(--paper); border-color: var(--ink); gap: .7rem; padding-left: .7rem; }
+.btn--google:hover { box-shadow: 0 8px 22px -10px rgba(29,27,22,.7); }
+.btn--google__g { flex: none; width: 1.75rem; height: 1.75rem; padding: .3rem; border-radius: 50%; background: #fff; box-sizing: border-box; }
+.hero__alt { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; font-size: .97rem; }
+.hero__alt:hover { color: var(--ink); }
+.hero__fine { margin: .8rem 0 0; font-size: .85rem; color: var(--muted); }
+.tryit__actions { gap: .6rem; }
+
+/* Phones: sign-up bar after the hero */
+.sticky-cta { display: none; }
+@media (max-width: 760px) {
+  .sticky-cta:not([hidden]) { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; padding: .65rem 1rem calc(.65rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--line); }
+  .sticky-cta .btn { width: 100%; justify-content: center; }
+  .cookie-banner { left: .6rem; right: .6rem; bottom: .6rem; padding: .7rem .8rem; gap: .5rem; }
+  .cookie-banner__text { font-size: .8rem; line-height: 1.4; }
+  .cookie-banner__actions .btn { min-width: 0; flex: 1; padding-top: .4em; padding-bottom: .4em; }
+}
+.hero__grid > * { min-width: 0; }
+.btn--google span { white-space: normal; text-align: left; }

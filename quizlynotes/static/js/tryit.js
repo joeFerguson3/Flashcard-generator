@@ -24,7 +24,8 @@
     root.querySelector('[data-sample]').addEventListener('click', function () {
       textarea.value = SAMPLE;
       updateCount();
-      textarea.focus();
+      QN.beacon('cta', { where: 'sample' });
+      if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true }));
     });
 
     form.addEventListener('submit', function (e) {

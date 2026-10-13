@@ -78,6 +78,12 @@
     </section>
 
     <section class="block">
+      <h2 class="block__title">Sign-up buttons clicked</h2>
+      <p class="muted small">Clicks on each "Start free" / Google button, and the sample-notes demo. Counted from 13 Oct.</p>
+      {% if s.ctas %}{{ hbar_list(s.ctas, 'label', 'n') }}{% else %}<p class="muted">No clicks yet in this period.</p>{% endif %}
+    </section>
+
+    <section class="block">
       <h2 class="block__title">Where people come from</h2>
       <p class="muted small">Add <code>?ref=name</code> to links you post (for example <code>quizlynotes.com/?ref=tiktok</code>) and they show up here by name.</p>
       {{ table_tools('t-sources', none) }}

@@ -252,7 +252,7 @@ def review(card_id: int):
 
 # --- Usage analytics from the browser ----------------------------------------
 
-BEACON_KINDS = {"quiz_abandon", "ai_undo", "quiz_options"}
+BEACON_KINDS = {"quiz_abandon", "ai_undo", "quiz_options", "cta"}
 
 
 @api_bp.post("/beacon")

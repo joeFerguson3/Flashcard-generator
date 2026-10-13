@@ -10,7 +10,7 @@
     <div class="tryit__foot">
       <span class="muted small"><span data-count>0</span> / {{ '{:,}'.format(config.GUEST_DEMO_MAX_CHARS) }} characters</span>
       <div class="tryit__actions">
-        <button type="button" class="link-btn small" data-sample>Use sample notes</button>
+        <button type="button" class="btn btn--ghost" data-sample title="Fill in sample notes about vision and make a quiz from them">Try with sample notes</button>
         <button type="submit" class="btn btn--primary">Make my quiz</button>
       </div>
     </div>
@@ -18,8 +18,8 @@
   </form>
   <div class="tryit__panel tryit__upload" data-panel="upload" hidden>
     <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0l-4 4m4-4l4 4M5 16v3a1 1 0 001 1h12a1 1 0 001-1v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <p><strong>PDF, lecture slides, Word or PowerPoint</strong><br><span class="muted">Up to 30MB. Sign in with Google to upload and save your sets.</span></p>
-    <a href="{{ url_for('auth.login', next=url_for('study.new_set')) }}" class="btn btn--primary">Sign in to upload</a>
+    <p><strong>PDF, lecture slides, Word or PowerPoint</strong><br><span class="muted">Up to 30MB. Sign in with Google (about 10 seconds) to upload files and save your sets. It's free.</span></p>
+    <a href="{{ url_for('auth.login', next=url_for('study.new_set')) }}" class="btn btn--primary" data-cta="upload">Continue with Google to upload</a>
   </div>
   <div class="tryit__loading" data-loading hidden>
     {% include "partials/loader.html" %}

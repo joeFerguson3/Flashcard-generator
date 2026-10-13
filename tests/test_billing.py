@@ -369,3 +369,17 @@ def test_google_ads_tag_needs_consent(client):
     assert 'src="https://www.googletagmanager.com' not in html
     assert "qn_ads=yes" in html
     assert 'id="cookies"' in client.get("/privacy").get_data(as_text=True)
+
+
+def test_home_cta_tracking_and_ads_source(client, app):
+    from quizlynotes.models import SiteEvent
+
+    html = client.get("/?gclid=abc", headers={"User-Agent": "Mozilla/5.0 Chrome/141"}).get_data(as_text=True)
+    assert 'data-cta="hero"' in html and "data-sticky-cta" in html and "Try with sample notes" in html
+    client.post("/api/beacon", data='{"kind":"cta","fields":{"where":"hero","page":"home"}}')
+    with app.app_context():
+        assert SiteEvent.query.filter_by(kind="landing").first().source == "Google Ads"
+        assert "where=hero" in SiteEvent.query.filter_by(kind="cta").first().detail
+    login(client, "boss@example.com")
+    assert "Home: Google button" in client.get("/admin/stats?range=0").get_data(as_text=True)
+
