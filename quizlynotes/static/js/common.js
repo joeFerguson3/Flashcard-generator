@@ -198,11 +198,25 @@
     var max = parseInt(range.max, 10);
     var key = 'qn-quiz-n-' + form.getAttribute('data-set');
     try { var saved = localStorage.getItem(key); if (saved !== null && +saved <= max) range.value = saved; } catch (e) {}
+    // Notes before each topic: on by default, remembered across sets (same setting as the quiz's Options).
+    var notesBox = form.querySelector('[data-notes-toggle]');
+    var notesWrap = form.querySelector('[data-notes-wrap]');
+    var sub = form.querySelector('[data-launch-sub]');
+    if (notesBox) {
+      try { notesBox.checked = localStorage.getItem('qn-quiz-notes') !== 'off'; } catch (e) {}
+      notesBox.addEventListener('change', function () {
+        try { localStorage.setItem('qn-quiz-notes', notesBox.checked ? 'on' : 'off'); } catch (e) {}
+        update();
+      });
+    }
     function update() {
       var n = parseInt(range.value, 10);
       out.textContent = n === 0 ? 'none, just the notes' : n === max ? 'all ' + max : n + ' of ' + max;
       go.textContent = n === 0 ? 'Read the notes →' : 'Start quiz →';
       range.style.setProperty('--fill', (max ? n / max * 100 : 100) + '%');
+      if (notesWrap) notesWrap.hidden = n === 0;
+      if (sub) sub.textContent = n === 0 ? 'Just the notes, topic by topic'
+        : (notesBox && !notesBox.checked) ? 'Questions only, no notes' : 'Notes and questions, topic by topic';
     }
     range.addEventListener('input', update);
     form.addEventListener('submit', function () {

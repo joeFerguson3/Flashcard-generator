@@ -72,13 +72,17 @@
           <span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 5l12 7-12 7V5z" fill="currentColor"/></svg></span>
           <div>
             <strong>{{ 'Retake quiz' if s.attempts else 'Start quiz' }}</strong>
-            <span class="quiz-launch__sub">Notes and questions, topic by topic</span>
+            <span class="quiz-launch__sub" data-launch-sub>Notes and questions, topic by topic</span>
           </div>
         </div>
         <label class="quiz-launch__slider">
           <span class="quiz-launch__label">Questions: <output data-n-out>{{ total_q }} of {{ total_q }}</output></span>
           <input type="range" name="n" min="0" max="{{ total_q }}" step="1" value="{{ total_q }}" data-n aria-label="Number of questions">
           <span class="quiz-launch__ends" aria-hidden="true"><span>Notes only</span><span>All {{ total_q }}</span></span>
+        </label>
+        <label class="quiz-launch__notes" data-notes-wrap>
+          <input type="checkbox" data-notes-toggle checked>
+          <span>Show notes before each topic</span>
         </label>
         <button class="btn btn--hl quiz-launch__go" type="submit" data-n-go>Start quiz →</button>
       </form>

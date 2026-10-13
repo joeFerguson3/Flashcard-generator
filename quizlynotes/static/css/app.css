@@ -1174,3 +1174,10 @@ th.is-sortable:focus-visible { outline: 2px solid var(--accent); outline-offset:
 }
 .hero__grid > * { min-width: 0; }
 .btn--google span { white-space: normal; text-align: left; }
+
+/* Notes on/off for quizzes */
+.quiz-launch__notes { display: inline-flex; align-items: center; gap: .55rem; font-size: .92rem; cursor: pointer; justify-self: start; }
+.quiz-launch__notes[hidden] { display: none; }
+.quiz-launch__notes input { width: 1.1rem; height: 1.1rem; accent-color: var(--hl); margin: 0; }
+.step__meta { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+.notes-off { color: var(--muted); }

@@ -383,3 +383,11 @@ def test_home_cta_tracking_and_ads_source(client, app):
     login(client, "boss@example.com")
     assert "Home: Google button" in client.get("/admin/stats?range=0").get_data(as_text=True)
 
+
+
+def test_set_page_has_notes_toggle(client):
+    login(client, "toggle@example.com")
+    set_id = int(new_set(client).json["redirect"].split("/")[2])
+    client.post(f"/api/sets/{set_id}/generate", json={})
+    html = client.get(f"/sets/{set_id}").get_data(as_text=True)
+    assert "data-notes-toggle" in html and "Show notes before each topic" in html

@@ -111,6 +111,12 @@
   });
   var notesOnly = !questions.length && steps.length > 0;
   if (notesOnly) showNotes = true;
+  function setShowNotes(on) {
+    showNotes = on;
+    try { localStorage.setItem('qn-quiz-notes', on ? 'on' : 'off'); } catch (e) {}
+    var box = document.querySelector('[data-opt-notes]');
+    if (box) box.checked = on;
+  }
   if (!questions.length && !notesOnly) {
     root.appendChild(h('div', { class: 'step' }, [h('p', { text: 'No questions to show.' })]));
     return;
@@ -244,12 +250,15 @@
       })) : h('span', { class: 'step__hint', text: count + ' question' + (count === 1 ? '' : 's') + ' on this topic' });
       var back = page > 0 ? h('button', { class: 'btn btn--ghost', type: 'button', text: '← Back', onclick: function () { page--; draw(); } }) : null;
       var skipNotes = (!last && !notesOnly) ? h('button', { class: 'btn btn--ghost', type: 'button', text: 'Skip notes', title: 'Go straight to the questions on this topic', onclick: next }) : null;
+      var notesOff = notesOnly ? null : h('button', { class: 'link-btn small notes-off', type: 'button', text: 'Turn off notes',
+        title: 'Go straight to questions for the rest of this quiz and future quizzes. Turn notes back on in Options.',
+        onclick: function () { setShowNotes(false); if (window.QN && QN.toast) QN.toast('Notes turned off. Turn them back on in Options.'); show(index); } });
       var fwd = h('button', {
         class: 'btn btn--primary', type: 'button', 'data-autofocus': true,
         text: last ? (notesOnly ? 'Next topic →' : 'I’m ready →') : 'Next →',
         onclick: function () { if (last) next(); else { page++; draw(); } }
       });
-      article.appendChild(h('div', { class: 'step__actions' }, [dots, h('div', { class: 'btn-row' }, [skipNotes, back, fwd])]));
+      article.appendChild(h('div', { class: 'step__actions' }, [h('div', { class: 'step__meta' }, [dots, notesOff]), h('div', { class: 'btn-row' }, [skipNotes, back, fwd])]));
       fwd.focus({ preventScroll: true });
     }
     article._keyHandler = function (key) {
@@ -874,8 +883,7 @@
     notesToggle.checked = showNotes;
     openBtn.addEventListener('click', function () { if (dlg.showModal) dlg.showModal(); });
     notesToggle.addEventListener('change', function () {
-      showNotes = notesToggle.checked;
-      try { localStorage.setItem('qn-quiz-notes', showNotes ? 'on' : 'off'); } catch (e) {}
+      setShowNotes(notesToggle.checked);
       if (!showNotes && steps[index] && steps[index].type === 'notes') show(index);
     });
     var newBtn = dlg.querySelector('[data-new-quiz]');
