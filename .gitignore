@@ -11,3 +11,14 @@ flashcardJSON.JSON
 TODO.txt
 .ruff_cache/
 node_modules/
+
+# Neon CLI and AI tool setup
+.neon
+neon.ts
+package.json
+package-lock.json
+.agents/
+.claude/
+.codex/
+.mcp.json
+skills-lock.json
