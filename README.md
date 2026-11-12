@@ -1,56 +1,74 @@
 # QuizlyNotes
 
-Turn notes, PDFs and lecture slides into revision notes, practice quizzes and spaced-repetition flashcards.
+**Turn your notes, PDFs and lecture slides into revision notes, practice quizzes and flashcards.**
 
 Live at [quizlynotes.com](https://quizlynotes.com).
 
-## What changed in v2
+![Python](https://img.shields.io/badge/Python-3.12-3776AB) ![Flask](https://img.shields.io/badge/Flask-backend-000000) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1) ![Gemini](https://img.shields.io/badge/Gemini-AI-8E75B2) ![Cloud Run](https://img.shields.io/badge/Google_Cloud_Run-hosting-4285F4)
 
-| Area | v1 | v2 |
-|---|---|---|
-| **Data loss** | SQLite file inside the Cloud Run container. Wiped whenever the instance scaled to zero or redeployed, which is why sets disappeared. | Hosted Postgres (Neon/Supabase) via `DATABASE_URL`. Survives restarts and redeploys. Notes are saved as soon as they're generated and autosave while editing. |
-| **AI** | `gpt-4o-mini`, text-only extraction, notes from arbitrary 850-character slices, one API call per question, unvalidated JSON (a bad response crashed the request). | Gemini reads the **whole PDF natively** (diagrams, scanned slides). Schema-enforced JSON, server-side validation (e.g. the right answer must be one of the options), retries, friendly errors. Two calls per set: notes, then cards. |
-| **Question quality** | Random sampling of sections, generic prompt. | Coverage across every section, plausible distractors, explanations on every answer, difficulty and question-type controls, atomic flashcards. |
-| **Security** | Any signed-in user could delete or edit another user's set by ID. No CSRF protection. Fallback secret key. `.env` copied into the Docker image. | Ownership enforced on every query (404 otherwise), CSRF on all forms and API calls, a secret key is required in production, `.dockerignore`, rate limits on AI endpoints. |
-| **Navigation** | Current set stored in the session (`set-id`), so back and refresh broke and pages were unbookmarkable. | Real URLs: `/sets/<id>`, `/sets/<id>/quiz` and so on. Old URLs redirect. |
-| **Quiz** | Apostrophes in answers broke the true/false and multiple-choice buttons. Answer checking depended on a CDN. Ordering was desktop drag-only. | Renders from JSON with safe escaping, forgiving answer matching (typos, plurals, articles), "I was right" override, ordering works on touch and with the keyboard, review of missed questions, "retry missed". |
-| **Flashcards** | The `/sets` library existed but nothing created flashcards any more. | Generated with every quiz, flip cards with spaced repetition (Again/Hard/Good/Easy), due counts in the library. |
-| **Design** | Indigo-violet gradient "AI app" look. | Paper, ink and highlighter. Light and dark themes, mobile-first. |
-| **SEO** | One landing page with no meta description, no sitemap, invented stats and testimonials, and FAQ answers promising features that didn't exist. | Keyword-targeted landing pages, meta and OG tags, JSON-LD (WebApplication, FAQPage, Breadcrumbs), sitemap.xml, robots.txt, an honest FAQ, a guest "try it" box, and privacy and terms pages. |
-| **Other** | Settings toggles that did nothing. | Export all data (JSON), delete account with confirmation. Upload PDF, DOCX, PPTX or TXT, or paste text. |
+| | |
+|---|---|
+| ![Revision notes](quizlynotes/static/img/screenshot-notes.png) | ![Practice quiz](quizlynotes/static/img/screenshot-quiz.png) |
+| Revision notes made from a lecture | A practice quiz on those notes |
 
-## Run locally
+## What it does
+
+- **Reads your material.** Upload a PDF, Word document, PowerPoint or text file, or paste text in. Gemini reads the whole PDF, including diagrams and scanned slides.
+- **Writes revision notes.** Short pages of bullet points with the key terms in bold, which you can edit, simplify or improve.
+- **Makes practice quizzes.** Covers every section of your notes, with 10 question types (multiple choice, true/false, fill in the blank, matching, ordering, odd one out and more) and an explanation for every answer.
+- **Marks fairly.** Typed answers are accepted with small typos, plurals and missing "the"s, and there's an "I was right" button for when it gets it wrong.
+- **Makes flashcards.** Flip cards with spaced repetition (Again / Hard / Good / Easy), plus Match, Speed and Write games.
+- **Keeps track.** Scores for each set, a review of the questions you missed, and a "retry missed" button.
+- **Free and Pro plans.** Studying is always free. The paid plan raises the AI limits and adds mock exams and weak-spot drills. See [`MONETISATION.md`](MONETISATION.md).
+
+## How you use it
+
+1. **Sign in** with Google, or try it from the home page without an account.
+2. **Add your notes:** upload a file or paste text, and pick a subject.
+3. **Read the notes** it writes, and edit anything you want to change.
+4. **Take the quiz,** then go back over the questions you missed.
+5. **Revise with flashcards.** Cards you find hard come back sooner.
+
+## Getting started
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+git clone https://github.com/joeFerguson3/Flashcard-generator.git
+cd Flashcard-generator
+python -m venv .venv
+.venv\Scripts\activate             # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env          # then edit
-flask --app wsgi run --debug
+copy .env.example .env             # macOS/Linux: cp .env.example .env
+flask --app wsgi run --debug       # opens on http://localhost:5000
 ```
 
-With `AI_PROVIDER=fake` and `ENABLE_DEV_LOGIN=true` you don't need any keys. Go to <http://localhost:5000/dev-login>. Leave `DATABASE_URL` blank to use a local SQLite file.
+You don't need any API keys to try it locally. In `.env`, set `AI_PROVIDER=fake` to use sample data instead of Gemini, and `ENABLE_DEV_LOGIN=true` to sign in at <http://localhost:5000/dev-login> without Google. Leave `DATABASE_URL` blank to use a local SQLite file.
 
-Tests: `pytest`
+To run the tests:
 
-## Deploy (Cloud Run)
+```bash
+pytest
+```
 
-### 1. Database: Neon (free)
+## Settings
 
-1. Create a project at [neon.tech](https://neon.tech) in a region near your Cloud Run region (e.g. `europe-west2` → AWS London).
-2. Copy the connection string (`postgresql://...?sslmode=require`). That's your `DATABASE_URL`.
-3. Tables are created automatically on deploy (`flask db upgrade` runs before the server starts).
+Every option is in [`.env.example`](.env.example). The main ones:
 
-### 2. Gemini API key
+| Variable | What it does |
+|---|---|
+| `DATABASE_URL` | Postgres connection string. Required in production. |
+| `GEMINI_API_KEY` | Your key from [Google AI Studio](https://aistudio.google.com/apikey). |
+| `GEMINI_MODEL` / `GEMINI_FAST_MODEL` | Which Gemini models to use. The fast one runs the guest demo and "Improve". |
+| `GENERATION_LIMIT` / `GUEST_LIMIT` | How many sets a user or guest can make per hour and per day. |
+| `ENABLE_GUEST_DEMO` | Shows the "try it" box on the home page. |
+| `MONETISATION_ENABLED` | Turns the Free / Pro plans and Stripe payments on or off. |
 
-Create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). **Turn on billing for the key's project.** On the free tier, Google may use prompts to improve its products, which you don't want for students' uploads, and the rate limits are low. A typical lecture costs a few cents to process.
+## Deploying
 
-The model is set with `GEMINI_MODEL` (default `gemini-3.8-flash`). Change it there when Google releases a newer Flash model; no code changes are needed.
+The site runs on Google Cloud Run with a free [Neon](https://neon.tech) Postgres database.
 
-### 3. Google sign-in
-
-The callback URL is unchanged: `https://quizlynotes.com/login/google/authorized`. The existing OAuth client works as it is.
-
-### 4. Deploy
+1. **Database:** create a Neon project near your Cloud Run region (e.g. `europe-west2` → AWS London) and copy its connection string. Tables are created automatically on each deploy.
+2. **Gemini:** create an API key and **turn on billing** for its project. On the free tier Google may use the uploads to improve its products, and the limits are low.
+3. **Deploy:**
 
 ```bash
 gcloud run deploy quizlynotes --source . --region europe-west2 \
@@ -59,39 +77,55 @@ gcloud run deploy quizlynotes --source . --region europe-west2 \
   --set-secrets FLASK_SECRET_KEY=flask-secret:latest,DATABASE_URL=database-url:latest,GEMINI_API_KEY=gemini-key:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest
 ```
 
-(Or set them as plain env vars in the Cloud Run console.) `--timeout 300` matters: a long PDF can take a minute or two to generate.
+Keep `--timeout 300`, because a long PDF can take a minute or two to process.
 
-### 5. After deploying (SEO)
+4. **After deploying:** submit `https://quizlynotes.com/sitemap.xml` in Google Search Console.
 
-1. In Search Console, submit `https://quizlynotes.com/sitemap.xml`.
-2. Use URL Inspection → Request indexing for `/`, `/notes-to-quiz`, `/pdf-to-quiz` and `/notes-to-flashcards`.
-3. Check the rich results with Google's Rich Results Test (FAQ, breadcrumbs).
+## Project files
 
-## Configuration
+### `quizlynotes/`
 
-See `.env.example` for every option. Key ones:
-
-| Variable | Purpose |
+| File | What it does |
 |---|---|
-| `DATABASE_URL` | Postgres connection string (required in production) |
-| `GEMINI_API_KEY` / `GEMINI_MODEL` / `GEMINI_FAST_MODEL` | AI provider. The fast model is used for the guest demo and "Improve" |
-| `GENERATION_LIMIT` / `GUEST_LIMIT` | Rate limits (per user / per IP) |
-| `ENABLE_GUEST_DEMO` | Show the "try it" box on landing pages |
-| `RATELIMIT_STORAGE_URI` | Defaults to in-memory, which is per instance. Use Redis if you scale out |
+| `__init__.py` | Creates the Flask app and sets up the database, login, rate limits and security headers. |
+| `config.py` | Reads the settings from `.env`. |
+| `models.py` | The database tables: users, study sets, note sections, quiz questions and flashcards, quiz attempts and usage. |
+| `auth.py` | Google sign-in and the local dev login. |
+| `billing.py` | Free and Pro plan limits, Stripe payments, trials and referrals. |
+| `sanitize.py` | Cleans user input and AI output before it's saved or shown. |
+| `activity.py` | Records usage for the stats page. |
+| `seo.py` | The text and FAQs for the landing pages. |
 
-## Project layout
+### `quizlynotes/ai/`
 
-```
-quizlynotes/
-  ai/            extract.py (files → model input), prompts.py, schemas.py (structured output),
-                 validate.py (checks model output), providers.py (Gemini + offline fake)
-  services/      study.py: create/update sets, scoring, spaced repetition
-  views/         public.py (landing/SEO/guest), study.py (app pages), api.py (JSON)
-  templates/     public/, app/, partials/
-  static/        css/app.css, js/ (one small file per page, no build step)
-  seo.py         landing page copy and FAQs
-migrations/      Alembic (flask db migrate / upgrade)
-tests/
-```
+| File | What it does |
+|---|---|
+| `extract.py` | Turns uploaded files into something the model can read. |
+| `prompts.py` | The instructions sent to Gemini for notes, quizzes and flashcards. |
+| `schemas.py` | The exact JSON shape the model has to reply in. |
+| `validate.py` | Checks every reply, e.g. that the right answer is one of the options. |
+| `providers.py` | Talks to Gemini, with a backup model if it's busy and an offline fake for testing. |
 
-Schema changes: edit `models.py`, then `flask --app wsgi db migrate -m "describe change"` and commit the generated file.
+### `quizlynotes/services/` and `quizlynotes/views/`
+
+| File | What it does |
+|---|---|
+| `services/study.py` | Creating and updating sets, scoring quizzes and scheduling flashcards. |
+| `views/public.py` | The home page, landing pages, pricing and the guest demo. |
+| `views/study.py` | The app pages: library, notes, quizzes, flashcards and settings. |
+| `views/api.py` | The JSON endpoints the pages call. |
+| `views/billing.py` | Checkout and the Stripe webhook. |
+| `views/admin.py` | The owner-only stats pages. |
+
+### Everything else
+
+| Folder | What's in it |
+|---|---|
+| `quizlynotes/templates/` | The HTML pages: `public/` for the website, `app/` for the app, `partials/` for shared pieces. |
+| `quizlynotes/static/` | The CSS, one small JavaScript file per page (no build step), icons and screenshots. |
+| `migrations/` | Database changes. After editing `models.py`, run `flask --app wsgi db migrate -m "what changed"` and commit the new file. |
+| `tests/` | Tests for the app and billing. They use the fake AI, so they run offline. |
+
+## Built with
+
+Python, Flask, SQLAlchemy, PostgreSQL (Neon), Google Gemini, Stripe, and a plain HTML/CSS/JavaScript front end, hosted on Google Cloud Run.
